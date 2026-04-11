@@ -27,8 +27,11 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional
 
-# Ensure scripts directory is in path for monitor_utils
+# Ensure project root is in path for src imports
 ROOT_PATH = Path(__file__).resolve().parent.parent
+if str(ROOT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_PATH))
+
 SCRIPTS_PATH = ROOT_PATH / "scripts"
 if str(SCRIPTS_PATH) not in sys.path:
     sys.path.append(str(SCRIPTS_PATH))

@@ -27,18 +27,13 @@ jobs:
               sudo apt-get update -y || true
             }
           done
-      - name: Install Geckodriver (Fallback)
-        run: |
-          if ! command -v geckodriver; then
-            echo "Geckodriver not found, downloading from Mozilla..."
-            GECKO_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep tag_name | cut -d '"' -f4)
-            wget -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/${GECKO_VERSION}/geckodriver-${GECKO_VERSION}-linux64.tar.gz"
-            tar -xzf geckodriver.tar.gz
-            chmod +x geckodriver
-            sudo mv geckodriver /usr/local/bin/
-            rm geckodriver.tar.gz
-          fi
-          geckodriver --version || (echo "Geckodriver installation failed" && exit 1)
+      - name: Set up Geckodriver
+        uses: browser-actions/setup-geckodriver@latest
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Geckodriver
+        run: geckodriver --version
 
       - name: Install dependencies
         run: |

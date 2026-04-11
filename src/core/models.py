@@ -17,21 +17,30 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 from pathlib import Path
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, Dict
 from src.parsers import media_parser
 from src.core import logger
 from src.core.config_master import (
     GLOBAL_CONFIG, AUDIO_NATIVE, AUDIO_TRANSCODE, ALL_AUDIO_EXTENSIONS,
-    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
     VIDEO_NATIVE, VIDEO_HD_TRANSCODE, VIDEO_PAL_TRANSCODE, VIDEO_NTSC_TRANSCODE,
     ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS,
     EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS, PLAYLIST_EXTENSIONS,
     ARCHIVE_EXTENSIONS
 )
 
-# --- ULTIMATE SSOT REGISTRIES (v1.37.07 Consolidated) ---
 # These registries are the absolute source of truth for all media categorization.
 # We enforce lowercase English keys internally (audio, multimedia, etc.).
+
+EXTENSION_REGISTRY = {
+    "audio": ALL_AUDIO_EXTENSIONS,
+    "video": ALL_VIDEO_EXTENSIONS,
+    "pictures": PICTURE_EXTENSIONS,
+    "documents": DOCUMENT_EXTENSIONS,
+    "ebooks": EBOOK_EXTENSIONS,
+    "disk_images": DISK_IMAGE_EXTENSIONS,
+    "playlists": PLAYLIST_EXTENSIONS,
+    "archives": ARCHIVE_EXTENSIONS
+}
 
 MASTER_CAT_MAP = {
     "audio": {
@@ -91,7 +100,7 @@ MASTER_CAT_MAP = {
         "aliases": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
         "extensions": PICTURE_EXTENSIONS
     },
-    "bilder": { # Alias for global category map parity
+    "bilder": {  # Alias for global category map parity
         "internal": "pictures",
         "aliases": ["bilder"],
         "extensions": PICTURE_EXTENSIONS
@@ -106,7 +115,7 @@ MASTER_CAT_MAP = {
         "aliases": ["e-book", "ebook", "epub", "mobi"],
         "extensions": EBOOK_EXTENSIONS
     },
-    "epub": { # Alias for global category map parity
+    "epub": {  # Alias for global category map parity
         "internal": "ebooks",
         "aliases": ["epub"],
         "extensions": EBOOK_EXTENSIONS
@@ -134,7 +143,7 @@ MASTER_CAT_MAP = {
 # --- Legacy Compatibility Aliases (v1.37.08) ---
 # Restored for backward compatibility with main.py and format_utils.py
 DSD_EXTENSIONS = AUDIO_TRANSCODE & {".dsf", ".dff", ".dsd"}
-HDDVD_EXTENSIONS = {".evo", ".map", ".bup"} # Subset of disk_images
+HDDVD_EXTENSIONS = {".evo", ".map", ".bup"}  # Subset of disk_images
 # ALL_AUDIO_EXTENSIONS and ALL_VIDEO_EXTENSIONS are already defined above.
 
 TECH_MARKERS = {
@@ -145,36 +154,39 @@ TECH_MARKERS = {
 }
 
 # --- [v1.45.141] ARCHITECTURE BRIDGE ---
-# Hardcoded BRANCH_MAP removed. 
+# Hardcoded BRANCH_MAP removed.
 # Logistics now driven by 'branch_architecture_registry' in CONFIG_MASTER.
 
 SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv", "pymediainfo", "ffprobe", "ffmpeg"}
 
 # --- ULTIMATE AUDITING LOGIC (v1.35.76) ---
 
+
 def audit_category_chain(item: Dict) -> str:
     """Automated debugging helper for the category chain assignment (v1.37.07 SSOT)."""
     raw_cat = str(item.get('category', 'Unbekannt')).lower()
     name = item.get('name', 'unknown')
-    
+
     matched_internal = None
     for internal_key, config in MASTER_CAT_MAP.items():
         if raw_cat == internal_key or raw_cat in config["aliases"]:
             matched_internal = internal_key
             break
-            
+
     if matched_internal:
         return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: Internal={matched_internal} -> OK"
     return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: NO MATCH -> DROPPED"
+
 
 # --- [v1.45.200] BRANCH IDENTITY & BUILD BRIDGE ---
 # This map provides the architectural link between branch IDs and human labels.
 # Restored as per user requirement to bridge fixed branches to build process.
 BRANCH_MAP = {
-    "audio":      "BUILD: AUDIO ONLY", # Legacy
-    "multimedia": "BUILD: MULTIMEDIA", # Current
-    "extended":   "BUILD: EXTENDED" # Future
+    "audio": "BUILD: AUDIO ONLY",  # Legacy
+    "multimedia": "BUILD: MULTIMEDIA",  # Current
+    "extended": "BUILD: EXTENDED"  # Future
 }
+
 
 def get_branch_label(branch_id: str) -> str:
     """Resolves the professional display name for a branch."""
@@ -183,12 +195,14 @@ def get_branch_label(branch_id: str) -> str:
         return reg[branch_id].get('label', BRANCH_MAP.get(branch_id, branch_id.upper()))
     return BRANCH_MAP.get(branch_id, branch_id.upper())
 
+
 def get_branch_build_id(branch_id: str) -> str:
     """Resolves the Build ID (e.g. MWV-A) for a branch."""
     reg = GLOBAL_CONFIG.get('branch_identity_registry', {})
     if branch_id in reg:
         return reg[branch_id].get('build_id', 'MWV-GENERIC')
     return "MWV-GENERIC"
+
 
 def get_build_link(branch_id: str) -> str:
     """Generates the absolute build artifact link for a branch (v1.45.200)."""
@@ -200,7 +214,9 @@ def get_build_link(branch_id: str) -> str:
     return f"./dist/MediaWebViewer-{build_id}.exe"
 
 # --- CATEGORY RECONCILIATION ---
-def get_allowed_categories(branch_id: str) -> list[str]:
+
+
+def get_allowed_internal_cats(displayed_cats: list[str]) -> list[str]:
     """
     @brief Returns the flattened list of internal labels for the requested categories (v1.37.07 SSOT).
     Supports German aliases and cross-mappings.
@@ -219,7 +235,7 @@ def get_allowed_categories(branch_id: str) -> list[str]:
 
     for dc in displayed_cats:
         raw_dc = dc.lower()
-        
+
         # 0. Handle 'all' expansion (v1.41.00 Master Reset)
         if raw_dc == 'all':
             for key in MASTER_CAT_MAP:
@@ -230,36 +246,37 @@ def get_allowed_categories(branch_id: str) -> list[str]:
 
         # 1. Resolve to canonical internal ID
         canonical = category_alias_table.get(raw_dc, raw_dc)
-        
+
         # 2. Add the canonical ID itself
         allowed.add(canonical)
-        
+
         # 3. Add all associated sub-labels (aliases) from the MASTER_CAT_MAP
         config = MASTER_CAT_MAP.get(canonical)
         if config:
             for alias in config["aliases"]:
                 allowed.add(alias.lower())
-                
+
     return list(allowed)
 
 # --- PLAYBACK & COMPATIBILITY REGISTRY (v1.35.77 Consolidated) ---
 
+
 PLAYABLE_KEYWORDS = [
-    "dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra", 
-    "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom", 
+    "dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra",
+    "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom",
     "dvd daten", "blu-ray daten"
 ]
 
 PLAYABLE_EXTENSIONS = [
-    ".mp4", ".mkv", ".avi", ".mp3", ".flac", ".wav", ".m4a", ".dsf", ".dff", 
-    ".ts", ".alac", ".aiff", ".mpeg", ".mpg", ".mov", ".webm", ".wmv", 
+    ".mp4", ".mkv", ".avi", ".mp3", ".flac", ".wav", ".m4a", ".dsf", ".dff",
+    ".ts", ".alac", ".aiff", ".mpeg", ".mpg", ".mov", ".webm", ".wmv",
     ".m4v", ".3gp", ".ogv", ".vob", ".m2ts", ".iso", ".bin", ".img"
 ]
 
 NATIVE_EXTENSIONS = [".mp4", ".mkv", ".webm", ".ogv", ".mp3", ".wav", ".ogg", ".m4a", ".flac"]
 
 NATIVE_CODECS = [
-    "h264", "avc1", "vp8", "vp9", "av1", "aac", "mp4a", "mp3", 
+    "h264", "avc1", "vp8", "vp9", "av1", "aac", "mp4a", "mp3",
     "opus", "vorbis", "flac", "pcm"
 ]
 
@@ -268,17 +285,19 @@ LOSSY_EXTENSIONS = {'.mp3', '.ogg', '.aac', '.m4a', '.m4b', '.wma', '.opus'}
 # Get specialized logger for models
 log = logger.get_logger("models")
 
+
 class MediaFormat:
     """
     @brief Unified engine for media format and type detection (v1.35.73 SSOT).
     @details Standardized logic driven by config_master registries.
     """
+
     def __init__(self, path: Path, tags: dict[str, Any] = None):
         self.path = path
         self.tags = tags or {}
         self.extension = path.suffix.lower()
         self.registry = EXTENSION_REGISTRY
-        
+
         # Primary Identity
         self.type = self.detect_type()
         self.format = self.detect_format()
@@ -290,14 +309,22 @@ class MediaFormat:
         Determines the granular capability stage for architectural filtering (v1.45.130).
         """
         ext = self.extension
-        if ext in AUDIO_NATIVE: return "audio_native"
-        if ext in AUDIO_TRANSCODE: return "audio_transcode"
-        if ext in VIDEO_NATIVE: return "video_native"
-        if ext in VIDEO_HD_TRANSCODE: return "video_hd"
-        if ext in VIDEO_PAL_TRANSCODE: return "video_pal"
-        if ext in DISK_IMAGE_EXTENSIONS: return "video_iso"
-        if ext in PICTURE_EXTENSIONS: return "bilder"
-        if ext in EBOOK_EXTENSIONS: return "epub"
+        if ext in AUDIO_NATIVE:
+            return "audio_native"
+        if ext in AUDIO_TRANSCODE:
+            return "audio_transcode"
+        if ext in VIDEO_NATIVE:
+            return "video_native"
+        if ext in VIDEO_HD_TRANSCODE:
+            return "video_hd"
+        if ext in VIDEO_PAL_TRANSCODE:
+            return "video_pal"
+        if ext in DISK_IMAGE_EXTENSIONS:
+            return "video_iso"
+        if ext in PICTURE_EXTENSIONS:
+            return "bilder"
+        if ext in EBOOK_EXTENSIONS:
+            return "epub"
         return "unknown"
 
     def detect_type(self) -> str:
@@ -310,6 +337,9 @@ class MediaFormat:
             # Special case: Audiobook detection
             if ext == '.m4b' or any(k in str(self.path).lower() for k in ['h\u00f6rbuch', 'hörbuch', 'audiobook']):
                 return 'audiobook'
+            # Special case: Sampler / Compilation detection
+            if str(self.tags.get('compilation')).lower() in ('1', 'true', 'yes'):
+                return 'sampler'
             return 'audio'
         if ext in self.registry.get("pictures", {}):
             return 'pictures'
@@ -331,8 +361,8 @@ class MediaFormat:
         # Special Handling for Disk Images
         if self.type == 'disk_images':
             tags = self.tags
-            _tag = lambda k: str(tags.get(k, '') or '').lower()
-            
+            def _tag(k): return str(tags.get(k, '') or '').lower()
+
             # 1. PC / Digital Games
             volume_id = _tag('pycdlib_volume_id')
             title = _tag('title')
@@ -340,12 +370,18 @@ class MediaFormat:
                 return 'PC Spiel'
 
             # 2. Specialized Optical Standards
-            if _tag('pycdlib_is_dvd_audio') == 'true': return 'DVD Audio'
-            if _tag('pycdlib_is_vcd') == 'true':       return 'Video CD'
-            if _tag('pycdlib_is_svcd') == 'true':      return 'Super VCD'
-            if _tag('pycdlib_is_cdi') == 'true':       return 'CD-i'
-            if _tag('pycdlib_is_cd_extra') == 'true':  return 'CD-Extra'
-            if _tag('pycdlib_is_hvdvd') == 'true' or 'hvdvd' in volume_id: return 'HD DVD'
+            if _tag('pycdlib_is_dvd_audio') == 'true':
+                return 'DVD Audio'
+            if _tag('pycdlib_is_vcd') == 'true':
+                return 'Video CD'
+            if _tag('pycdlib_is_svcd') == 'true':
+                return 'Super VCD'
+            if _tag('pycdlib_is_cdi') == 'true':
+                return 'CD-i'
+            if _tag('pycdlib_is_cd_extra') == 'true':
+                return 'CD-Extra'
+            if _tag('pycdlib_is_hvdvd') == 'true' or 'hvdvd' in volume_id:
+                return 'HD DVD'
 
             # 3. Standard Video Disks
             if _tag('pycdlib_is_bluray') == 'true' or any(k in volume_id for k in ['blu', 'bd', 'brd']):
@@ -362,7 +398,9 @@ class MediaFormat:
         # 5. Specialized Content-aware Labels (v1.35.81)
         # High-Res / HDR logic moved here from format_utils
         tags = self.tags
-        _tag = lambda k: str(tags.get(k, '') or '').lower()
+        def _tag(k): return str(tags.get(k, '') or '').lower()
+
+        fmt_name = ext.upper().lstrip('.') or 'UNKNOWN'
 
         if self.type == 'audio':
             bits = _tag('audio_bit_depth')
@@ -374,7 +412,7 @@ class MediaFormat:
                 s = int(s_match.group()) if s_match else 44100
                 if b > 16 or s > 48000:
                     from src.parsers.format_utils import format_samplerate
-                    return f'High-Res {fmt} ({b}-bit/{format_samplerate(s)})'
+                    return f'High-Res {fmt_name} ({b}-bit/{format_samplerate(s)})'
             except (ValueError, AttributeError, ImportError):
                 pass
 
@@ -382,11 +420,14 @@ class MediaFormat:
             hdr = _tag('video_hdr')
             scan = _tag('video_scan_type')
             bits = _tag('video_bit_depth')
-            if hdr and hdr != 'none': return f'HDR {hdr.upper()} Video'
-            if 'interlaced' in scan:   return 'Interlaced Video'
-            if '10 bit' in bits or '12 bit' in bits: return f'{bits} Deep Color'
+            if hdr and hdr != 'none':
+                return f'HDR {hdr.upper()} Video'
+            if 'interlaced' in scan:
+                return 'Interlaced Video'
+            if '10 bit' in bits or '12 bit' in bits:
+                return f'{bits} Deep Color'
 
-        return fmt
+        return fmt_name
 
     @property
     def is_playable(self) -> bool:
@@ -398,7 +439,7 @@ class MediaFormat:
         fmt_lower = self.format.lower()
         if any(k in fmt_lower for k in ['pc spiel', 'digitales spiel', '(index)']):
             return False
-            
+
         # Extension-based whitelist from SSOT
         return self.extension in PLAYABLE_EXTENSIONS
 
@@ -408,17 +449,20 @@ class MediaFormat:
         """
         ext = self.extension
         tags = self.tags
-        _tag = lambda k: str(tags.get(k, '') or '').lower()
-        
+        def _tag(k): return str(tags.get(k, '') or '').lower()
+
         # Disk Specific Content
         if self.type == 'disk_images':
             standard = _tag('standard')
             volume_id = _tag('pycdlib_volume_id')
-            if 'pal' in volume_id or 'pal' in standard: return 'Standard: PAL'
-            if 'ntsc' in volume_id or 'ntsc' in standard: return 'Standard: NTSC'
-            if _tag('pycdlib_is_dvd_vr') == 'true': return 'VR Mode'
+            if 'pal' in volume_id or 'pal' in standard:
+                return 'Standard: PAL'
+            if 'ntsc' in volume_id or 'ntsc' in standard:
+                return 'Standard: NTSC'
+            if _tag('pycdlib_is_dvd_vr') == 'true':
+                return 'VR Mode'
             return ''
-            
+
         return ''
 
     def to_dict(self) -> dict[str, Any]:
@@ -441,11 +485,11 @@ class MediaItem:
         self.path = Path(path)
         self.is_directory = self.path.is_dir()
         self.is_mock = is_mock
-        
+
         # 1. Metadata Extraction
         parser_mode = GLOBAL_CONFIG.get("parser_mode", "lightweight")
         _meta = media_parser.extract_metadata(self.path, self.name, mode=parser_mode)
-        
+
         self.duration = 0
         self.tags = {}
         self._normalize_metadata(_meta)
@@ -469,7 +513,7 @@ class MediaItem:
         # Type Tokens (UI Compatibility)
         self.media_type = 'container' if self.is_directory else 'file'
         self.type_token = self.category
-        
+
         # Mapping extra fields for database parity
         self._set_db_parity_fields()
 
@@ -492,7 +536,8 @@ class MediaItem:
             self.duration = int(self.tags.get('duration', 0) or 0)
 
         # Base fallbacks
-        if not self.tags: self.tags = {}
+        if not self.tags:
+            self.tags = {}
         if not self.tags.get('title'):
             self.tags['title'] = self.path.stem if not self.is_directory else self.path.name
 
@@ -506,13 +551,13 @@ class MediaItem:
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
-        
+
         if self.media_type == 'container':
-             self.subtype = self.category.replace(' ', '_')
-             self.file_type = None
+            self.subtype = self.category.replace(' ', '_')
+            self.file_type = None
         else:
-             self.subtype = None
-             self.file_type = f"{self.category.lower()}-file"
+            self.subtype = None
+            self.file_type = f"{self.category.lower()}-file"
 
     def extract_artwork(self) -> Optional[str]:
         from src.parsers.artwork_extractor import extractor
@@ -551,7 +596,7 @@ class MediaItem:
             transcoded_format = 'OGG'
         else:
             transcoded_format = None
-            
+
         # Is Chrome Native?
         from src.parsers.format_utils import is_chrome_native
         chrome_native = is_chrome_native(self.type, codec)
@@ -587,15 +632,15 @@ class MediaItem:
             'is_playable': self.is_playable,
             'is_directory': self.is_directory,
             'art_path': self.art_path,
-            'artwork': self.art_path or '/cover/undefined', # Fallback for UI
+            'artwork': self.art_path or '/cover/undefined',  # Fallback for UI
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format,
             'is_chrome_native': chrome_native,
             'year': filtered_tags.get('year', ''),
-            'title': filtered_tags.get('title', self.name), # Flatten for easier JS access
-            'artist': filtered_tags.get('artist', 'Unknown Artist'), # Flatten for JS
-            'album': filtered_tags.get('album', 'No Album'), # Flatten for JS
+            'title': filtered_tags.get('title', self.name),  # Flatten for easier JS access
+            'artist': filtered_tags.get('artist', 'Unknown Artist'),  # Flatten for JS
+            'album': filtered_tags.get('album', 'No Album'),  # Flatten for JS
             'film_title': filtered_tags.get('title', self.name),
             'media_type': self.media_type,
             'subtype': self.subtype,

@@ -373,27 +373,30 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     {"id": "dashboard", "label": "Dashboard", "action": "switchToolsTab('dashboard')"},
                     {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
                 ]
-            },
             }
         },
 
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
         "library_category_map": [
-            {"id": "all", "label": "ALL MEDIA"},
-            {"id": "audio_native", "label": "AUDIO (NATIVE)"},
-            {"id": "audio_transcode", "label": "AUDIO (TRANSCODE)"},
-            {"id": "video_native", "label": "VIDEO (NATIVE)"},
-            {"id": "video_hd", "label": "VIDEO (HD TRANSCODE)"},
-            {"id": "video_pal", "label": "VIDEO (PAL TRANSCODE)"},
-            {"id": "video_iso", "label": "VIDEO (ISO/DVD)"},
-            {"id": "bilder", "label": "BILDER"},
-            {"id": "epub", "label": "EPUB SUPPORT [OFF]"}
+            {"id": "all",             "label": "ALLE MEDIEN"},
+            {"id": "audio",           "label": "AUDIO (ALLE)"},
+            {"id": "audio_native",    "label": "AUDIO (NATIV)"},
+            {"id": "audio_transcode", "label": "AUDIO (UMWANDLUNG)"},
+            {"id": "audiobook",       "label": "HÖRBÜCHER"},
+            {"id": "sampler",         "label": "SAMPLER / MIXES"},
+            {"id": "video",           "label": "VIDEO (ALLE)"},
+            {"id": "video_native",    "label": "VIDEO (NATIV)"},
+            {"id": "video_pal",       "label": "VIDEO (PAL TRANSCODE)"},
+            {"id": "video_iso",       "label": "DVD / ISO IMAGES"},
+            {"id": "bilder",          "label": "BILDER / FOTOS"},
+            {"id": "ebooks",          "label": "E-BOOKS"},
+            {"id": "unknown",         "label": "UNBEKANNT"}
         ],
 
         "branch_architecture_registry": {
-            "audio":      ["audio_native", "audio_transcode"],
-            "multimedia": ["audio_native", "audio_transcode", "video_native", "video_hd", "video_pal"],
-            "extended":   ["all"] # [v1.45] Full Forensic Support
+            "audio":      ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler", "video", "video_native", "video_iso", "bilder"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler", "video", "video_native", "video_iso", "bilder", "ebooks", "unknown"]
         },
 
         # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---

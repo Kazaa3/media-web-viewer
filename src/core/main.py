@@ -1,15 +1,23 @@
-import sys, os
+import sys
+import os
 from pathlib import Path
-import subprocess
 
 # --- [v1.41.100-SUPER-STABLE] High-Priority Bootstrap Guard ---
 _file = Path(__file__).resolve()
 _root = _file.parent.parent.parent
 _src = _root / "src"
 
+# Forced Path Injection (Forensic Reset)
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+if str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
+
+
 def ensure_stable_environment():
     """Ensures we are running in the correct .venv (v1.35.68 Restoration)."""
-    if os.environ.get("MWV_AUTO_REEXEC") == "1": return
+    if os.environ.get("MWV_AUTO_REEXEC") == "1":
+        return
     for v in [_root / ".venv", _root / ".venv_run"]:
         if v.exists():
             venv_python = v / "bin" / "python"
@@ -21,20 +29,33 @@ def ensure_stable_environment():
                 os.execve(str(venv_python), [str(venv_python), str(_file)] + sys.argv[1:], env)
                 sys.exit(0)
 
+
 if __name__ == "__main__":
+    import subprocess
     # 1. Flash Burn (Instant Port Cleanup)
     subprocess.run("fuser -k 8345/tcp > /dev/null 2>&1", shell=True)
     # 2. Environment Shield
     ensure_stable_environment()
 
-# --- 1. Path Forensics ---
-_file = Path(__file__).resolve()
-_root = _file.parent.parent.parent
-_src = _root / "src"
+# --- 1. Path Forensics Done ---
 
-# Forced Path Injection (Forensic Reset)
-if str(_root) not in sys.path: sys.path.insert(0, str(_root))
-if str(_src) not in sys.path: sys.path.insert(0, str(_src))
+# --- 2. Internal Imports ---
+from src.core.config_master import _DOTENV_LOADED
+from src.core.db import get_active_db_path
+from typing import Dict, Any, List, Optional, cast, Tuple
+import threading
+import ast
+import sqlite3
+import glob
+import shutil
+import re
+import platform
+import socket
+import contextlib
+import traceback
+import logging
+import json
+import time
 
 # Verification of Package Root
 try:
@@ -53,21 +74,6 @@ main.py - Business Logic & Application Entry Point
 dict - Desktop Media Player and Library Manager v1.41.00
 """
 
-import time
-import json
-import logging
-import traceback
-import contextlib
-import socket
-import platform
-import re
-import shutil
-import subprocess
-import glob
-import sqlite3
-import ast
-import threading
-from typing import Dict, Any, List, Optional, cast, Tuple
 
 # --- PERFORMANCE PROFILING ---
 INITIAL_START_TIME = time.time()
@@ -75,6 +81,8 @@ APP_START_TIME = INITIAL_START_TIME
 profiler = None
 
 # --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
+
+
 class BootstrapLogger:
     def info(self, m): print(f"STDOUT: {m}", flush=True)
     def error(self, m): print(f"STDOUT: [ERROR] {m}", flush=True)
@@ -83,7 +91,9 @@ class BootstrapLogger:
     def debug(self, m): print(f"STDOUT: [DEBUG] {m}", flush=True)
     def exception(self, m): print(f"STDOUT: [EXCEPTION] {m}", flush=True)
 
+
 log = BootstrapLogger()
+
 
 def log_self_diagnostics():
     """Logs critical environment information."""
@@ -93,13 +103,14 @@ def log_self_diagnostics():
     log.info(f"Prefix: {sys.prefix}")
     log.info(f"Project Root: {_root}")
     log.info(f"Working Dir: {os.getcwd()}")
-    log.info(f"SYS_PATH: {sys.path[:3]}") # Show top 3
+    log.info(f"SYS_PATH: {sys.path[:3]}")  # Show top 3
     log.info("-------------------------")
 
 # Environment Guard already executed at top.
 
 # --- EXECUTE GUARD IMMEDIATELY ---
 # Consolidated Entry Point at end of file.
+
 
 # --- INITIALIZE PROFILER (Post-Guard) ---
 try:
@@ -118,16 +129,29 @@ try:
     import eel
     from eel import chrome
     log.info("[Bootstrap] Eel loaded successfully")
-    
+
     # --- CORE METADATA REGISTRY ---
-    from core.models import MASTER_CAT_MAP, TECH_MARKERS
-    from core.config_master import GLOBAL_CONFIG, APP_VERSION, BACKEND_VERSION, FRONTEND_VERSION
+    from core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem, get_allowed_internal_cats
+    from core.config_master import (
+        GLOBAL_CONFIG, APP_VERSION, BACKEND_VERSION, FRONTEND_VERSION,
+        VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
+    )
+    from src.core.transcoder import TranscoderManager
+    from src.core import handbrake_wrapper as handbrake
+    from src.core import mkv_tool_wrapper as mkv_tool
+    from src.core.subtitle_processor import SubtitleProcessor
+    import requests
+    
     VERSION = APP_VERSION
     PROJECT_ROOT = _root
+    
+    # Initialize Global Managers
+    transcode_mgr = TranscoderManager()
 except ImportError as e:
     log.error(f"[Bootstrap] Required module missing: {e}")
     log_self_diagnostics()
     sys.exit(1)
+
 
 @eel.expose
 def shutdown_backend():
@@ -136,44 +160,46 @@ def shutdown_backend():
     Ensures all child processes and threads are forcefully terminated.
     """
     log.warning("☢️ [BACKEND] CRITICAL: RECEIVED NUCLEAR SHUTDOWN SIGNAL.")
-    
+
     try:
         from src.core.process_manager import ProcessController
         from pathlib import Path
-        
+
         # Initialize ProcessController for emergency cleanup
         pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
-        
+
         log.info("[SHUTDOWN] Purging project process tree...")
         pc.kill_stale_instances(current_pid=os.getpid())
-        
+
         log.info("[SHUTDOWN] Releasing locks...")
         pc.release_lock()
-        
+
     except Exception as e:
         log.error(f"[SHUTDOWN] Cleanup error: {e}")
-    
+
     log.warning("☢️ [BACKEND] [SHUTDOWN-VERIFIED] PURGING ENVIRONMENT. BYE.")
-    
+
     # [v1.41.169] Forensic Log Flush with Bootstrap Safety
     try:
         import time
         import signal
-        
+
         # Check if we have a real logger with handlers to flush
         if hasattr(log, 'handlers'):
             for handler in log.handlers:
                 try:
                     handler.flush()
-                except Exception: pass
-        
-        time.sleep(0.2) # Increased grace period for disk I/O (v1.41.169)
-        
+                except Exception:
+                    pass
+
+        time.sleep(0.2)  # Increased grace period for disk I/O (v1.41.169)
+
         # Final Purge
         os.killpg(os.getpgrp(), signal.SIGKILL)
     except Exception as e:
         print(f"STDOUT: [SHUTDOWN] Nuclear failover: {e}")
         os._exit(0)
+
 
 @eel.expose
 def get_category_master():
@@ -181,17 +207,20 @@ def get_category_master():
     log.info("[BD-AUDIT] Handshake: get_category_master requested.")
     return MASTER_CAT_MAP
 
+
 @eel.expose
 def get_global_config():
     """Returns the full centralized configuration (v1.41.00)."""
     log.info("[BD-AUDIT] Handshake: get_global_config requested.")
     return GLOBAL_CONFIG
 
+
 @eel.expose
 def get_tech_markers():
     """Returns the centralized transcoding tech markers (v1.35.76 SSOT)."""
     log.info("[BD-AUDIT] Handshake: get_tech_markers requested.")
     return TECH_MARKERS
+
 
 @eel.expose
 def get_startup_info():
@@ -208,6 +237,7 @@ def get_startup_info():
         "version": GLOBAL_CONFIG.get("version", "Unknown")
     }
 
+
 @eel.expose
 def get_startup_report():
     """Returns the high-resolution StartupProfiler report (v1.41.00)."""
@@ -215,11 +245,13 @@ def get_startup_report():
         return profiler.get_report()
     return {"status": "error", "message": "Profiler not initialized"}
 
+
 @eel.expose
 def heartbeat():
     """Explicit heartbeat for window health monitoring (v1.41.00)."""
     GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
     return {"status": "ok", "timestamp": time.time()}
+
 
 @eel.expose
 def kill_stale_and_restart():
@@ -228,19 +260,20 @@ def kill_stale_and_restart():
     """
     from src.core.process_manager import ProcessController
     from pathlib import Path
-    
+
     log.info(f"[RESTART] Using ProcessController for emergency cleanup. Root: {PROJECT_ROOT}")
     pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
-    
+
     # 1. Forceful cleanup of all project-related processes (including children & ffmpeg)
     pc.kill_stale_instances(current_pid=os.getpid())
-    
+
     # 2. Restart current process
     log.warning("[RESTART] Executing os.execl...")
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
 # (Path calculation and sys.path injection moved to config_master.py)
+
 
 # Import Status Tool
 try:
@@ -254,9 +287,12 @@ except ImportError:
         def __exit__(self, *a): pass
         def update(self, *a): log.info(f"[Progress] {self.msg} ({a[0]}%)")
 
+
 class Lazy:
     """Lazy-loading proxy for modules (v1.41.00 Optimization)."""
+
     def __init__(self, name): self._name, self._mod = name, None
+
     def __getattr__(self, attr):
         if not self._mod:
             import importlib
@@ -264,13 +300,16 @@ class Lazy:
             log.debug(f"🚀 [Lazy-Load] {self._name} accessed via '{attr}'")
         return getattr(self._mod, attr)
 
+
 # 3. Early Monkey Patching
 try:
-    if profiler: profiler.start_phase("Gevent-Patching")
+    if profiler:
+        profiler.start_phase("Gevent-Patching")
     from gevent import monkey
     monkey.patch_all()
     log.info("[Bootstrap] gevent monkey-patching successful")
-    if profiler: profiler.end_phase("Gevent-Patching")
+    if profiler:
+        profiler.end_phase("Gevent-Patching")
 except ImportError:
     log.info("[Bootstrap] gevent not found, continuing without patching")
 
@@ -284,19 +323,29 @@ tag_writer = Lazy("src.parsers.tag_writer")
 format_utils = Lazy("src.parsers.format_utils")
 
 # Data Proxies (Redirecting to format_utils)
+
+
 class LazyConfigProxy(Lazy):
     def __getattr__(self, attr):
-        mod = super().__getattr__("__name__") # force load
-        return getattr(self._mod, "PARSER_CONFIG").get(attr) if attr != "get" else getattr(self._mod, "PARSER_CONFIG").get
+        mod = super().__getattr__("__name__")  # force load
+        return getattr(self._mod, "PARSER_CONFIG").get(
+            attr) if attr != "get" else getattr(self._mod, "PARSER_CONFIG").get
+
     def __getitem__(self, key):
-        if not self._mod: self.__getattr__("get")
+        if not self._mod:
+            self.__getattr__("get")
         return self._mod.PARSER_CONFIG[key]
+
     def __setitem__(self, key, value):
-        if not self._mod: self.__getattr__("get")
+        if not self._mod:
+            self.__getattr__("get")
         self._mod.PARSER_CONFIG[key] = value
+
     def update(self, val):
-        if not self._mod: self.__getattr__("get")
+        if not self._mod:
+            self.__getattr__("get")
         self._mod.PARSER_CONFIG.update(val)
+
 
 PARSER_CONFIG = LazyConfigProxy("src.parsers.format_utils")
 
@@ -326,6 +375,7 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
 STARTUP_TIME = time.time()
 CHECKPOINTS = []
 
+
 def log_checkpoint(msg: str, tag: str = "generic"):
     elapsed = time.time() - STARTUP_TIME
     CHECKPOINTS.append((msg, elapsed))
@@ -335,11 +385,12 @@ def log_checkpoint(msg: str, tag: str = "generic"):
         # Fallback to simple logging
         log.info(f"[Checkpoint] {elapsed:6.3f}s | {msg}")
 
+
 # --- Application Initialization Sequence ---
 with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(0, "Importing Eel")
     import eel
-    
+
     sb.update(10, "Initializing Eel Assets")
     web_dir = str(PROJECT_ROOT / "web")
     log.info(f"\n[DIAGNOSTIC] !!! EEL WEB DIRECTORY: {os.path.abspath(web_dir)} !!!\n")
@@ -351,22 +402,24 @@ with StatusBar("Loading Core Components", total=100) as sb:
 
     sb.update(30, "Registering Core SRC Modules")
     try:
-        if profiler: profiler.start_phase("Core-Modules-Init")
+        if profiler:
+            profiler.start_phase("Core-Modules-Init")
         from core import db
         from core.db import DB_FILENAME
         from core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
         from core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
-        
+
         # Core data initialization (no heavy parsing yet)
-        db.init_db()  
-        
+        db.init_db()
+
         sb.update(80, "Core modules registered")
         sb.update(80, "Core modules loaded")
-        
+
         # Fast Data Count (v1.38.07) - Replaces heavy get_all_media() during bootstrap
         media_count = db.get_media_count()
         log.info(f"[Startup-Trace] DB Initialized: {media_count} records found.")
-        if profiler: profiler.end_phase("Core-Modules-Init")
+        if profiler:
+            profiler.end_phase("Core-Modules-Init")
     except Exception as e:
         log.critical(f"Resource load failure: {e}")
         log.error(traceback.format_exc())
@@ -375,21 +428,26 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(90, "Setting UI State")
     global port, eel_kwargs
     port = GLOBAL_CONFIG.get("port", 8345)
-    eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
+    eel_kwargs = {'host': 'localhost', 'size': (1280, 800)}
     sb.update(100, "Initial State OK")
-    if profiler: profiler.end_phase("Bootstrap-Imports")
+    if profiler:
+        profiler.end_phase("Bootstrap-Imports")
 
 # --- Eel Communication & Lifecycle ---
 spawn_event = threading.Event()
+
 
 @eel.expose
 def report_spawn():
     if not spawn_event.is_set():
         spawn_event.set()
+
+
 @eel.expose
 def log_gui_event(category, action, details=""):
     """General purpose GUI event logging for forensic analysis."""
     log.info(f"[JS-NAV] [{category}] {action} | {details}")
+
 
 @eel.expose
 def set_hydration_mode(mode: str):
@@ -400,6 +458,7 @@ def set_hydration_mode(mode: str):
         return True
     return False
 
+
 @eel.expose
 def set_ui_config_value(key: str, value: Any):
     """
@@ -407,9 +466,9 @@ def set_ui_config_value(key: str, value: Any):
     Special handling for nested ui_fragments and functional modules.
     """
     from core.config_master import set_config_value as master_set
-    
+
     log.info(f"[CONFIG] UI Request: {key} -> {value}")
-    
+
     # Check if it's a nested ui_fragment toggle
     if key.startswith("ui_fragments."):
         frag_key = key.split(".")[1]
@@ -425,7 +484,7 @@ def set_ui_config_value(key: str, value: Any):
             GLOBAL_CONFIG["ui_settings"]["footer_settings"][feat_key] = value
             log.info(f"[CONFIG] Granular Footer Feature {feat_key} toggled: {value}")
             return True
-            
+
     # Generic set
     return master_set(key, value)
 
@@ -436,7 +495,7 @@ def set_ui_config_value(key: str, value: Any):
 def get_footer_registry():
     """ Returns a merged dict of primary flat flags and granular footer sub-settings. """
     settings = GLOBAL_CONFIG.get("ui_settings", {})
-    
+
     # 1. Primary Flat Flags
     flat_keys = [
         "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
@@ -444,10 +503,11 @@ def get_footer_registry():
         "enable_footer_db_status"
     ]
     resp = {k: settings.get(k, False) for k in flat_keys}
-    
+
     # 2. Nested Granular Settings (v1.41.158)
     resp.update(settings.get("footer_settings", {}))
     return resp
+
 
 @eel.expose
 def set_footer_element_state(element_key: str, is_active: bool):
@@ -456,14 +516,14 @@ def set_footer_element_state(element_key: str, is_active: bool):
     Example element_key: 'enable_sync_anchor'
     """
     log.info(f"[UI-ORCHESTRATION] Requesting state change for footer component: {element_key} -> {is_active}")
-    
+
     # Validation
     valid_keys = [
         "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
         "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
         "enable_footer_db_status"
     ]
-    
+
     if element_key not in valid_keys:
         log.warning(f"[UI-ORCHESTRATION] REJECTED: Invalid footer component key: {element_key}")
         return False
@@ -481,9 +541,10 @@ def report_items_spawned(count, source="frontend"):
         msg = f"[DOM-TEST] [SUCCESS] Items in DOM: {count} (Source: {source})"
     else:
         msg = f"[DOM-TEST] [EMPTY] No items in DOM (Source: {source})."
-    
+
     log.info(msg)
     return {"status": "counts_logged", "timestamp": time.time()}
+
 
 @eel.expose
 def report_playback_state(is_playing, item_name, current_time):
@@ -491,34 +552,42 @@ def report_playback_state(is_playing, item_name, current_time):
     Reports the current playback state from the frontend.
     Used for automated verification of playability.
     """
-    msg = f"[DOM-TEST] [PLAYBACK] {'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {current_time:.1f}s"
+    msg = f"[DOM-TEST] [PLAYBACK] {
+        'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {
+        current_time:.1f}s"
     log.info(msg)
     return {"status": "playback_logged"}
 
+
 def run_app_audit_detached(session_port):
     """
-    Background thread that waits for the Eel UI to be ready and then launches 
+    Background thread that waits for the Eel UI to be ready and then launches
     the Playwright audit script in debug mode.
     """
     def audit_trigger():
         log.info(f"[System-Audit] Waiting for UI synchronization on port {session_port}...")
         spawn_event.wait()
         log.info(f"[Guard] Boot Sequence Initiated. Waiting for UI hydration...")
-        eel.sleep(8) # Allow UI to settle (v1.34 has glassmorphic transitions)
+        eel.sleep(8)  # Allow UI to settle (v1.34 has glassmorphic transitions)
         log.info(f"[System-Audit] Launching Playwright UI Audit (scripts/app_audit_playwright.py)...")
-        
+
         audit_script = PROJECT_ROOT / "scripts" / "app_audit_playwright.py"
         try:
             # We use the current python executable to ensure same venv
             api_root = GLOBAL_CONFIG["network_settings"].get("api_root", f"http://localhost:{session_port}")
             cmd = [sys.executable, str(audit_script), "--url", f"{api_root}/app.html"]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=str(PROJECT_ROOT))
-            
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=str(PROJECT_ROOT))
+
             for line in process.stdout:
                 line_clean = line.strip()
                 if line_clean:
                     log.info(f"[System-Audit] {line_clean}")
-                
+
             process.wait()
             if process.returncode == 0:
                 log.info(f"[System-Audit] Audit SUCCESS. Report: scripts/audit_reports/audit_report.md")
@@ -529,6 +598,7 @@ def run_app_audit_detached(session_port):
 
     threading.Thread(target=audit_trigger, daemon=True).start()
 
+
 @eel.expose
 def trigger_factory_reset():
     """
@@ -537,6 +607,7 @@ def trigger_factory_reset():
     log.warning("[System] Factory reset triggered via Eel.")
     from src.core.db import factory_reset
     return factory_reset()
+
 
 @eel.expose
 def trigger_db_reconnect():
@@ -548,14 +619,16 @@ def trigger_db_reconnect():
     init_db()
     return True
 
+
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
-    if profiler: profiler.start_phase("App-Launch-Setup")
+    if profiler:
+        profiler.start_phase("App-Launch-Setup")
     # --- ULTRA-SOLO STARTUP (Zero-Latency) ---
     from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
-    
+
     # Singleton Guard
     if not pc.acquire_lock():
         log.warning("[Bootstrap] Lock collision. Retrying once...")
@@ -564,7 +637,7 @@ def start_app():
             log.error("[Bootstrap] MWV ALREADY RUNNING. Aborting.")
             sys.exit(1)
 
-    # Port readiness is now handled by fast_port_kill above. 
+    # Port readiness is now handled by fast_port_kill above.
     # Only do a safety check if not in low-latency mode.
     if not GLOBAL_CONFIG.get("fast_startup", True):
         try:
@@ -577,50 +650,55 @@ def start_app():
             log.warning(f"[Bootstrap] Port check failed: {e}")
 
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
-    
+
     eel_mode = 'chrome'
-    if "--ng" in sys.argv: 
+    if "--ng" in sys.argv:
         eel_mode = False
-    elif "--n" in sys.argv or GLOBAL_CONFIG.get("connectionless"): 
+    elif "--n" in sys.argv or GLOBAL_CONFIG.get("connectionless"):
         eel_mode = None
-    
+
     # Ensure isolation for automated sessions or user preference
     import shutil
     # Browser Discovery (v1.41.00 Centralized)
     chrome_path = None
     for b in GLOBAL_CONFIG["browsers"]:
         chrome_path = shutil.which(b)
-        if chrome_path: break
-    
+        if chrome_path:
+            break
+
     if not chrome_path:
         log.error("[Startup] No compatible browser (chrome/chromium) found in PATH!")
         if eel_mode == 'chrome':
             print("STDOUT: [Eel] FALLBACK: Switching to system default browser (mode=None).", flush=True)
-            eel_mode = None 
+            eel_mode = None
 
     print(f"STDOUT: [Bootstrap-Audit] Step 2: Starting Eel Engine (mode={eel_mode}, port={port})...", flush=True)
 
     try:
         # We specify the port and block=False to allow the watchdog to run.
         # mode='chrome' is the preferred isolated environment.
-        if profiler: profiler.start_phase("Eel-Engine-Start")
+        if profiler:
+            profiler.start_phase("Eel-Engine-Start")
         # [v1.44] DYNAMIC ENTRY POINT SELECTION
         evolution_mode = GLOBAL_CONFIG.get("ui_evolution_mode", "stable")
         start_page = 'shell_master.html' if evolution_mode == 'rebuild' else 'app.html'
-        
+
         print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
         eel.start(start_page, block=False, port=port, mode=eel_mode, **eel_kwargs)
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
-        if profiler: profiler.end_phase("Eel-Engine-Start")
+        if profiler:
+            profiler.end_phase("Eel-Engine-Start")
 
-        if profiler: profiler.end_phase("App-Launch-Setup")
-        if profiler: profiler.start_phase("UI-Sync-Wait")
-        
+        if profiler:
+            profiler.end_phase("App-Launch-Setup")
+        if profiler:
+            profiler.start_phase("UI-Sync-Wait")
+
         # --- Automated Probe Trigger ---
         if "--probe" in sys.argv:
             def probe_trigger():
                 spawn_event.wait()
-                time.sleep(GLOBAL_CONFIG['sleep_times']['boot_probe_wait']) 
+                time.sleep(GLOBAL_CONFIG['sleep_times']['boot_probe_wait'])
                 log.info("[Eel] Triggering automated frontend probe (@eel.run_frontend_probe)")
                 eel.run_frontend_probe()()
             threading.Thread(target=probe_trigger, daemon=True).start()
@@ -633,12 +711,13 @@ def start_app():
         timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
         start_wait = time.time()
         last_alive = start_wait
-        
+
         while not spawn_event.is_set():
             now = time.time()
             if now - start_wait > timeout:
                 print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
-                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(
+                    port) else 'Available (Unexpected)'}", flush=True)
                 print(f"Python: {sys.version.split()[0]}", flush=True)
                 print(f"Eel Mode: {eel_mode}", flush=True)
                 print(f"Working Dir: {os.getcwd()}", flush=True)
@@ -646,22 +725,26 @@ def start_app():
                 print("-----------------------------", flush=True)
                 print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
                 break
-            
+
             if now - last_alive >= 5:
                 elapsed = int(now - start_wait)
                 log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
                 last_alive = now
             eel.sleep(0.5)
-            
+
         if spawn_event.is_set():
             print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
-            if profiler: profiler.end_phase("UI-Sync-Wait")
-            if profiler: profiler.log_checkpoint("Application Ready", tag="success")
-            
+            if profiler:
+                profiler.end_phase("UI-Sync-Wait")
+            if profiler:
+                profiler.log_checkpoint("Application Ready", tag="success")
+
     except Exception as e:
         print(f"CRITICAL: Eel launch failure: {e}", flush=True)
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
+
 
 def ensure_singleton():
     """Manages MWV singleton state using the centralized process_manager."""
@@ -670,13 +753,14 @@ def ensure_singleton():
     if not pm.acquire_lock():
         pm.kill_stale_instances()
         if not pm.acquire_lock():
-            print("CRITICAL: Another instance is blocking the singleton lock.", flush=True); sys.exit(1)
+            print("CRITICAL: Another instance is blocking the singleton lock.", flush=True)
+            sys.exit(1)
     return pm
+
 
 # _SINGLETON_LOCK = ensure_singleton()
 # --- End of Startup Block ---
 # SESSION_ID stable and already logged
-from src.core.db import get_active_db_path
 session_port = GLOBAL_CONFIG["port"]
 # 4. Bandwidth Optimization (v1.41.00)
 if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
@@ -685,7 +769,6 @@ if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
     GLOBAL_CONFIG["fast_scan"] = True
 
 # 4. Environment & Session Diagnostics (v1.41.00)
-from src.core.config_master import _DOTENV_LOADED
 env_type = "Conda" if os.environ.get("CONDA_PREFIX") else "Venv" if os.environ.get("VIRTUAL_ENV") else "System"
 log.info(f"[System] Booting from {env_type} (Dotenv Loaded: {_DOTENV_LOADED})")
 log.info(f"[System] Session: {SESSION_ID} | PID: {os.getpid()} | Port: {session_port}")
@@ -710,7 +793,7 @@ def get_best_ffmpeg_encoder():
         gpu_info = hardware_detector.get_gpu_info()
         encoders = gpu_info.get("encoders", [])
         if "nvenc" in encoders:
-            return "h264_nvenc" 
+            return "h264_nvenc"
         if "qsv" in encoders:
             return "h264_qsv"
         if "vaapi" in encoders:
@@ -848,7 +931,7 @@ def rtt_ping(data):
     """
     size = len(json.dumps(data))
     is_heartbeat = isinstance(data, dict) and data.get("type") == "heartbeat"
-    
+
     if is_heartbeat:
         # Silently log pulse for watchdog health
         GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
@@ -897,7 +980,7 @@ def run_video_transcode_diagnostic(file_path=None):
     """
     from src.core import db
     import requests
-    
+
     # 1. Target selection
     target_path = file_path
     if not target_path:
@@ -906,20 +989,21 @@ def run_video_transcode_diagnostic(file_path=None):
             target_path = items[0]['path']
         else:
             return {"status": "error", "error": "No media found in library to test."}
-    
+
     log.info(f"[Diagnostic] Testing video pipeline for: {target_path}")
     results = []
-    
+
     # Endpoints to test (SSOT v1.35.93)
-    base_url = GLOBAL_CONFIG['network_settings'].get('api_root', f"http://{GLOBAL_CONFIG['network_settings']['host']}:{GLOBAL_CONFIG['network_settings']['port']}")
+    base_url = GLOBAL_CONFIG['network_settings'].get(
+        'api_root', f"http://{GLOBAL_CONFIG['network_settings']['host']}:{GLOBAL_CONFIG['network_settings']['port']}")
     encoded_path = requests.utils.quote(target_path)
     endpoints = [
         {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
         {"name": "Transcode (Safe)", "url": f"{base_url}/stream/via/transcode/{encoded_path}"}
     ]
-    
+
     atom_cfg = GLOBAL_CONFIG.get("atom_detection", {"atoms": ["ftyp", "moof", "mdat", "moov"], "header_limit": 4096})
-    
+
     for ep in endpoints:
         ep_result = {"name": ep['name'], "status": "unknown", "details": ""}
         try:
@@ -930,7 +1014,7 @@ def run_video_transcode_diagnostic(file_path=None):
                 atoms = [a.encode() if isinstance(a, str) else a for a in atom_cfg["atoms"]]
                 limit = atom_cfg["header_limit"]
                 found = [a.decode() if isinstance(a, bytes) else a for a in atoms if a in chunk[:limit]]
-                
+
                 if found:
                     ep_result["status"] = "success"
                     ep_result["details"] = f"Valid MP4 atoms found: {', '.join(found)}"
@@ -945,7 +1029,7 @@ def run_video_transcode_diagnostic(file_path=None):
             ep_result["status"] = "error"
             ep_result["details"] = str(e)
         results.append(ep_result)
-        
+
     return {"status": "complete", "results": results, "target": target_path}
 
 
@@ -1009,22 +1093,22 @@ def set_log_level(level):
         "ERROR": logging.ERROR,
         "CRITICAL": logging.CRITICAL
     }
-    
+
     if level in valid_levels:
         new_lvl = valid_levels[level]
         logging.getLogger().setLevel(new_lvl)
-        
+
         # Update all active handlers
         for handler in logging.getLogger().handlers:
             handler.setLevel(new_lvl)
-            
+
         # Persist to config
         PARSER_CONFIG["log_level"] = level
         save_parser_config()
-        
+
         log.warning(f"[System] Log level changed to {level} and persisted.")
         return {"status": "success", "level": level}
-    
+
     return {"status": "error", "message": f"Invalid level: {level}"}
 
 
@@ -1064,13 +1148,13 @@ def get_hydration_stats():
     """
     from src.core import db
     import sqlite3
-    
+
     results = {
         "db_index": 0,
         "backend_cache": 0,
         "status": "ok"
     }
-    
+
     try:
         # 1. RAW SQLite Count
         conn = sqlite3.connect(db.DB_FILENAME)
@@ -1078,12 +1162,12 @@ def get_hydration_stats():
         cursor.execute("SELECT COUNT(*) FROM media")
         results["db_index"] = cursor.fetchone()[0]
         conn.close()
-        
+
         # 2. Backend Memory Cache Count
         # We access the module-level library to see what's loaded
         items = db.get_library()
         results["backend_cache"] = len(items)
-        
+
         return results
     except Exception as e:
         log.error(f"[Forensic-DBI] Audit failed: {e}")
@@ -1098,36 +1182,37 @@ def get_active_video_workers():
     """
     import subprocess
     import os
-    
+
     workers = []
     try:
         # We use 'ps' to get process details for the current user
         # comm= (command name), args= (full command line)
         output = subprocess.check_output(['ps', '-u', str(os.getlogin()), '-o', 'pid,comm,args'], encoding='utf-8')
-        lines = output.splitlines()[1:] # Skip header
-        
+        lines = output.splitlines()[1:]  # Skip header
+
         cwd = os.getcwd()
 
         for line in lines:
             parts = line.strip().split(None, 2)
-            if len(parts) < 3: continue
-            
+            if len(parts) < 3:
+                continue
+
             pid, comm, args = parts[0], parts[1], parts[2]
-            
+
             # Filter for our key workers
             comm_lower = comm.lower()
             if 'ffmpeg' in comm_lower or 'mkvmerge' in comm_lower:
                 # Forensic Check: Is it in our CWD?
                 # This prevents accidentally listing system-level ffmpeg processes not from our app
                 is_workspace = cwd in args
-                
+
                 workers.append({
                     "pid": pid,
                     "name": comm,
                     "command": args[:100] + "..." if len(args) > 100 else args,
                     "is_workspace": is_workspace
                 })
-        
+
         return {"status": "ok", "workers": workers}
     except Exception as e:
         log.error(f"[Forensic-VID] Worker Audit Failed: {e}")
@@ -1144,29 +1229,29 @@ def get_system_environment():
     import socket
     import platform
     import time
-    
+
     try:
         process = psutil.Process()
-        
+
         # 1. Resource Telemetry
-        cpu_percent = process.cpu_percent(interval=None) # Non-blocking
+        cpu_percent = process.cpu_percent(interval=None)  # Non-blocking
         mem_info = process.memory_info()
         mem_rss_mb = mem_info.rss / (1024 * 1024)
-        
+
         # 2. Uptime calculation
         uptime = time.time() - APP_START_TIME
-        
+
         # 3. Port Health Audit
         port = 8345
         port_status = "error"
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 # If we catch an error, it means we can bind, which means it's NOT bound yet.
-                # Since we ARE running, it SHOULD be bound. 
+                # Since we ARE running, it SHOULD be bound.
                 # Checking if OUR process has it would be better, but this is a quick check.
                 res = s.connect_ex(('127.0.0.1', port))
                 port_status = "active" if res == 0 else "inactive"
-        except:
+        except BaseException:
             pass
 
         return {
@@ -1180,7 +1265,7 @@ def get_system_environment():
             "platform": {
                 "python": platform.python_version(),
                 "os": platform.system() + " " + platform.release(),
-                "eel": "0.16.0" # Current Baseline
+                "eel": "0.16.0"  # Current Baseline
             },
             "pid": os.getpid()
         }
@@ -1197,35 +1282,35 @@ def get_storage_forensics():
     """
     import os
     from pathlib import Path
-    
+
     media_path = PROJECT_ROOT / "media"
     if not media_path.exists():
         return {"status": "error", "message": f"Media path not found: {media_path}"}
-    
+
     results = {
         "status": "ok",
         "total_files": 0,
         "total_folders": 0,
         "total_size_bytes": 0,
-        "largest_files": [], # List of {name, size, path}
+        "largest_files": [],  # List of {name, size, path}
         "deepest_level": 0,
         "deepest_path": "",
         "broken_paths": []
     }
-    
+
     all_files = []
-    
+
     try:
         for root, dirs, files in os.walk(str(media_path)):
             results["total_folders"] += 1
-            
+
             # Calculate depth relative to media root
             rel_root = os.path.relpath(root, str(media_path))
             depth = 0 if rel_root == "." else len(Path(rel_root).parts)
             if depth > results["deepest_level"]:
                 results["deepest_level"] = depth
                 results["deepest_path"] = rel_root
-                
+
             for f in files:
                 results["total_files"] += 1
                 f_path = Path(root) / f
@@ -1243,11 +1328,13 @@ def get_storage_forensics():
         # Heuristic: Extract Top 10 Largest Assets
         all_files.sort(key=lambda x: x["size"], reverse=True)
         results["largest_files"] = all_files[:10]
-        
+
         # Format size for readability
         results["total_size_human"] = f"{results['total_size_bytes'] / (1024**3):.2f} GB"
         for f in results["largest_files"]:
-            f["size_human"] = f"{f['size'] / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] / (1024**3):.2f} GB"
+            f["size_human"] = f"{f['size']
+                                 / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] /
+                                                                                     (1024**3):.2f} GB"
 
         return results
     except Exception as e:
@@ -1337,7 +1424,7 @@ def kill_stalled_ffmpeg_streams():
     """
     import psutil
     import os
-    
+
     project_fragment = "gui_media_web_viewer"
     killed_count = 0
     terminated_pids = []
@@ -1350,8 +1437,9 @@ def kill_stalled_ffmpeg_streams():
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
                 pid = proc.info['pid']
-                if pid in ancestor_pids: continue
-                
+                if pid in ancestor_pids:
+                    continue
+
                 name = (proc.info.get('name') or "").lower()
                 cmdline = proc.info.get('cmdline') or []
                 cmd_str = " ".join(cmdline).lower()
@@ -1359,12 +1447,12 @@ def kill_stalled_ffmpeg_streams():
                 # Targeted match for media processes in this project
                 if ("ffmpeg" in name or "mkvmerge" in name) and project_fragment in cmd_str:
                     log.info(f"[Forensic-Kill] Purging process {pid} ({name})")
-                    proc.kill() # Force kill for immediate recovery
+                    proc.kill()  # Force kill for immediate recovery
                     killed_count += 1
                     terminated_pids.append(pid)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-        
+
         return {"status": "success", "count": killed_count, "pids": terminated_pids}
     except Exception as e:
         log.error(f"[Forensic-Kill] Error during pipeline recovery: {e}")
@@ -1379,7 +1467,7 @@ def get_playlist_forensics():
     """
     from src.core import db
     import os
-    
+
     try:
         playlists = db.get_all_playlists()
         results = {
@@ -1387,11 +1475,11 @@ def get_playlist_forensics():
             "count": len(playlists),
             "playlists": []
         }
-        
+
         for pl in playlists:
             items = db.get_playlist_items(pl['id'])
             orphans = db.get_playlist_orphans(pl['id'])
-            
+
             pl_audit = {
                 "id": pl['id'],
                 "name": pl['name'],
@@ -1402,15 +1490,15 @@ def get_playlist_forensics():
                 "total_duration_sec": 0,
                 "integrity_score": 100
             }
-            
+
             for item in items:
                 # Check physical existence
                 if item['path'] and not os.path.exists(item['path']):
                     pl_audit["physical_missing"] += 1
                     pl_audit["broken_paths"].append(item['path'])
-                
+
                 # Sum duration if available in metadata tags (from db.get_playlist_items)
-                # Note: get_playlist_items doesn't return full duration_sec yet, 
+                # Note: get_playlist_items doesn't return full duration_sec yet,
                 # but we can improve it or just audit existence for now.
                 pass
 
@@ -1418,9 +1506,9 @@ def get_playlist_forensics():
             total_issues = pl_audit["relational_orphans"] + pl_audit["physical_missing"]
             if pl_audit["item_count"] > 0:
                 pl_audit["integrity_score"] = max(0, 100 - (total_issues * 100 // pl_audit["item_count"]))
-            
+
             results["playlists"].append(pl_audit)
-            
+
         return results
     except Exception as e:
         log.error(f"[Forensic-PLY] Playlist Audit Failed: {e}")
@@ -1451,7 +1539,7 @@ def get_state_forensics():
     try:
         from src.core import config_master
         cfg = config_master.GLOBAL_CONFIG
-        
+
         # Aggregating critical backend state for frontend parity check
         state = {
             "status": "ok",
@@ -1493,16 +1581,17 @@ def get_process_forensics():
         import os
         parent = psutil.Process(os.getpid())
         children = parent.children(recursive=True)
-        
+
         proc_list = []
         zombie_count = 0
-        
+
         for p in children:
             try:
                 with p.oneshot():
                     status = p.status()
-                    if status == psutil.STATUS_ZOMBIE: zombie_count += 1
-                    
+                    if status == psutil.STATUS_ZOMBIE:
+                        zombie_count += 1
+
                     proc_list.append({
                         "pid": p.pid,
                         "name": p.name(),
@@ -1513,7 +1602,7 @@ def get_process_forensics():
                     })
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-                
+
         return {
             "status": "ok",
             "active_workers": len(proc_list),
@@ -1533,14 +1622,14 @@ def terminate_worker_process(pid):
     try:
         import psutil
         proc = psutil.Process(int(pid))
-        
+
         # Security Guard: Only allow killing children of this process
         parent = psutil.Process(os.getpid())
         children_pids = [c.pid for c in parent.children(recursive=True)]
-        
+
         if int(pid) not in children_pids:
             return {"status": "error", "message": "Access Denied: Cannot kill external process."}
-            
+
         proc.terminate()
         log.info(f"[Forensic-PRC] Terminated worker PID {pid}.")
         return {"status": "success", "pid": pid}
@@ -1559,66 +1648,78 @@ def get_global_health_audit():
         from src.core import db
         import psutil
         import os
-        
+
         health_report = {
             "status": "ok",
             "readiness_score": 0,
             "level": "DEGRADED",
             "metrics": {}
         }
-        
+
         # 1. DB HEALTH (Weighted 25%)
         db_stats = db.get_db_stats()
         health_report["metrics"]["db"] = "SYNC" if db_stats.get("total_items", 0) > 0 else "EMPTY"
-        
+
         # 2. SYS HEALTH (Weighted 25%)
         mem = psutil.virtual_memory()
         health_report["metrics"]["sys"] = "STABLE" if mem.percent < 85 else "HEAVY_LOAD"
-        
+
         # 3. VOL HEALTH (Weighted 25%)
         from src.core import config_master
         media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
         health_report["metrics"]["vol"] = "MOUNTED" if os.path.exists(media_dir) else "DISCONNECTED"
-        
+
         # 4. PRC HEALTH (Weighted 16%)
         parent = psutil.Process(os.getpid())
         zombies = [c for c in parent.children(recursive=True) if c.status() == psutil.STATUS_ZOMBIE]
         health_report["metrics"]["prc"] = "CLEAN" if len(zombies) == 0 else "ZOMBIE_DETECTED"
-        
+
         # 5. DRV HEALTH (Weighted 16%)
         from src.core import hardware_detector
         hw_enc = hardware_detector.get_best_hw_encoder()
         health_report["metrics"]["drv"] = "ACCEL_ACTIVE" if "h264_" in hw_enc and "libx264" not in hw_enc else "SOFTWARE_ONLY"
-        
+
         # 6. SEC HEALTH (Weighted 20%)
         db_writable = os.access(db.get_active_db_path(), os.W_OK)
         health_report["metrics"]["sec"] = "AUTHORITY_VERIFIED" if db_writable else "PERMISSION_LOCKED"
-        
+
         # 7. API HEALTH (Weighted 14%)
         health_report["metrics"]["api"] = "DOCUMENTED"
-        
+
         # 8. ENV HEALTH (Weighted 14%)
         import shutil
         health_report["metrics"]["env"] = "STACK_VERIFIED" if shutil.which("ffmpeg") else "FFMPEG_MISSING"
-        
+
         # Scoring Logic (19-Layer Balanced Model)
         score = 0
-        if health_report["metrics"]["db"] == "SYNC": score += 12
-        if health_report["metrics"]["sys"] == "STABLE": score += 12
-        if health_report["metrics"]["vol"] == "MOUNTED": score += 12
-        if health_report["metrics"]["prc"] == "CLEAN": score += 12
-        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 12
-        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 12
-        if health_report["metrics"]["api"] == "DOCUMENTED": score += 14
-        if health_report["metrics"]["env"] == "STACK_VERIFIED": score += 14
-        
+        if health_report["metrics"]["db"] == "SYNC":
+            score += 12
+        if health_report["metrics"]["sys"] == "STABLE":
+            score += 12
+        if health_report["metrics"]["vol"] == "MOUNTED":
+            score += 12
+        if health_report["metrics"]["prc"] == "CLEAN":
+            score += 12
+        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE":
+            score += 12
+        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED":
+            score += 12
+        if health_report["metrics"]["api"] == "DOCUMENTED":
+            score += 14
+        if health_report["metrics"]["env"] == "STACK_VERIFIED":
+            score += 14
+
         health_report["readiness_score"] = min(100, score)
-        
-        if score >= 95: health_report["level"] = "BATTLE-READY"
-        elif score >= 75: health_report["level"] = "STABILIZED"
-        elif score >= 50: health_report["level"] = "DEGRADED"
-        else: health_report["level"] = "CRITICAL"
-        
+
+        if score >= 95:
+            health_report["level"] = "BATTLE-READY"
+        elif score >= 75:
+            health_report["level"] = "STABILIZED"
+        elif score >= 50:
+            health_report["level"] = "DEGRADED"
+        else:
+            health_report["level"] = "CRITICAL"
+
         return health_report
     except Exception as e:
         log.error(f"[Forensic-HLT] Global Health Audit Failed: {e}")
@@ -1635,10 +1736,10 @@ def get_security_forensics():
         import os
         import platform
         from src.core import db, config_master
-        
+
         db_path = db.get_active_db_path()
         media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
-        
+
         security_info = {
             "uid": os.getuid() if hasattr(os, "getuid") else 0,
             "gid": os.getgid() if hasattr(os, "getgid") else 0,
@@ -1654,7 +1755,7 @@ def get_security_forensics():
             },
             "platform": platform.platform()
         }
-        
+
         return {
             "status": "ok",
             "security": security_info
@@ -1673,11 +1774,11 @@ def get_hardware_forensics():
     try:
         from src.core import hardware_detector
         info = hardware_detector.get_hardware_info()
-        
+
         # Add real-time usage if possible
         usage = hardware_detector.get_gpu_usage_safe()
         info["gpu_usage"] = usage
-        
+
         return {
             "status": "ok",
             "hardware": info
@@ -1698,14 +1799,14 @@ def get_api_forensics():
         # Eel stores exposed functions in _exposed_functions or similar
         # We manually aggregate the mission-critical ones for the registry
         registry = []
-        
+
         # We'll use a technical mapping for the highest-fidelity reporting
         critical_bridges = [
             "get_global_health_audit", "get_net_ping", "get_process_forensics",
             "get_hardware_forensics", "get_security_forensics", "get_db_stats",
             "get_all_media", "sync_library", "terminate_worker_process"
         ]
-        
+
         for func_name in critical_bridges:
             if func_name in globals():
                 func = globals()[func_name]
@@ -1714,7 +1815,7 @@ def get_api_forensics():
                     "desc": func.__doc__.strip() if func.__doc__ else "No documentation provided.",
                     "status": "EXPOSED"
                 })
-        
+
         return {
             "status": "ok",
             "registry": registry,
@@ -1737,13 +1838,14 @@ def get_environment_forensics():
         import psutil
         import subprocess
         import platform
-        
+
         ffmpeg_version = "NOT FOUND"
         try:
             res = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=2)
             ffmpeg_version = res.stdout.split('\n')[0] if res.stdout else "UNKNOWN"
-        except: pass
-            
+        except BaseException:
+            pass
+
         stack_info = {
             "python": sys.version.split('\n')[0],
             "eel": eel.__version__,
@@ -1752,7 +1854,7 @@ def get_environment_forensics():
             "os": platform.platform(),
             "node": platform.node()
         }
-        
+
         return {
             "status": "ok",
             "stack": stack_info
@@ -1948,7 +2050,7 @@ def get_gpu_usage_safe():
                 m = float(f2.read().strip())
                 if m > 0:
                     return (cur / m) * 100
-    except:
+    except BaseException:
         pass
 
     # 2. AMD / Intel Arc / Generic (Linux sysfs)
@@ -1968,7 +2070,7 @@ def get_gpu_usage_safe():
 
                     # AMD / Others (Standard 0-100)
                     return val
-    except:
+    except BaseException:
         pass
 
     # 3. Nvidia (Nvidia-smi)
@@ -1978,7 +2080,7 @@ def get_gpu_usage_safe():
             stderr=subprocess.DEVNULL
         ).decode().strip().split('\n')[0]
         return float(res)
-    except:
+    except BaseException:
         pass
 
     return 0
@@ -2011,7 +2113,7 @@ def system_stats_pusher():
                 from src.core import hardware_detector
                 gpu_info = hardware_detector.get_gpu_info()
                 # If we had a live GPU load detector, we'd use it here.
-            except:
+            except BaseException:
                 pass
 
             stats = {
@@ -2244,6 +2346,7 @@ def run_ffplay(url: str):
         log.error(f"[DIAG-FFPLAY] Launch failed: {e}")
         return {"status": "error", "message": str(e)}
 
+
 def test_media_route(path: str):
     """Debug endpoint to test mode_router logic from UI."""
     from src.core.mode_router import smart_route
@@ -2255,6 +2358,7 @@ def get_version():
     """Returns the application version."""
     return VERSION
 
+
 @eel.expose
 def get_version_info():
     """Returns detailed tiered version information."""
@@ -2263,6 +2367,7 @@ def get_version_info():
         'backend': BACKEND_VERSION,
         'frontend': FRONTEND_VERSION
     }
+
 
 @eel.expose
 def get_debug_stats():
@@ -2277,13 +2382,15 @@ def get_debug_stats():
         for i in items:
             cat = i.get('category', 'Unknown')
             categories[cat] = categories.get(cat, 0) + 1
-    except: pass
+    except BaseException:
+        pass
     return {
         "pid": os.getpid(),
         "total_items": total,
         "categories": categories,
         "status": "healthy"
     }
+
 
 @eel.expose
 def get_format_utils_exts():
@@ -2298,6 +2405,7 @@ def get_format_utils_exts():
         "disks": list(format_utils.DISK_IMAGE_EXTENSIONS)
     }
 
+
 @eel.expose
 def get_debug_dict(source="library"):
     """Returns raw backend data for the Universal JSON Explorer."""
@@ -2311,6 +2419,7 @@ def get_debug_dict(source="library"):
         return {"version": VERSION, "pid": os.getpid(), "root": str(PROJECT_ROOT)}
     return {"error": "Unknown source"}
 
+
 @eel.expose
 def get_debug_console():
     """Returns the tail of the app.log file for the Live Terminal."""
@@ -2323,6 +2432,7 @@ def get_debug_console():
         return "Log file not found."
     except Exception as e:
         return f"Error reading logs: {e}"
+
 
 @eel.expose
 def get_app_name():
@@ -2422,7 +2532,7 @@ def get_environment_info_dict():
     # Use centralized Style Sheet (Template) with safe-get fallback (v1.41.170)
     _tpt = GLOBAL_CONFIG.get("templates", {})
     env_data = _tpt.get("environment", {}).copy()
-    
+
     # Ensure mandatory fields (even if template was skeleton)
     env_data.update({
         "env_type": env_type,
@@ -2668,6 +2778,7 @@ def get_ui_settings():
     """Returns the current UI registry (v1.37 Restoration)."""
     return GLOBAL_CONFIG.get("ui_settings", {})
 
+
 @eel.expose
 def set_ui_setting(key: str, value: Any):
     """Updates a specific UI setting in the global config."""
@@ -2676,6 +2787,7 @@ def set_ui_setting(key: str, value: Any):
     GLOBAL_CONFIG["ui_settings"][key] = value
     log.info(f"[UI-CONFIG] Set {key} = {value}")
     return {"status": "success"}
+
 
 @eel.expose
 def reset_config():
@@ -2875,7 +2987,7 @@ def _get_requirements_status():
         # Normalize path for seen set
         try:
             abs_path = file_path.resolve()
-        except:
+        except BaseException:
             return
         if str(abs_path) in seen:
             return
@@ -2951,6 +3063,7 @@ def _get_requirements_status():
     status["missing_count"] = len(missing)
     return status
 
+
 @eel.expose
 def nuclear_restart():
     """
@@ -2960,10 +3073,10 @@ def nuclear_restart():
     import os
     import subprocess
     from pathlib import Path
-    
+
     script_path = Path("/home/xc/#Coding/gui_media_web_viewer/scripts/reboot_mwv.sh")
     log.warning(f"[REBOOT] NUCLEAR RESTART TRIGGERED. PID: {os.getpid()}")
-    
+
     try:
         if script_path.exists():
             # Use start_new_session=True to detach from this process tree
@@ -2976,6 +3089,7 @@ def nuclear_restart():
     except Exception as e:
         log.error(f"[REBOOT] Spawn failed: {e}")
         return {"status": "error", "message": str(e)}
+
 
 @eel.expose
 def get_sys_overview(force_refresh=False):
@@ -3558,7 +3672,7 @@ def get_sys_overview(force_refresh=False):
         "python_path": sys.executable,
         "mediainfo": mediainfo_status.get("mediainfo_cli_version") or mediainfo_status.get("pymediainfo_version") or "N/A",
         "ffmpeg": tools_status.get("ffmpeg_cli_version") or "N/A",
-        
+
         # Lists & Matrices
         "core_packages": core_packages,
         "venvs": local_venvs,
@@ -3569,7 +3683,7 @@ def get_sys_overview(force_refresh=False):
             "missing": requirements_status.get("missing", [])
         }
     }
-    
+
     _ENV_INFO_CACHE["data"] = result
     _ENV_INFO_CACHE["ts"] = time.time()
     return result
@@ -3920,7 +4034,7 @@ def is_port_in_use(port: int) -> bool:
 
 
 def _ensure_project_venv_active() -> None:
-    """Re-exec into local project .venv_core interpreter when available, 
+    """Re-exec into local project .venv_core interpreter when available,
     but respect any project-local .venv_* if already active."""
     if os.environ.get("MWV_DISABLE_AUTO_VENV") == "1":
         return
@@ -4111,16 +4225,13 @@ def get_venv_summary():
             "name": env_name,
             "path": str(env_path),
             "python_version": py_ver,
-            "python_executable": str(py_exec)
-        },
+            "python_executable": str(py_exec)},
         "available_venvs": available_venvs,
         "multi_venv_concept": "Das Projekt nutzt eine Multi-Venv-Strategie zur Trennung von Core-Logik, Build-System und Testing.",
         "recommended_environment": {
             "name": ".venv_core",
             "type": "venv",
-            "reason": "Empfohlene Umgebung fr den stabilen Betrieb der App."
-        }
-    }
+            "reason": "Empfohlene Umgebung fr den stabilen Betrieb der App."}}
 
 
 @eel.expose
@@ -4191,8 +4302,14 @@ def get_db_info():
         return None
 
 
-
-def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all", active_branch: str = None) -> Tuple[List[Dict], Dict[str, Any]]:
+def _apply_library_filters(all_media: List[Dict],
+                           force_raw: bool = False,
+                           search: str = "",
+                           genre: str = "all",
+                           year: str = "all",
+                           active_branch: str = None) -> Tuple[List[Dict],
+                                                               Dict[str,
+                                                                    Any]]:
     """
     @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
     @return Tuple of (filtered_list, audit_metadata)
@@ -4207,17 +4324,18 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
 
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
-    
+
     # [V1.45.142] ARCHITECTURAL BRANCH CONSTRAINTS
     # Resolve which categories are strictly supported by the active branch
     branch_registry = GLOBAL_CONFIG.get("branch_architecture_registry", {})
     supported_by_branch = branch_registry.get(active_branch) if active_branch else None
-    
+
     if supported_by_branch:
-        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {str(active_branch).upper() if active_branch else 'NONE'}")
+        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {
+                 str(active_branch).upper() if active_branch else 'NONE'}")
 
     filtered = []
-    
+
     # [DIAGNOSTIC] Excessive Chain Audit (v1.35.99)
     # Track why items are dropped specifically
     dropped_reasons = {
@@ -4227,12 +4345,12 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         "year_mismatch": 0,
         "extension_unknown": 0
     }
-    
+
     for item in all_media:
         # [MOCK-FILTER] v1.41.00 Unified Hydration Logic
         item_is_mock = bool(item.get('is_mock', 0))
         h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
-        
+
         if h_mode == 'real' and item_is_mock:
             dropped_reasons["mock_filtered"] = dropped_reasons.get("mock_filtered", 0) + 1
             continue
@@ -4248,34 +4366,41 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         # 1. Category check (Bypass logic v1.37.07)
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
-            
+
             # [V1.45.142] ARCHITECTURAL BRANCH ENFORCEMENT
             # If a branch is active, we check if this item's capability is supported.
             if supported_by_branch and "all" not in supported_by_branch:
                 # We check both the canonical category (e.g. 'audio') and granular stages (e.g. 'audio_native')
-                # For now, we perform a smart-match. 
+                # For now, we perform a smart-match.
                 # If cat is 'audio', we try to see if 'audio_native' or 'audio_transcode' are in supported_by_branch.
-                
+
                 # Check for granular match first (if item has it)
                 item_stage = item.get('capability_stage') or cat
-                
+
                 is_supported = (cat in supported_by_branch) or (item_stage in supported_by_branch)
-                
-                # Special logic for 'audio' -> matches 'audio_native' or 'audio_transcode'
-                if not is_supported and cat == 'audio':
-                    is_supported = 'audio_native' in supported_by_branch or 'audio_transcode' in supported_by_branch
-                if not is_supported and cat == 'video':
-                    is_supported = any(v in supported_by_branch for v in ['video_native', 'video_hd', 'video_pal', 'video_iso'])
+
+                # Special logic for category groups (smart-match)
+                if not is_supported:
+                    if cat == 'audio':
+                        is_supported = 'audio_native' in supported_by_branch or 'audio_transcode' in supported_by_branch
+                    elif cat == 'video':
+                        is_supported = any(
+                            v in supported_by_branch for v in [
+                                'video_native', 'video_hd', 'video_pal', 'video_iso'])
+                    elif cat in ['pictures', 'bilder']:
+                        is_supported = 'bilder' in supported_by_branch or 'pictures' in supported_by_branch
+                    elif cat in ['ebooks', 'epub']:
+                        is_supported = 'epub' in supported_by_branch or 'ebooks' in supported_by_branch
 
                 if not is_supported:
                     dropped_reasons["branch_mismatch"] = dropped_reasons.get("branch_mismatch", 0) + 1
                     continue
 
             # [Refine] 'multimedia'-> Map to 'video' (v1.41.00 Final)
-            if cat == 'multimedia': 
+            if cat == 'multimedia':
                 cat = 'video'
-                item['category'] = 'video' # Immediate re-map for UI consistency
-                
+                item['category'] = 'video'  # Immediate re-map for UI consistency
+
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
                 # [v1.41.00-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
@@ -4288,7 +4413,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
                     item['category'] = 'video'
                     filtered.append(item)
                     continue
-                
+
                 # If still unknown, use multimedia as fallback instead of dropping
                 item['category'] = 'multimedia'
                 filtered.append(item)
@@ -4314,7 +4439,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         filtered.append(item)
 
     audit_meta = {
-            "status": "filtered",
+        "status": "filtered",
         "kept": len(filtered),
         "dropped_total": sum(dropped_reasons.values()),
         "dropped_reasons": dropped_reasons,
@@ -4322,22 +4447,22 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
 
     log.info(f"[BD-AUDIT] Filter Pass complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
-    
+
     # [FORENSIC-ID] Sample Trace (v1.41.00)
     if len(filtered) > 0:
-        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')} | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
-    
+        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')
+                                                 } | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
+
     if audit_meta['dropped_total'] > 0:
         log.debug(f"[BD-AUDIT] Drop Reasons: {dropped_reasons}")
 
     if not filtered and all_media:
-        log.critical(f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_media)}). Audit: {audit_meta}")
+        log.critical(
+            f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_media)}). Audit: {audit_meta}")
         return all_media, {"status": "emergency_raw", "dropped_total": 0, "stage": 0, "audit": audit_meta}
 
     log.info(f"[BD-AUDIT] Filter complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
     return filtered, audit_meta
-
-
 
 
 @eel.expose
@@ -4349,26 +4474,27 @@ def get_library_forensics():
     from src.core import db
     db_items = db.get_library() or []
     db_path = str(Path(db.DB_FILENAME).resolve())
-    
+
     cat_stats = {}
     ext_stats = {}
     for item in db_items:
         cat = item.get('category', 'unknown').lower()
         path = str(item.get('path', ''))
         ext = os.path.splitext(path)[1].lower() or '.dat'
-        
+
         cat_stats[cat] = cat_stats.get(cat, 0) + 1
         ext_stats[ext] = ext_stats.get(ext, 0) + 1
-        
+
     return {
         "status": "success",
         "total": len(db_items),
         "db_path": db_path,
         "categories": cat_stats,
-        "formats": ext_stats, # Added for Extension Audit
+        "formats": ext_stats,  # Added for Extension Audit
         "duplicates": 0,      # TODO: Implement duplicate detection
         "pid": os.getpid()
     }
+
 
 @eel.expose
 def get_branch_identity(branch_id: str = None) -> Dict[str, Any]:
@@ -4384,6 +4510,7 @@ def get_branch_identity(branch_id: str = None) -> Dict[str, Any]:
         "version": GLOBAL_CONFIG.get('build_configuration', {}).get('orchestrator_version', 'v1.45.200')
     }
 
+
 @eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """
@@ -4394,7 +4521,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     pid = os.getpid()
     db_path = str(Path(db.DB_FILENAME).resolve())
     log.info(f"[BD-AUDIT] STAGE 1.1: Database path: {db_path}")
-    
+
     # [FS-AUDIT] Internal filesystem check
     db_exists = os.path.exists(db_path)
     db_size = os.path.getsize(db_path) if db_exists else -1
@@ -4404,13 +4531,23 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         "pid": pid,
         "path": db_path
     }
-    
+
     # --- STAGE 1: CONNECTIVITY MOCKS ---
     if audit_stage == 1:
         log.info(f"[BD-AUDIT] STAGE 1 Handshake (Connectivity Mocks). PID: {pid}")
         mocks = [
-            {"id": "m1", "name": "Stage 1: Connection Success (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "diagnostic"}, "is_mock": True},
-            {"id": "m2", "name": "Stage 1: Connection Success (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "diagnostic"}, "is_mock": True}
+            {"id": "m1",
+             "name": "Stage 1: Connection Success (Audio)",
+             "category": "audio",
+             "path": "/mock1.mp3",
+             "tags": {"genre": "diagnostic"},
+             "is_mock": True},
+            {"id": "m2",
+             "name": "Stage 1: Connection Success (Video)",
+             "category": "video",
+             "path": "/mock2.mp4",
+             "tags": {"genre": "diagnostic"},
+             "is_mock": True}
         ]
         return {"media": mocks, "db_count": 2, "status": "mock", "audit": {"stage": 1, "pid": pid}}
 
@@ -4432,8 +4569,9 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
                     "is_mock": True
                 })
         if not playable:
-            playable = [{"id": "m-err", "name": "Stage 2 Error: ./media empty", "category": "unknown", "path": "", "is_mock": True}]
-            
+            playable = [{"id": "m-err", "name": "Stage 2 Error: ./media empty",
+                         "category": "unknown", "path": "", "is_mock": True}]
+
         return {"media": playable, "db_count": len(playable), "status": "mock", "audit": {"stage": 2, "pid": pid}}
 
     # --- MAIN DATA RETRIEVAL (v1.41.00.99) ---
@@ -4453,7 +4591,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     # --- EMERGENCY RECOVERY ---
     # Trigger ONLY if real filtered_media is 0 but DB has data
     if len(filtered_media) == 0 and count_total > 0:
-        log.warning(f"[BD-RECOVERY] Filter Collision: {count_total} items in DB but 0 visible. Forcing Emergency Bypass.")
+        log.warning(
+            f"[BD-RECOVERY] Filter Collision: {count_total} items in DB but 0 visible. Forcing Emergency Bypass.")
         filtered_media = all_media
         status = "emergency-raw"
     else:
@@ -4487,9 +4626,11 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
 
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.41.00)
-    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
+    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)
+                                                      } items (DB: {count_total}, Status: {status})", flush=True)
     if len(final_media) > 0:
-        print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')} (ID: {final_media[0].get('id')})", flush=True)
+        print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')
+                                                       } (ID: {final_media[0].get('id')})", flush=True)
 
     return {
         "media": final_media,
@@ -4505,22 +4646,21 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     }
 
 
-
 @eel.expose
 def get_library_audit_summary() -> Dict[str, Any]:
     """Provides a breakdown of item counts at each stage of hydration (541 -> 527 -> X)."""
     from src.core import db
     all_media = db.get_all_media()
     total = len(all_media)
-    
+
     # Calculate Stages explicitly for the audit
     cat_filtered, cat_audit = _apply_library_filters(all_media, force_raw=True)
     full_filtered, full_audit = _apply_library_filters(all_media, force_raw=False)
-    
+
     return {
         "stages": {
             "0_db_raw": total,
-            "1_ssot_norm": total, # Current SSOT level includes everything if force_raw
+            "1_ssot_norm": total,  # Current SSOT level includes everything if force_raw
             "2_cat_mapped": len(cat_filtered),
             "3_production": len(full_filtered)
         },
@@ -4545,12 +4685,14 @@ def force_sync_all():
 
 
 @eel.expose
-def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name", force_raw: bool = False, active_branch: str = None) -> Dict[str, Any]:
+def get_library_filtered(search: str = "", genre: str = "all", year: str = "all",
+                         sort_by: str = "name", force_raw: bool = False, active_branch: str = None) -> Dict[str, Any]:
     """
     @brief Advanced filtering for the media library.
     """
     all_media = db.get_all_media()
-    filtered, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year, active_branch=active_branch)
+    filtered, logic_audit = _apply_library_filters(
+        all_media, force_raw=force_raw, search=search, genre=genre, year=year, active_branch=active_branch)
 
     # Sorting
     if sort_by == "year":
@@ -4861,14 +5003,15 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
     """
-    if getattr(eel, 'js_set_scanning_status', None): 
+    if getattr(eel, 'js_set_scanning_status', None):
         eel.js_set_scanning_status(True)
-    
+
     try:
         _scan_media_execution(dir_path, clear_db)
     finally:
         if getattr(eel, 'js_set_scanning_status', None):
             eel.js_set_scanning_status(False)
+
 
 def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     """
@@ -4877,7 +5020,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     start_time = time.time()
     count_indexed = 0
     total_traversed = 0
-    
+
     # 0. Round 5.6 - Emergency DB Purge (v1.35.98)
     if clear_db:
         log.warning("[DB-SCAN] Round 5.6: Emergency DB Purge triggered. Clearing existing items.")
@@ -4886,14 +5029,14 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         existing_media = set()
     else:
         existing_media = {str(Path(m['path']).resolve()) for m in db.get_all_media_items() if m.get('path')}
-    
+
     # 1. Imports (Round 5.5: Avoid Scoping Issues)
     from src.parsers.format_utils import (
         AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
         DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
         DSD_EXTENSIONS, HDDVD_EXTENSIONS, PARSER_CONFIG, get_default_scan_dir
     )
-    
+
     # 4. Prepare Extension Filter & Fast-Category-Mapper (v1.35.98)
     from src.core.models import MASTER_CAT_MAP
     ext_to_cat = {}
@@ -4902,15 +5045,15 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             ext_to_cat[ext.lower()] = cat
 
     all_exts = set(ext_to_cat.keys())
-    
+
     # 2. Fast-Scan Override
     parser_mode = 'lightweight'
     GLOBAL_CONFIG["parser_mode"] = 'lightweight'
-    
+
     # MUTE ARTWORK (The True 10-minute Stall Source)
     orig_art_cfg = PARSER_CONFIG.get('ffmpeg_extract_thumbnails', True)
     PARSER_CONFIG['ffmpeg_extract_thumbnails'] = False
-    
+
     log.info(f"[DB-SCAN] EMERGENCY Round 5.5 (v1.35.98): Mode={parser_mode} & Muting Thumbnails.")
 
     # 3. Path Resolution
@@ -4919,20 +5062,22 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         config_dirs = PARSER_CONFIG.get("scan_dirs", [])
         for d in config_dirs:
             p = Path(d).resolve()
-            if p.exists(): scan_roots.append(p)
-    
+            if p.exists():
+                scan_roots.append(p)
+
     # Default fallback
-    if not scan_roots: scan_roots = [get_default_scan_dir()]
-            
+    if not scan_roots:
+        scan_roots = [get_default_scan_dir()]
+
     # Path Resolution logic...
     # (Already handled by 0. Round 5.6)
-    
+
     # 4. Prepare Extension Filter
     indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-    
+
     # 5. Batch Collection
     collected_items = []
-    
+
     try:
         for scan_root in scan_roots:
             log.info(f" [Scan] Starting scan of: {scan_root}")
@@ -4941,18 +5086,19 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                 total_traversed += (len(files) + len(dirs))
                 if total_traversed > max_files:
                     log.warning(f"[DB-SCAN] Safety Cap Triggered ({max_files} items). Stopping traversal.")
-                    dirs[:] = [] # Stop os.walk from recursing further
+                    dirs[:] = []  # Stop os.walk from recursing further
                     break
-                
+
                 d = Path(root)
                 # Depth Check (v1.35.98)
                 try:
                     rel_path = d.relative_to(scan_root)
-                    if len(rel_path.parts) > 12: 
-                        dirs[:] = [] # Stop recursion
+                    if len(rel_path.parts) > 12:
+                        dirs[:] = []  # Stop recursion
                         continue
-                except Exception: continue
-                
+                except Exception:
+                    continue
+
                 # 2. Folders as Media (Albums/DVDs)
                 if d != scan_root:
                     m_count = sum(1 for f in files if f.lower().endswith(tuple(all_exts)))
@@ -4962,18 +5108,20 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                         cat = 'audio' if is_audio else 'video'
                         collected_items.append({
                             'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
-                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                             'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
+                            'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                            'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
                         })
                         count_indexed += 1
 
                 # 3. Individual Files (Standard Pass)
                 for filename in files:
                     ext = "." + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
-                    if ext not in all_exts: continue
+                    if ext not in all_exts:
+                        continue
                     f_path = os.path.join(root, filename)
-                    if f_path in existing_media: continue
-                    
+                    if f_path in existing_media:
+                        continue
+
                     try:
                         cat = ext_to_cat.get(ext, 'Unknown')
                         collected_items.append({
@@ -4983,7 +5131,8 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             'extension': ext
                         })
                         count_indexed += 1
-                    except Exception: pass
+                    except Exception:
+                        pass
 
         # 6. Atomic Commit
         if collected_items:
@@ -4992,9 +5141,9 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
 
         # 10. Round 5.6 - Final Sync & Availability Check (v1.35.98)
         if not clear_db:
-             log.info("[DB-SCAN] Running availability check for incremental sync...")
-             total, missing = db.check_media_availability()
-             log.info(f"[DB-SCAN] Availability check done. Total: {total} | Missing/Renamed: {missing}")
+            log.info("[DB-SCAN] Running availability check for incremental sync...")
+            total, missing = db.check_media_availability()
+            log.info(f"[DB-SCAN] Availability check done. Total: {total} | Missing/Renamed: {missing}")
 
         return {"status": "ok", "count": count_indexed, "time_seconds": time.time() - start_time}
 
@@ -5007,8 +5156,10 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         # Silent Status Update
         websockets = getattr(eel, '_websockets', [])
         if len(websockets) > 0 and hasattr(eel, 'set_db_status'):
-            try: eel.set_db_status("Ready")
-            except Exception: pass
+            try:
+                eel.set_db_status("Ready")
+            except Exception:
+                pass
 
 
 @eel.expose
@@ -5121,8 +5272,10 @@ def play_media(path):
     ext = Path(path).suffix.lower()
     is_dir = os.path.exists(path) and os.path.isdir(path)
     player_cfg = GLOBAL_CONFIG.get("player_settings", {})
-    video_exts = player_cfg.get("video_extensions", [".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"])
-    
+    video_exts = player_cfg.get(
+        "video_extensions", [
+            ".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"])
+
     if ext in video_exts or is_dir:
         log.warning(f"DEBUG: [Player-Trace] play_media REJECTED for video/dir: {path}. Use open_video_smart.")
         return {"status": "error", "message": "Invalid call: Use open_video_smart for Video/Dir"}
@@ -5172,7 +5325,7 @@ def resolve_media_path(file_path: str) -> str:
     """
     # Decouple from URL encoding (Robust v1.41.00)
     path_decoded = unquote(str(file_path))
-    
+
     # Pathlib safety: Ensure the path is normalized for the OS
     p_obj = Path(path_decoded).expanduser()
     path_normalized = str(p_obj)
@@ -5256,12 +5409,22 @@ def find_main_track_iso(path: str) -> int:
         from src.core.config_master import GLOBAL_CONFIG
         # Use ffprobe to scan titles if possible, though DVD-structure is tricky with pure ffmpeg
         # Often, the longest title is the one we want.
-        cmd = [GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"), "-i", str(path), "-show_format", "-show_streams", "-loglevel", "error"]
-        # Note: True DVD title detection often requires libdvdnav/lsdvd. 
+        cmd = [
+            GLOBAL_CONFIG["program_paths"].get(
+                "ffprobe",
+                "ffprobe"),
+            "-i",
+            str(path),
+            "-show_format",
+            "-show_streams",
+            "-loglevel",
+            "error"]
+        # Note: True DVD title detection often requires libdvdnav/lsdvd.
         # Fallback to Title 1 or longest stream if ffprobe cannot see the structure.
-        return 0 
-    except:
         return 0
+    except BaseException:
+        return 0
+
 
 def get_best_hw_encoder():
     """
@@ -5274,7 +5437,7 @@ def get_best_hw_encoder():
 
         # Centralized Hardware Priority
         priority = GLOBAL_CONFIG.get("player_settings", {}).get("hardware_encoders_priority", ["nvenc", "vaapi", "qsv"])
-        
+
         for p in priority:
             if p in encoders:
                 return f"h264_{p}"
@@ -5309,7 +5472,7 @@ def serve_media_raw(file_path):
     )
 
 
-# [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py 
+# [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py
 # to support centralized on-the-fly transcoding and better mimetype handling.
 
 def apply_large_file_protection(cmd, file_path):
@@ -5323,25 +5486,26 @@ def apply_large_file_protection(cmd, file_path):
         threshold_bytes = cfg.get("threshold_gb", 4.0) * 1024 * 1024 * 1024
         file_size = os.path.getsize(file_path)
         is_large = file_size > threshold_bytes
-        
+
         if is_large:
             log.warning(f"[Protection] Large file detected ({file_size / (1024**3):.2f} GB): {file_path}")
-            
+
             # Hook 1: Enforce CRF limit for video to prevent CPU/IO spikes
             if "-crf" in cmd:
                 idx = cmd.index("-crf")
-                current_crf = int(cmd[idx+1])
+                current_crf = int(cmd[idx + 1])
                 limit = cfg.get("enforce_crf_limit", 28)
                 if current_crf < limit:
                     log.info(f"[Protection] Adjusting CRF {current_crf} -> {limit} for resource safety.")
-                    cmd[idx+1] = str(limit)
-            
+                    cmd[idx + 1] = str(limit)
+
             # Hook 2: Future hooks for remux vs transcode can be added here
-            
+
         return cmd, is_large
     except Exception as e:
         log.error(f"[Protection] Error applying safety policies: {e}")
         return cmd, False
+
 
 @eel.btl.route('/stream/via/transcode/<file_path:path>')
 def stream_video_fragmented(file_path):
@@ -5372,8 +5536,8 @@ def stream_video_fragmented(file_path):
     low_path = str(resolved_path).lower()
     is_audio = any(ext in low_path for ext in audio_exts)
     profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
-    p_key = "transcode_audio_aac" # default
-    
+    p_key = "transcode_audio_aac"  # default
+
     if is_audio:
         if ".opus" in low_path:
             p_key = "transcode_audio_opus"
@@ -5394,7 +5558,7 @@ def stream_video_fragmented(file_path):
                 "codec": "H.264 (AVC) / AAC",
                 "bitrate": "Target: 4-8 Mbps",
                 "engine": f"FFmpeg ({encoder})",
-                "rtt": 5, # Low latency for MSE
+                "rtt": 5,  # Low latency for MSE
                 "atmos": False,
                 "bitstream": False
             }
@@ -5407,7 +5571,7 @@ def stream_video_fragmented(file_path):
         if is_iso:
             main_track = find_main_track_iso(resolved_path)
             # FFmpeg DVD syntax: -playlist X (if supported) or just -i
-            input_args = ["-i", str(resolved_path)] 
+            input_args = ["-i", str(resolved_path)]
         else:
             input_args = ["-i", str(resolved_path)]
 
@@ -5415,7 +5579,7 @@ def stream_video_fragmented(file_path):
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         cmd.extend(ss_args)
         cmd.extend(input_args)
-        
+
         if is_audio:
             # Audio Transcoding Profile Selection (v1.35.98 Unified)
             profile = profiles.get(p_key, {})
@@ -5423,9 +5587,9 @@ def stream_video_fragmented(file_path):
             bitrate = profile.get("bitrate", "192k")
             fmt = profile.get("format", "mp4")
             movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
-            
+
             cmd.extend([
-                "-vn", 
+                "-vn",
                 "-c:a", codec, "-b:a", bitrate,
                 "-f", fmt
             ])
@@ -5445,14 +5609,14 @@ def stream_video_fragmented(file_path):
                 cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}", "-map", f"0:s:{subs_idx}"])
             else:
                 cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
-                
+
             cmd.extend([
                 "-c:v", encoder, "-preset", preset, "-crf", crf,
                 "-c:a", a_codec, "-b:a", a_bitrate,
-                "-f", fmt, 
+                "-f", fmt,
                 "-movflags", movflags
             ])
-        
+
         cmd.append("pipe:1")
 
         # Apply Large File Protection (v1.35.98 Hook)
@@ -5465,6 +5629,7 @@ def stream_video_fragmented(file_path):
         try:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf)
             # Log stderr in background
+
             def log_stderr(p):
                 for line in p.stderr:
                     log.error(f"[FFmpeg-Stream] {line.decode().strip()}")
@@ -5481,8 +5646,10 @@ def stream_video_fragmented(file_path):
         finally:
             if process:
                 process.terminate()
-                try: process.wait(timeout=1)
-                except: process.kill()
+                try:
+                    process.wait(timeout=1)
+                except BaseException:
+                    process.kill()
 
     # Determine Correct Content-Type (v1.35.98 Dynamic)
     if is_audio:
@@ -5497,6 +5664,7 @@ def stream_video_fragmented(file_path):
         bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
     return ffmpeg_stream()
 
+
 @eel.expose
 def delete_file(file_path):
     """Deletes high-performance JSON/text files from data/ cache."""
@@ -5507,6 +5675,7 @@ def delete_file(file_path):
     except Exception as e:
         log.error(f"[Critical] Error deleting file {file_path}: {e}")
         return False
+
 
 @eel.expose
 def write_file(file_path, content):
@@ -5519,6 +5688,7 @@ def write_file(file_path, content):
         log.error(f"[Critical] Error writing file {file_path}: {e}")
         return False
 
+
 @eel.expose
 def delete_directory(directory_path):
     """Deletes recursive directories from data/ cache."""
@@ -5530,6 +5700,8 @@ def delete_directory(directory_path):
     except Exception as e:
         log.error(f"[Critical] Error deleting directory {directory_path}: {e}")
         return False
+
+
 def vlc_hls_live_proxy(filename):
     """
     @brief Serves real-time HLS segments generated by the background VLC engine.
@@ -5553,24 +5725,29 @@ def vlc_hls_live_proxy(filename):
         })
     except Exception:
         return bottle.HTTPResponse(status=500)
+
+
 def log_process_stderr(process, name):
     """
     @brief Helper to stream process stderr to the master log in the background.
     """
     if not process or not process.stderr:
         return
+
     def log_thread():
         for line in process.stderr:
             try:
                 log.info(f" [{name}] {line.decode().strip()}")
-            except:
+            except BaseException:
                 pass
     import threading
     threading.Thread(target=log_thread, daemon=True).start()
 
+
 def is_mkvtoolnix_available():
     """Checks if mkvmerge is available in PATH."""
     return shutil.which("mkvmerge") is not None
+
 
 @eel.btl.route('/video-remux-stream/<item_id:path>')
 def video_remux_stream(item_id):
@@ -5611,7 +5788,7 @@ def video_remux_stream(item_id):
                 "codec": "Lossless Remux (Copy)",
                 "bitrate": "Direct Stream",
                 "engine": "Pipe-Kit (mkvmerge + ffmpeg)",
-                "rtt": 2, # Ultra-low latency for remux
+                "rtt": 2,  # Ultra-low latency for remux
                 "atmos": "mp4-remux" in str(file_path).lower(),
                 "bitstream": True
             }
@@ -5653,20 +5830,25 @@ def video_remux_stream(item_id):
                     log_process_stderr(mkv_proc, "MKVMerge-Pipe")
 
                     lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
-                    lossless_flags = lossless_cfg.get("flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+                    lossless_flags = lossless_cfg.get(
+                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
 
                     ffmpeg_cmd = [
                         ffmpeg_path, "-loglevel", "error", "-i", "pipe:0"
                     ] + lossless_flags + ["-"]
 
                     ffmpeg_proc = subprocess.Popen(
-                        ffmpeg_cmd, stdin=mkv_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf
-                    )
+                        ffmpeg_cmd,
+                        stdin=mkv_proc.stdout,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        bufsize=stream_buf)
                     log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
                 else:
                     # Use FFmpeg for seeking/mapping remux (more reliable for mid-stream offsets/tracks)
                     lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
-                    lossless_flags = lossless_cfg.get("flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+                    lossless_flags = lossless_cfg.get(
+                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
 
                     ffmpeg_cmd = [
                         ffmpeg_path, "-loglevel", "error"
@@ -5696,10 +5878,10 @@ def video_remux_stream(item_id):
                         try:
                             p.terminate()
                             p.wait(timeout=1)
-                        except:
+                        except BaseException:
                             try:
                                 p.kill()
-                            except:
+                            except BaseException:
                                 pass
                 log.info(f" [Remux] Finalized Pipe-Kit stream for: {file_path}")
 
@@ -5766,12 +5948,13 @@ def run_raw_media_probe(item_id):
     import subprocess
     from src.core import db
     from src.core.config_master import GLOBAL_CONFIG
-    
+
     path = resolve_media_path(item_id)
     if not os.path.exists(path):
         # Try database resolve if path not immediately found (numerical IDs)
         item = db.get_media_by_id(item_id)
-        if item: path = item['path']
+        if item:
+            path = item['path']
 
     if not os.path.exists(path):
         return {"status": "error", "message": "Media path not found."}
@@ -5785,10 +5968,10 @@ def run_raw_media_probe(item_id):
             "-show_format", "-show_streams", str(path)
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-        
+
         if result.returncode != 0:
             return {"status": "error", "message": f"ffprobe failed: {result.stderr}"}
-            
+
         data = json.loads(result.stdout)
         return {"status": "success", "data": data}
     except Exception as e:
@@ -5847,7 +6030,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
         stop_vlc()
         # Proactive: Shell kill to be absolutely sure
         subprocess.run(["pkill", "-9", "-f", "vlc"], capture_output=True)
-    except:
+    except BaseException:
         pass
 
     vlc_path = shutil.which('vlc') or '/usr/bin/vlc'
@@ -5861,6 +6044,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
         if os.path.exists(hls_dir):
             shutil.rmtree(hls_dir)
         os.makedirs(hls_dir, exist_ok=True)
+        index_file = f"{hls_dir}/index.m3u8"
 
         # Content-Aware Profile Selection (SSOT v1.35.95)
         # Check if we are dealing with PAL DVD/ISO vs. HD content
@@ -5868,7 +6052,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
             str(file_path).lower().endswith('.iso'),
             os.path.exists(os.path.join(file_path, "VIDEO_TS"))
         ])
-        
+
         profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
         if is_dvd:
             p = profiles.get("vlc_hls_profile_pal", {})
@@ -5889,7 +6073,8 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
 
         try:
             control_port = find_free_port()
-            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
+            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {
+                     start_time}s: {full_path} -> {index_file} (Control: {control_port})")
 
             cmd = [
                 str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet",
@@ -5958,7 +6143,8 @@ def send_vlc_command(port, command, val=None):
 
 
 @eel.expose
-def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", source: str = "direct", start_time: float = 0):
+def open_video(file_path: str, player_type: str = "auto", mode: str = "auto",
+               source: str = "direct", start_time: float = 0):
     """
     @brief Explicitly opens a media file with a specific player type and mode.
     Handles 'auto' routing and specializes for ISO, DVD, Audio.
@@ -6043,7 +6229,8 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
                 return {"status": "error", "error": f"VLC failed: {e}"}
 
         if mode == "auto" or mode == "vlc_embedded":
-            return start_vlc_guarded(target_path, "vlc_embedded", prefix, source=f"open_video_{source}", start_time=start_time)
+            return start_vlc_guarded(target_path, "vlc_embedded", prefix,
+                                     source=f"open_video_{source}", start_time=start_time)
         return start_vlc_guarded(target_path, mode, prefix, source=f"open_video_{source}", start_time=start_time)
 
     elif player_type == "ffplay":
@@ -6222,7 +6409,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
                 os.path.exists(os.path.join(file_path, "BDMV")),
                 any(f.lower().endswith(('.iso', '.bin', '.img')) for f in os.listdir(file_path))
             ])
-        except:
+        except BaseException:
             pass
 
     # Check DB category for specialized routing
@@ -7022,8 +7209,16 @@ def detect_ts_stream(port):
         import socket
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(('localhost', port)) == 0
-    except:
+    except BaseException:
         return False
+
+
+def find_free_port():
+    """Finds an available TCP port on the local machine."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
 
 
 @eel.expose
@@ -7033,12 +7228,6 @@ def vlc_ts_mode(file_path):
     file_path = resolve_dvd_bundle_path(file_path)
     if not os.path.exists(file_path):
         return {"status": "error", "error": "Datei nicht gefunden"}
-
-    def find_free_port():
-        import socket
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))
-            return s.getsockname()[1]
 
     port = find_free_port()
     try:
@@ -7057,7 +7246,8 @@ def vlc_ts_mode(file_path):
             if detect_ts_stream(port):
                 log.info(f"[cvlc] TS Stream active on port {port}")
                 # We return a URL that the frontend can play via Video.js (type: video/mp2t)
-                return {"status": "play", "path": f"http://localhost:{port}/", "mode": "chrome_native", "type": "video/mp2t"}
+                return {"status": "play", "path": f"http://localhost:{port}/",
+                        "mode": "chrome_native", "type": "video/mp2t"}
 
         return {"status": "error", "error": "cvlc TS failed to start"}
     except Exception as e:
@@ -7152,7 +7342,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
         mtx_host = GLOBAL_CONFIG["mediamtx_settings"]["host"]
         rtsp_port = GLOBAL_CONFIG["mediamtx_settings"]["rtsp_port"]
         rtsp_target = f"rtsp://{mtx_host}:{rtsp_port}/{safe_name}"
-        
+
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"]["ffmpeg"]
         ffmpeg_cmd = [ffmpeg_bin, "-re"]
 
@@ -7191,7 +7381,8 @@ def stream_to_mediamtx(file_path, protocol="hls"):
             src_url = f"http://localhost:8888/{safe_name}/index.m3u8"
             mode = "mediamtx"
 
-        return {"status": "play", "path": src_url, "mode": mode, "type": "application/x-mpegURL" if protocol == "hls" else "video/webrtc"}
+        return {"status": "play", "path": src_url, "mode": mode,
+                "type": "application/x-mpegURL" if protocol == "hls" else "video/webrtc"}
     except Exception as e:
         log.error(f"[mediamtx] Setup error: {e}")
         return {"status": "error", "error": str(e)}
@@ -7218,7 +7409,7 @@ def run_mtx_validation(file_path):
         r = requests.get("http://localhost:8888", timeout=2)
         report["server_up"] = True
         report["logs"].append(" MediaMTX HLS Listener found on :8888.")
-    except:
+    except BaseException:
         report["logs"].append(" MediaMTX not running or HLS port closed.")
         return report
 
@@ -7238,7 +7429,7 @@ def run_mtx_validation(file_path):
                 if r.status_code == 200:
                     found = True
                     break
-            except:
+            except BaseException:
                 pass
         if found:
             report["hls_read_ok"] = True
@@ -7260,7 +7451,7 @@ def run_mtx_validation(file_path):
             if r.status_code in [200, 404, 405]:
                 report["webrtc_read_ok"] = True
                 report["logs"].append(" WebRTC Listener is responsive.")
-        except:
+        except BaseException:
             pass
 
     return report or {"error": "Unknown failure"}
@@ -8012,7 +8203,8 @@ def get_logbook_entry(feature_name, source="logbuch"):
                     break
 
         if not log_file:
-            # Try to match the stem if re-numbered (e.g., search for "The_Modular_Heart" in "010_2026-03-13_The_Modular_Heart...")
+            # Try to match the stem if re-numbered (e.g., search for
+            # "The_Modular_Heart" in "010_2026-03-13_The_Modular_Heart...")
             for f in log_dir.rglob("*.md"):
                 if feature_name in f.name:
                     log_file = f
@@ -8252,7 +8444,7 @@ def list_feature_modal_items():
         if not path.exists():
             continue
         mtime = path.stat().st_mtime
-        
+
         # Use centralized style sheet (template) from v1.35.96 SSOT
         entry = GLOBAL_CONFIG["templates"]["logbook_entry"].copy()
         entry.update({
@@ -8516,7 +8708,7 @@ def get_test_results():
     try:
         import json
         return json.loads(results_path.read_text(encoding='utf-8'))
-    except:
+    except BaseException:
         return []
 
 
@@ -8706,7 +8898,7 @@ def get_parser_stats():
             if isinstance(p_times, str):
                 try:
                     p_times = json.loads(p_times)
-                except:
+                except BaseException:
                     continue
 
             if not isinstance(p_times, dict):
@@ -8769,7 +8961,6 @@ def get_transcode_status(task_id: str):
     return transcode_mgr.get_task_status(task_id)
 
 # --- Main Entry Point ---
-
 
 
 # --- Tests & Utility Functions ---
@@ -8880,7 +9071,8 @@ def open_ffplay(filepath):
         # -autoexit: closes window when playback ends
         # -sn: disable subtitles for performance during test
         ffplay_path = GLOBAL_CONFIG["program_paths"]["ffplay"]
-        subprocess.Popen([ffplay_path, "-autoexit", "-sn", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen([ffplay_path, "-autoexit", "-sn", filepath],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -8893,7 +9085,7 @@ def get_playback_benchmarks():
         path = GLOBAL_CONFIG["storage_registry"]["playback_benchmark_path"]
         if path.exists():
             return json.loads(path.read_text())
-    except:
+    except BaseException:
         pass
     return {}
 
@@ -8905,7 +9097,7 @@ def save_playback_benchmarks(data):
         path = GLOBAL_CONFIG["storage_registry"]["playback_benchmark_path"]
         path.write_text(json.dumps(data))
         return True
-    except:
+    except BaseException:
         return False
 
 
@@ -9335,6 +9527,8 @@ def get_routing_suite_report():
             from src.core.models import DISK_IMAGE_EXTENSIONS
             is_direct = is_direct_play_capable(path, 'browser')
 
+            import os as python_os
+            ext = python_os.path.splitext(path)[1].lower()
             if is_direct:
                 mode = 'direct'
             elif ext in DISK_IMAGE_EXTENSIONS or item.get('is_disc'):
@@ -9401,10 +9595,10 @@ def get_media_compatibility_report():
             ext = item.get('extension', '').lower()
 
             is_chrome = is_chrome_native(ext, codec)
-            
+
             player_cfg = GLOBAL_CONFIG.get("player_settings", {})
             v_exts = player_cfg.get("video_extensions", [".mp4", ".mkv", ".avi", ".mov", ".ts"])
-            is_mtx = ext in v_exts # FFmpeg can remux these
+            is_mtx = ext in v_exts  # FFmpeg can remux these
             is_vlc = True  # VLC plays everything
             is_ffplay = True  # FFmpeg plays everything
 
@@ -9668,21 +9862,6 @@ def analyze_media_item(*args, **kwargs):
 
 
 
-# --- UTF-8 Sanitization Helper (v1.35 Restoration) ---
-def sanitize_json_utf8(obj):
-    """Recursively converts all string values in an object to clean UTF-8."""
-    if isinstance(obj, str):
-        try:
-            return obj.encode('utf-8', errors='ignore').decode('utf-8')
-        except:
-            return obj
-    elif isinstance(obj, dict):
-        return {k: sanitize_json_utf8(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [sanitize_json_utf8(i) for i in obj]
-    return obj
-
-
 @eel.expose
 def get_parser_registry():
     """Returns all available parsers, their capabilities and settings schemas."""
@@ -9694,20 +9873,22 @@ def get_parser_registry():
 def update_parser_setting(parser_id, key, value):
     """Updates a specific setting for a parser in GLOBAL_CONFIG and persists it."""
     from src.core.config_master import GLOBAL_CONFIG
-    
+
     if "parser_settings" not in GLOBAL_CONFIG:
         GLOBAL_CONFIG["parser_settings"] = {}
     if parser_id not in GLOBAL_CONFIG["parser_settings"]:
         GLOBAL_CONFIG["parser_settings"][parser_id] = {}
-        
+
     # Cast value if needed (handle boolean/int from UI)
     old_val = GLOBAL_CONFIG["parser_settings"][parser_id].get(key)
     if isinstance(old_val, bool) and not isinstance(value, bool):
         value = str(value).lower() in ("true", "1", "yes", "on")
     elif isinstance(old_val, int) and not isinstance(value, int):
-        try: value = int(value)
-        except: pass
-        
+        try:
+            value = int(value)
+        except BaseException:
+            pass
+
     GLOBAL_CONFIG["parser_settings"][parser_id][key] = value
     log.info(f"[Config] Updated parser '{parser_id}' setting '{key}' to '{value}'")
     return True
@@ -9721,22 +9902,22 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
     """
     from src.core import db
     from src.core.models import audit_category_chain
-    
+
     all_media = db.get_all_media()
     match = None
-    
+
     # 1. DB Stage: Finding the item
     for item in all_media:
         if query.lower() in item.get('name', '').lower() or query.lower() in item.get('path', '').lower():
             match = item
             break
-            
+
     if not match:
         return {"status": "not_found", "query": query}
-        
+
     # 2. Models Stage: Category Detection
     category_audit = audit_category_chain(match)
-    
+
     # 3. Backend Filter Stage:
     # We run a mock filter pass just for this one item
     filtered, logic_audit = _apply_library_filters([match], force_raw=False)

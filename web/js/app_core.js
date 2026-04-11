@@ -129,8 +129,16 @@ function renderMasterNav(config) {
 
     console.info("[NAV] Rendering Dynamic Master Navigation...");
     
-    const items = config.navigation_orchestrator.level_1;
+    let items = config.navigation_orchestrator.level_1;
+    const activeBranch = config.active_branch || 'multimedia';
     const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+
+    // [v1.45.300] Filter navigation based on active branch branch identity
+    if (activeBranch === 'audio') {
+        items = items.filter(i => ['audio', 'status', 'tools'].includes(i.id));
+    } else if (activeBranch === 'multimedia') {
+        items = items.filter(i => ['audio', 'multimedia', 'status', 'tools'].includes(i.id));
+    }
 
     navBar.innerHTML = items.map(item => `
         <button id="nav-btn-${item.id}" 
