@@ -5014,6 +5014,41 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             eel.js_set_scanning_status(False)
 
 
+def _parse_nfo_file(nfo_path: Path) -> dict:
+    """
+    Parses a Kodi/Plex style .nfo XML file (v1.45.130).
+    """
+    metadata = {}
+    try:
+        import xml.etree.ElementTree as ET
+        if not nfo_path.exists(): return {}
+        tree = ET.parse(nfo_path)
+        root = tree.getroot()
+        
+        # Mapping: XML Tag -> Metadata Key
+        mappings = {
+            'title': 'title',
+            'year': 'year',
+            'genre': 'genre',
+            'artist': 'artist',
+            'album': 'album',
+            'plot': 'plot'
+        }
+        
+        for xml_tag, meta_key in mappings.items():
+            el = root.find(xml_tag)
+            if el is not None and el.text:
+                metadata[meta_key] = el.text.strip()
+                
+        # Handle multiple genres
+        genres = [g.text for g in root.findall('genre') if g.text]
+        if genres: metadata['genre'] = ", ".join(genres)
+            
+    except Exception:
+        pass
+    return metadata
+
+
 def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Performs the actual media scan (Refactored for Round 5.5 Performance).
@@ -5046,6 +5081,10 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             ext_to_cat[ext.lower()] = cat
 
     all_exts = set(ext_to_cat.keys())
+    
+    # [v1.45.130] Toggles
+    enable_collections = GLOBAL_CONFIG.get("enable_collection_management", True)
+    enable_nfo = GLOBAL_CONFIG.get("enable_nfo_parsing", True)
 
     # 2. Fast-Scan Override
     parser_mode = 'lightweight'
@@ -5100,17 +5139,34 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                 except Exception:
                     continue
 
-                # 2. Folders as Media (Albums/DVDs)
-                if d != scan_root:
-                    m_count = sum(1 for f in files if f.lower().endswith(tuple(all_exts)))
+                # 2. Folders as Media (Albums/DVDs) - v1.45.130
+                if d != scan_root and enable_collections:
+                    media_files = [f for f in files if f.lower().endswith(tuple(all_exts))]
+                    m_count = len(media_files)
+                    
                     if m_count > 0:
-                        # Fast Category mapping
-                        is_audio = any(f.lower().endswith(tuple(AUDIO_EXTENSIONS)) for f in files)
+                        # 1. Detect NFO & Coverage
+                        nfo_file = next((f for f in files if f.lower().endswith('.nfo')), None)
+                        nfo_data = _parse_nfo_file(d / nfo_file) if (nfo_file and enable_nfo) else {}
+                        
+                        # 2. Determine Collection Category
+                        is_audio = any(f.lower().endswith(tuple(AUDIO_EXTENSIONS)) for f in media_files)
                         cat = 'audio' if is_audio else 'video'
+                        
+                        # Forensic Categorization Logic (v1.45.130)
+                        genre = nfo_data.get('genre', '').lower()
+                        artist = nfo_data.get('artist', '').lower()
+                        
+                        if 'klassik' in genre or 'classical' in genre: cat = 'klassik'
+                        elif 'soundtrack' in genre or 'ost' in genre: cat = 'soundtrack'
+                        elif any(va in artist for va in ['va', 'varios', 'various artists']): cat = 'compilation'
+                        elif m_count > 1 and is_audio: cat = 'album'
+                        elif m_count > 1 and not is_audio: cat = 'series'
+                        
                         collected_items.append({
                             'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
-                            'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                            'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
+                            'is_mock': 0, 'mock_stage': 0, 'full_tags': nfo_data, 'chapters': [],
+                            'type': 'folder', 'media_type': cat, 'nfo_parsed': 1 if nfo_data else 0
                         })
                         count_indexed += 1
 

@@ -457,23 +457,36 @@ function getMediaTypeString(item) {
  */
 function getCategoryBadgeHtml(item) {
     if (!item || !item.category) return '';
-    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image', 'Soundtrack', 'Playlist'];
-    if (!specialCategories.includes(item.category)) return '';
+    const cat = item.category.toLowerCase();
+    
+    // Forensic Icon Registry (v1.45.130 Inline SVGs)
+    const icons = {
+        'klassik': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`, // Elegant Classical Upward
+        'soundtrack': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 20V4"/><path d="M15 20V4"/><path d="M4 9h5"/><path d="M15 9h5"/><path d="M4 15h5"/><path d="M15 15h5"/></svg>`, // Film Reel
+        'podcast': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`, // Microphone
+        'nfo': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`, // Info
+        'album': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`, // Disc
+        'compilation': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="16" cy="16" r="6"/></svg>`, // Duo Discs
+        'single': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
+        'series': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>`, // Film Strip
+        'documentation': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+    };
 
-    let catIcon = '';
-    if (item.category === 'H\u00f6rbuch') catIcon = '<svg width="12" height="12"><use href="#icon-audio"></use></svg>';
-    else if (item.category === 'Film') catIcon = '<svg width="12" height="12"><use href="#icon-video"></use></svg>';
-    else if (item.category === 'Serie') catIcon = '<svg width="12" height="12"><use href="#icon-tv"></use></svg>';
-    else if (item.category === 'Dokument') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
-    else if (item.category === 'E-Book') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
-    else if (item.category === 'Bilder') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>️';
-    else if (item.category === 'ISO/Image') catIcon = '<svg width="12" height="12"><use href="#icon-disk"></use></svg>';
-    else if (item.category === 'Compilation') catIcon = '<svg width="12" height="12"><use href="#icon-save"></use></svg>';
-    else if (item.category === 'Soundtrack') catIcon = '<svg width="12" height="12"><use href="#icon-audio"></use></svg>';
-    else if (item.category === 'Playlist') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
+    const legacyIcons = {
+        'hörbuch': '<use href="#icon-audio"></use>',
+        'film': '<use href="#icon-video"></use>',
+        'bilder': '<use href="#icon-generic"></use>',
+        'iso/image': '<use href="#icon-disk"></use>',
+        'playlist': '<use href="#icon-generic"></use>'
+    };
 
+    let catIcon = icons[cat] || legacyIcons[cat] || '';
     if (!catIcon) return '';
-    return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
+
+    const isInline = catIcon.startsWith('<svg');
+    const svgContent = isInline ? catIcon : `<svg width="12" height="12">${catIcon}</svg>`;
+
+    return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5; padding: 4px;" title="${item.category}">${svgContent}</div>`;
 }
 /**
  * Updates the technical sync anchor in the footer (v1.41.00).

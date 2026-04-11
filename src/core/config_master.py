@@ -297,6 +297,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "docker_mode": get_env_bool("MWV_DOCKER", False),
     "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
     "installed_packages": {},
+    "enable_collection_management": True, # GLOBAL: Automatische Ordner-Gruppierung. Filmname (Jahr),  Albumartist - Name (Jahr) und Serien werden automatisch erkannt.
+    "enable_nfo_parsing": True,          # GLOBAL: XML-Extraktion aus .nfo Dateien.
     
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
@@ -387,20 +389,26 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             {"id": "single",          "label": "single"},
             {"id": "hörbuch",         "label": "hörbuch"},
             {"id": "sampler",         "label": "sampler"},
+            {"id": "compilation",     "label": "compilation"},
+            {"id": "podcast",         "label": "podcast"},
             {"id": "soundtrack",      "label": "soundtrack"},
+            {"id": "klassik",         "label": "klassik"},
             {"id": "video",           "label": "video"},
             {"id": "video_iso",       "label": "iso-image"},
+            {"id": "series",          "label": "serie"},
+            {"id": "documentation",   "label": "dokumentation"},
             {"id": "bilder",          "label": "bilder"},
             {"id": "epub",            "label": "epub"},
             {"id": "docs",            "label": "dokumente"},
             {"id": "archives",        "label": "archiv"},
+            {"id": "nfo",             "label": "nfo"},
             {"id": "unknown",         "label": "unbekannt"}
         ],
 
         "branch_architecture_registry": {
-            "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub"],
-            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "nfo", "unknown"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
             "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"], 
