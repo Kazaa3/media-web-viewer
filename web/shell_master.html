@@ -39,7 +39,11 @@
     </nav>
 
     <!-- [BODY] MAIN VIEWPORT DECK -->
-    <main id="main-viewport" class="main-viewport">
+    <main id="main-viewport-container" class="main-viewport">
+        <!-- [v1.44] REBUILD MODE: UNIFIED FORENSIC STAGE -->
+        <div id="rebuild-stage" class="deck-view rebuild-stage-active" data-tab-domain="rebuild" style="display:none; z-index: 5000; background: var(--bg-master);">
+            <div class="stage-sentinel-loader loading-fragment">INITIALIZING STAGE...</div>
+        </div>
         
         <!-- Category Fragments -->
         <div id="player-panel-container" class="deck-view active">
