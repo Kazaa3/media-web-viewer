@@ -53,45 +53,65 @@ const WindowManager = {
         this.updateStatus(name, 'hydrating');
 
         try {
-            // 1. Hydrate Fragment if required
-            if (win.fragmentId && win.fragmentPath) {
-                const container = document.getElementById(win.fragmentId);
-                const needsLoad = !container || container.getAttribute('data-loaded') !== 'true' || force;
+            // [v1.44] FORENSIC STAGE REDIRECTION
+            const isRebuildMode = window.GLOBAL_CONFIG?.ui_evolution_mode === 'rebuild';
+            const stage = document.getElementById('rebuild-stage');
 
-                if (needsLoad) {
-                    console.info(`[WM] Stage 1.1: Loading fragment for ${name} -> ${win.fragmentPath}`);
-                    await FragmentLoader.load(win.fragmentId, win.fragmentPath);
-                    if (win.onHydrate) win.onHydrate();
+            if (isRebuildMode && stage && win.fragmentPath) {
+                console.info(`[WM] REBUILD_MODE: Routing ${name} to Unified Stage...`);
+                
+                // Hide legacy shells
+                this._hideAllShells();
+                
+                // Show and load stage
+                stage.style.display = 'flex';
+                stage.classList.add('active');
+                
+                // Atomic Fragment Load (v1.44)
+                if (typeof FragmentLoader.loadAtomic === 'function') {
+                    await FragmentLoader.loadAtomic('rebuild-stage', win.fragmentPath);
+                } else {
+                    await FragmentLoader.load('rebuild-stage', win.fragmentPath);
+                }
+                
+                if (win.onHydrate) win.onHydrate();
+            } else {
+                // --- LEGACY STABLE PATH ---
+                // 1. Hydrate Fragment if required
+                if (win.fragmentId && win.fragmentPath) {
+                    const container = document.getElementById(win.fragmentId);
+                    const needsLoad = !container || container.getAttribute('data-loaded') !== 'true' || force;
+
+                    if (needsLoad) {
+                        console.info(`[WM] Stage 1.1: Loading fragment for ${name} -> ${win.fragmentPath}`);
+                        await FragmentLoader.load(win.fragmentId, win.fragmentPath);
+                        if (win.onHydrate) win.onHydrate();
+                    }
+                }
+
+                // 2. Visibility Matrix Update (v1.41.116 Robust Refinement)
+                this._hideAllShells();
+                let shell = document.getElementById(win.shellId);
+                if (!shell) {
+                    // Fallback to domain lookup (v1.41.115 bridging)
+                    shell = document.querySelector(`.tab-content[data-tab-domain="${name}"]`);
+                    if (!shell) shell = document.querySelector(`.tab-content[data-tab-domain="media"]`);
+                }
+
+                if (shell) {
+                    console.info(`[WM] Stage 1.2: Enforcing visibility on container: #${shell.id}`);
+                    shell.style.display = 'flex';
+                    shell.style.opacity = '1';
+                    shell.classList.add('active');
+                } else {
+                    throw new Error(`Shell container #${win.shellId} not found in DOM.`);
                 }
             }
 
-            // 2. Visibility Matrix Update (v1.41.116 Robust Refinement)
-            this._hideAllShells();
-            let shell = document.getElementById(win.shellId);
-            if (!shell) {
-                // Fallback to domain lookup (v1.41.115 bridging)
-                shell = document.querySelector(`.tab-content[data-tab-domain="${name}"]`);
-                if (!shell) shell = document.querySelector(`.tab-content[data-tab-domain="media"]`); // Extra safety for player/media mismatch
-            }
-
-            if (shell) {
-                console.info(`[WM] Stage 1.2: Enforcing visibility on container: #${shell.id}`);
-                shell.style.display = 'flex';
-                shell.style.opacity = '1';
-                shell.classList.add('active');
-                
-                // [v1.37.52] Force Global UI Logic Sync
-                const categoryMap = { 'player': 'media', 'library': 'library', 'editor': 'edit', 'database': 'database' };
-                const cat = categoryMap[name] || 'media';
-                if (typeof refreshUIVisibility === 'function') refreshUIVisibility(cat);
-                
-                // Ensure correct geometry for the shell (v1.37.52 Engine)
-                shell.style.height = '100%';
-                shell.style.width = '100%';
-                shell.style.overflow = 'hidden';
-            } else {
-                throw new Error(`Shell container #${win.shellId} not found in DOM.`);
-            }
+            // [v1.37.52] Force Global UI Logic Sync
+            const categoryMap = { 'player': 'media', 'library': 'library', 'editor': 'edit', 'database': 'database' };
+            const cat = categoryMap[name] || 'media';
+            if (typeof refreshUIVisibility === 'function') refreshUIVisibility(cat);
 
             // 3. Mark as Healthy & Active
             this.activeWindow = name;

@@ -8,6 +8,44 @@ const FragmentLoader = {
     pendingLoads: new Map(), // Track in-flight requests (targetId -> Promise)
 
     /**
+     * loadAtomic (v1.44)
+     * Performs a 'flicker-free' swap by fetching the HTML first and only
+     * updating the DOM once the content is ready and verified.
+     */
+    async loadAtomic(targetId, fragmentPath, callback) {
+        const container = document.getElementById(targetId);
+        if (!container) return;
+
+        // Transition: Fade out or show loader
+        container.style.opacity = '0.4';
+        
+        try {
+            // Force fetch/cache logic via _executeLoad (but we want it atomic here)
+            // We'll reuse the internal fetch logic
+            let html;
+            if (this.cache.has(fragmentPath)) {
+                html = this.cache.get(fragmentPath);
+            } else {
+                const response = await fetch(fragmentPath);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                html = await response.text();
+                this.cache.set(fragmentPath, html);
+            }
+
+            if (!html || html.trim() === "") throw new Error("Empty Fragment");
+
+            // STAGE 2: SWAP
+            container.innerHTML = html;
+            container.dataset.loaded = 'true';
+            container.style.opacity = '1';
+            
+            if (callback) callback();
+        } catch (e) {
+            this.error(targetId, fragmentPath, e);
+        }
+    },
+
+    /**
      * Loads an external HTML fragment into a container.
      * @param {string} targetId - The ID of the container element.
      * @param {string} fragmentPath - The path to the .html fragment.
