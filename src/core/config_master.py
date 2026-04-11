@@ -342,12 +342,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
-        # --- [v1.45.105] BRANCH VS CATEGORY ORCHESTRATOR ---
+        # --- [v1.45.115] BRANCH VS CATEGORY ORCHESTRATOR (Structural) ---
         "navigation_orchestrator": {
             "level_1": [
-                {"id": "media", "label": "AUDIO", "icon": "play", "action": "media"}, # [v1.45] Dev-Branch: Legacy (Audio Only)
-                {"id": "library", "label": "MULTIMEDIA", "icon": "grid", "action": "library"}, # [v1.45] Dev-Branch: Hybrid (A/V/Pictures)
-                {"id": "database", "label": "EXTENDED", "icon": "folder", "action": "database"}, # [v1.45] Dev-Branch: Support (EPUB/ISO/Docs)
+                {"id": "media", "label": "AUDIO", "icon": "play", "action": "media"},
+                {"id": "library", "label": "MULTIMEDIA", "icon": "grid", "action": "library"},
+                {"id": "database", "label": "EXTENDED", "icon": "folder", "action": "database"},
                 {"id": "tools", "label": "TOOLS", "icon": "tool", "action": "tools"},
                 {"id": "status", "label": "STATUS", "icon": "sparkles", "action": "status", "color": "#00ffcc"}
             ],
@@ -370,16 +370,23 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
                 ]
             },
-            
-            # --- [v1.45.105] GUI CATEGORY MAP (Items in Dropdown) ---
-            "library_category_map": [
-                {"id": "all", "label": "ALL MEDIA"},
-                {"id": "audio", "label": "AUDIO BRANCH"},
-                {"id": "video", "label": "VIDEO BRANCH"},
-                {"id": "bilder", "label": "BILDER"},
-                {"id": "iso", "label": "ISO IMAGES"},
-                {"id": "transcoded", "label": "TRANSCODED"}
-            ]
+            }
+        },
+
+        # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
+        "library_category_map": [
+            {"id": "all", "label": "ALL MEDIA"},
+            {"id": "audio", "label": "AUDIO BRANCH"},
+            {"id": "video", "label": "VIDEO BRANCH"},
+            {"id": "bilder", "label": "BILDER"},
+            {"id": "iso", "label": "ISO IMAGES"},
+            {"id": "transcoded", "label": "TRANSCODED"}
+        ],
+
+        "branch_architecture_registry": {
+            "media": ["all", "audio", "transcoded"],
+            "library": ["all", "audio", "video", "bilder", "transcoded"],
+            "database": ["all", "iso", "audio", "transcoded"]
         },
         
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---

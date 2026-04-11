@@ -160,10 +160,11 @@ window.triggerModuleHydration = async function(name) {
             case 'player':
                 if (typeof syncQueueWithLibrary === 'function') await syncQueueWithLibrary();
                 if (window.AudioPlayer && typeof window.AudioPlayer.refresh === 'function') window.AudioPlayer.refresh();
-                if (typeof window.hydrateCategoryDropdown === 'function') window.hydrateCategoryDropdown();
+                if (typeof window.hydrateCategoryDropdown === 'function') window.hydrateCategoryDropdown(module);
                 break;
             case 'library':
                 if (typeof loadLibrary === 'function') await loadLibrary();
+                if (typeof window.hydrateCategoryDropdown === 'function') window.hydrateCategoryDropdown(module);
                 break;
             case 'edit':
             case 'editor':
@@ -171,6 +172,10 @@ window.triggerModuleHydration = async function(name) {
                 break;
             case 'status':
                 if (window.Diagnostics && typeof window.Diagnostics.refresh === 'function') window.Diagnostics.refresh();
+                break;
+            case 'database':
+            case 'explorer':
+                if (typeof window.hydrateCategoryDropdown === 'function') window.hydrateCategoryDropdown('database');
                 break;
         }
 
@@ -183,26 +188,42 @@ window.triggerModuleHydration = async function(name) {
 };
 
 /**
- * hydrateCategoryDropdown (v1.45.100)
- * Populates the 'Category Map' dropdown from backend config.
+ * hydrateCategoryDropdown (v1.45.115)
+ * Populates the 'Category Map' dropdown from backend config 
+ * based on the ARCHITECTURE of the active branch.
  */
-window.hydrateCategoryDropdown = function() {
+window.hydrateCategoryDropdown = function(branchId) {
     const select = document.getElementById('queue-type-filter');
     if (!select) return;
 
-    const map = window.CONFIG?.ui_settings?.library_category_map;
-    if (!map || !Array.isArray(map)) {
+    const ui = window.CONFIG?.ui_settings;
+    const allCategories = ui?.library_category_map;
+    const supportMap = ui?.branch_architecture_registry;
+    
+    // Normalize branchId for lookup
+    let targetBranch = branchId.toLowerCase();
+    if (targetBranch === 'player') targetBranch = 'media';
+    if (targetBranch === 'explorer') targetBranch = 'database';
+
+    const supportedIds = supportMap ? supportMap[targetBranch] : null;
+
+    if (!allCategories || !Array.isArray(allCategories)) {
         console.warn("[HYDRATION] No library_category_map found in config.");
         return;
     }
 
-    console.log(`[HYDRATION] Populating Category Map with ${map.length} entries.`);
+    console.log(`[HYDRATION] Syncing Category Map for Branch: ${targetBranch.toUpperCase()}`);
     
     // Preserve existing selection if possible
     const currentVal = select.value;
     
+    // Filter by Branch Architecture
+    const filtered = supportedIds 
+        ? allCategories.filter(cat => supportedIds.includes(cat.id))
+        : allCategories;
+
     // Clear and Fill
-    select.innerHTML = map.map(item => `
+    select.innerHTML = filtered.map(item => `
         <option value="${item.id}">${item.label}</option>
     `).join('');
 
