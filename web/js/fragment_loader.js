@@ -191,8 +191,9 @@ const FragmentLoader = {
             window.auditFragmentHydration(fragName, 'error', err.message);
         }
 
-        // --- [v1.41.161] AUTO-RESCUE FAILOVER ---
-        if (fragmentPath !== 'fragments/diagnostic_rescue.html') {
+        // --- [v1.41.161/163] AUTO-RESCUE FAILOVER ---
+        const rescueEnabled = window.CONFIG?.ui_settings?.enable_rescue_failover !== false;
+        if (rescueEnabled && fragmentPath !== 'fragments/diagnostic_rescue.html') {
             console.warn(`[FragmentLoader] TRIGGERING AUTO-RESCUE for #${targetId} (Source: ${fragmentPath})`);
             this._executeLoad(targetId, 'fragments/diagnostic_rescue.html');
             return;
