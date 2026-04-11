@@ -400,6 +400,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (typeof eel !== 'undefined' && typeof eel.get_global_config === 'function') {
             const config = await eel.get_global_config()();
             window.GLOBAL_CONFIG = config;
+            window.CONFIG = config; // Ensure legacy/standard references are also updated (v1.45.310 Sync)
             
             // [v1.43] MASTER GEOMETRY SYNC
             syncUiGeometry(config);
