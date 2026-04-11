@@ -160,6 +160,12 @@ window.MWV_UI = (() => {
             auditBtn.style.display = showAudit ? 'flex' : 'none';
         }
 
+        const technicalBtn = document.getElementById('header-btn-status');
+        if (technicalBtn) {
+            const showTechnical = !!(registry.config.enable_technical_hud);
+            technicalBtn.style.display = showTechnical ? 'flex' : 'none';
+        }
+
         // --- Geometry Recalculation ---
         updateGeometry();
     }

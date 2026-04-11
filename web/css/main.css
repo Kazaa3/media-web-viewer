@@ -166,6 +166,18 @@ body.mwv-hide-footer { --footer-height: 0px; }
     position: relative;
 }
 
+#header-btn-status:hover {
+    background: rgba(0, 122, 255, 0.2) !important;
+    border-color: rgba(0, 122, 255, 0.4) !important;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.2);
+}
+
+#header-btn-status.active {
+    background: #007aff !important;
+    color: white !important;
+    border-color: #007aff !important;
+}
+
 #header-btn-auditor:hover {
     background: rgba(0, 255, 127, 0.2) !important;
     border-color: rgba(0, 255, 127, 0.4) !important;

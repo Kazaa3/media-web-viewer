@@ -116,12 +116,7 @@ onclick="toggleMenuBar()"
                 <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
                     data-category="database">Database</button>
                 
-                <button id="nav-btn-status" class="menu-item-btn" 
-                    style="color: #00ffcc; font-weight: 900; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); margin-right: 4px;"
-                    onclick="switchMainCategory('status', this)">
-                    <svg width="12" height="12" style="margin-right: 6px;"><use href="#icon-sparkles"></use></svg>
-                    STATUS
-                </button>
+                <!-- nav-btn-status removed (v1.41.152) -->
 
                 <!-- Secondary Systems (Mega-Nav Integration) -->
                 <button id="nav-btn-file" class="menu-item-btn" onclick="switchMainCategory('file', this)" data-category="file">Browser</button>
@@ -153,6 +148,15 @@ onclick="toggleMenuBar()"
 
         <!-- System Controls (Right) -->
         <div class="nav-cluster secondary-cluster" style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
+            <!-- Technical HUD Toggle (v1.41.152) -->
+            <button id="header-btn-status" class="tab-btn" title="Toggle Technical HUD"
+                onclick="if(typeof toggleTechnicalHUD === 'function') toggleTechnicalHUD()"
+                style="padding: 6px; border-radius: 50%; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2); cursor: pointer; display: none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+            </button>
+
             <!-- Diagnostics Sidebar Overlay Toggle -->
             <button id="header-btn-diag-overlay" class="tab-btn" title="Toggle System Diagnostics"
                 onclick="toggleDiagnosticsSidebar()"

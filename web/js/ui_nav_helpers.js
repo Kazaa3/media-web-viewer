@@ -708,7 +708,6 @@ function switchMainCategory(category, btn) {
         'logbuch': 'logbuch',
         'system': 'options',
         'diagnostics': 'debug',
-        'status': 'debug',
         'edit': 'edit',
         'reporting': 'reporting',
         'debug': 'debug',
