@@ -379,24 +379,30 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
         "library_category_map": [
             {"id": "all",             "label": "ALLE MEDIEN"},
-            {"id": "audio",           "label": "AUDIO (ALLE)"},
-            {"id": "audio_native",    "label": "AUDIO (NATIV)"},
-            {"id": "audio_transcode", "label": "AUDIO (UMWANDLUNG)"},
-            {"id": "audiobook",       "label": "HÖRBÜCHER"},
-            {"id": "sampler",         "label": "SAMPLER / MIXES"},
-            {"id": "video",           "label": "VIDEO (ALLE)"},
-            {"id": "video_native",    "label": "VIDEO (NATIV)"},
-            {"id": "video_pal",       "label": "VIDEO (PAL TRANSCODE)"},
-            {"id": "video_iso",       "label": "DVD / ISO IMAGES"},
-            {"id": "bilder",          "label": "BILDER / FOTOS"},
-            {"id": "ebooks",          "label": "E-BOOKS"},
-            {"id": "unknown",         "label": "UNBEKANNT"}
+            {"id": "audio",           "label": "audio"},
+            {"id": "album",           "label": "album"},
+            {"id": "single",          "label": "single"},
+            {"id": "hörbuch",         "label": "hörbuch"},
+            {"id": "sampler",         "label": "sampler"},
+            {"id": "soundtrack",      "label": "soundtrack"},
+            {"id": "video",           "label": "video"},
+            {"id": "video_iso",       "label": "iso-image"},
+            {"id": "bilder",          "label": "bilder"},
+            {"id": "epub",            "label": "epub"},
+            {"id": "docs",            "label": "dokumente"},
+            {"id": "archives",        "label": "archiv"},
+            {"id": "unknown",         "label": "unbekannt"}
         ],
 
         "branch_architecture_registry": {
-            "audio":      ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler", "video", "video_native", "video_iso", "bilder"],
-            "extended":   ["all", "audio", "audio_native", "audio_transcode", "audiobook", "sampler", "video", "video_native", "video_iso", "bilder", "ebooks", "unknown"]
+            "audio":      ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack"],
+            "multimedia": ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "extended":   ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            
+            # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
+            "media":      ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"], 
+            "library":    ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "database":   ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
         },
 
         # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---

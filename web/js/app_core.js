@@ -213,7 +213,7 @@ window.hydrateCategoryDropdown = function(branchId) {
     if (targetBranch === 'player') targetBranch = 'media';
     if (targetBranch === 'explorer') targetBranch = 'database';
 
-    const supportedIds = supportMap ? supportMap[targetBranch] : null;
+    const supportedIds = supportMap ? (supportMap[targetBranch] || supportMap[window.CONFIG?.branch_id] || null) : null;
 
     if (!allCategories || !Array.isArray(allCategories)) {
         console.warn("[HYDRATION] No library_category_map found in config.");
