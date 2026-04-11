@@ -168,6 +168,9 @@ body.mwv-hide-footer { --footer-height: 0px; }
 
 .tab-content.active {
     display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: var(--bg-primary); /* Ensure we have a solid base to prevent 'blackouts' */
     flex-direction: column !important;
     height: 100% !important;
     width: 100% !important;

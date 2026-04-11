@@ -292,6 +292,38 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
                 }
             });
+            WM.register('video', { 
+                shellId: 'video-panel-container', 
+                fragmentId: 'video-main-viewport', 
+                fragmentPath: 'fragments/video_cinema.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
+                }
+            });
+            WM.register('tools', { 
+                shellId: 'tools-panel-container', 
+                fragmentId: 'tools-main-viewport', 
+                fragmentPath: 'fragments/tools_dashboard.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
+                }
+            });
+            WM.register('logbuch', { 
+                shellId: 'logbook-tab-container', 
+                fragmentId: 'logbook-main-viewport', 
+                fragmentPath: 'fragments/logbook_view.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
+                }
+            });
+            WM.register('tests', { 
+                shellId: 'tests-panel-container', 
+                fragmentId: 'tests-main-viewport', 
+                fragmentPath: 'fragments/test_sentinel.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
+                }
+            });
         }
 
         // Shared background fragments (Immediate parallel load)
