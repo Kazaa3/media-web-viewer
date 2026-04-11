@@ -297,6 +297,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_session_log": True,     # Persistent session-specific log
         "enable_symlink": True,         # logs/current -> session_folder
         "use_session_subfolders": True, # logs/<session_id>/...
+        "enable_ui_console": True,      # Real-time UI log buffer
         "session_id_format": "{timestamp}_{pid}", # e.g. 1775416263_1001527 for sorting
         
         "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
@@ -1018,6 +1019,26 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     # --- TEMPLATE REGISTRY (v1.35.96 Style Sheets) ---
     "templates": {
+        "environment": {
+            "env_type": "unknown",
+            "env_name": "unknown",
+            "env_path": "unknown",
+            "python_version": "unknown",
+            "python_executable": "unknown",
+            "platform": "unknown",
+            "venv_active": False,
+            "cwd": "unknown",
+            "os": "unknown",
+            "pid": 0,
+            "browser_pid": 0,
+            "testbed_pid": 0,
+            "selenium_pid": 0,
+            "log_level": "INFO",
+            "release": "unknown",
+            "machine": "unknown",
+            "debug_flags": {},
+            "version": "unknown"
+        },
         "logbook_entry": {
             "name": "",
             "filename": "",

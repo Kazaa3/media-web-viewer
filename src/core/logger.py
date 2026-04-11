@@ -277,9 +277,10 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
             print(f"STDOUT: [Logger] Error initializing debug log: {e}")
 
     # E. UI Buffer Handler
-    ui_handler = UIHandler()
-    ui_handler.setFormatter(formatter)
-    root_logger.addHandler(ui_handler)
+    if REGISTRY.get("enable_ui_console", True):
+        ui_handler = UIHandler()
+        ui_handler.setFormatter(formatter)
+        root_logger.addHandler(ui_handler)
 
     # Suppress noisy third-party logs
     logging.getLogger("geventwebsocket.handler").setLevel(logging.WARNING)
