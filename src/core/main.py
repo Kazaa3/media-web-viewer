@@ -5153,15 +5153,25 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                         is_audio = any(f.lower().endswith(tuple(AUDIO_EXTENSIONS)) for f in media_files)
                         cat = 'audio' if is_audio else 'video'
                         
-                        # Forensic Categorization Logic (v1.45.130)
+                        # Forensic Categorization Logic (v1.45.130-EXT)
+                        folder_name = d.name.lower()
                         genre = nfo_data.get('genre', '').lower()
                         artist = nfo_data.get('artist', '').lower()
                         
-                        if 'klassik' in genre or 'classical' in genre: cat = 'klassik'
-                        elif 'soundtrack' in genre or 'ost' in genre: cat = 'soundtrack'
+                        # Optical Media Check (v1.45.130)
+                        has_dvd = 'video_ts' in [sd.lower() for sd in dirs]
+                        has_bd = 'bdmv' in [sd.lower() for sd in dirs]
+                        
+                        if has_dvd or has_bd: cat = 'video_iso'
+                        elif 'klassik' in genre or 'classical' in genre or 'klassik' in folder_name: cat = 'klassik'
+                        elif 'soundtrack' in genre or 'ost' in genre or 'ost' in folder_name: cat = 'soundtrack'
+                        elif 'podcast' in genre or 'podcast' in folder_name: cat = 'podcast'
+                        elif 'hörbuch' in genre or 'audiobook' in genre or 'hörbuch' in folder_name: cat = 'hörbuch'
+                        elif ('mix' in folder_name or 'mixtape' in folder_name) and any(va in artist for va in ['va', 'varios', 'various artists']): cat = 'mix'
                         elif any(va in artist for va in ['va', 'varios', 'various artists']): cat = 'compilation'
                         elif m_count > 1 and is_audio: cat = 'album'
                         elif m_count > 1 and not is_audio: cat = 'series'
+                        elif 'doku' in folder_name or 'dokumentation' in folder_name: cat = 'documentation'
                         
                         collected_items.append({
                             'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,

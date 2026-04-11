@@ -35,11 +35,12 @@ EXTENSION_REGISTRY = {
     "audio": ALL_AUDIO_EXTENSIONS,
     "video": ALL_VIDEO_EXTENSIONS,
     "pictures": PICTURE_EXTENSIONS,
-    "documents": DOCUMENT_EXTENSIONS,
+    "documents": DOCUMENT_EXTENSIONS | {".nfo"},
     "ebooks": EBOOK_EXTENSIONS,
     "disk_images": DISK_IMAGE_EXTENSIONS,
     "playlists": PLAYLIST_EXTENSIONS,
-    "archives": ARCHIVE_EXTENSIONS
+    "archives": ARCHIVE_EXTENSIONS,
+    "nfo": {".nfo"}
 }
 
 MASTER_CAT_MAP = {
@@ -82,9 +83,29 @@ MASTER_CAT_MAP = {
         "aliases": ["sampler", "mix", "compilation"],
         "extensions": ALL_AUDIO_EXTENSIONS
     },
+    "compilation": {
+        "internal": "audio",
+        "aliases": ["compilation", "various artists", "va"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "podcast": {
+        "internal": "audio",
+        "aliases": ["podcast", "cast", "show"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "mix": {
+        "internal": "audio",
+        "aliases": ["mix", "mixtape", "set", "dj-set"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
     "soundtrack": {
         "internal": "audio",
         "aliases": ["soundtrack", "ost", "score"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "klassik": {
+        "internal": "audio",
+        "aliases": ["klassik", "classical", "opera"],
         "extensions": ALL_AUDIO_EXTENSIONS
     },
     "video": {
@@ -98,9 +119,19 @@ MASTER_CAT_MAP = {
     },
     "video_iso": {
         "internal": "video_iso",
-        "aliases": ["video iso", "video-iso", "iso-image", "dvd iso"],
+        "aliases": ["video iso", "video-iso", "iso-image", "dvd iso", "optical folder"],
         "extensions": DISK_IMAGE_EXTENSIONS,
         "transcode": DISK_IMAGE_EXTENSIONS
+    },
+    "series": {
+        "internal": "video",
+        "aliases": ["series", "serie", "tv-show", "staffel"],
+        "extensions": ALL_VIDEO_EXTENSIONS
+    },
+    "documentation": {
+        "internal": "video",
+        "aliases": ["documentation", "dokumentation", "doku", "report"],
+        "extensions": ALL_VIDEO_EXTENSIONS
     },
     "pictures": {
         "internal": "pictures",
@@ -131,6 +162,11 @@ MASTER_CAT_MAP = {
         "internal": "archives",
         "aliases": ["archiv", "archives", "zip", "rar"],
         "extensions": ARCHIVE_EXTENSIONS
+    },
+    "nfo": {
+        "internal": "nfo",
+        "aliases": ["nfo", "info", "metadata"],
+        "extensions": {".nfo"}
     }
 }
 

@@ -11,7 +11,7 @@ window.CollectionManager = (function() {
      * Supports: "Movie Name (2024)", "Artist - Album (2023)", "Series S01"
      */
     function parseFolderName(name) {
-        if (!name) return { title: 'Unknown', year: '' };
+        if (!name) return { title: 'Unknown', year: '', category_prefix: '' };
         
         // Remove [FOLDER] prefix if present
         let cleanName = name.replace(/^\[FOLDER\]\s+/, '');
@@ -19,8 +19,17 @@ window.CollectionManager = (function() {
         const result = {
             title: cleanName,
             year: '',
-            artist: ''
+            artist: '',
+            category_prefix: ''
         };
+
+        // 0. Detect Specialized Category Prefixes (v1.45.130-EXT)
+        const prefixMatch = cleanName.match(/^\[(MIX|PODCAST|AUDIOBOOK)\]\s*/i);
+        if (prefixMatch) {
+            result.category_prefix = prefixMatch[1].toUpperCase();
+            cleanName = cleanName.replace(/^\[.*?\]\s*/i, '');
+            result.title = cleanName;
+        }
         
         // 1. Regex for (Year) pattern: "Title (2024)"
         const yearMatch = cleanName.match(/\((\d{4})\)$/);
