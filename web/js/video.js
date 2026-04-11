@@ -268,50 +268,56 @@ function showPlaybackError(title, message, technicalInfo = {}) {
  */
 function renderVideoQueue() {
     const list = document.getElementById('player-playlist-container');
+    const emptyDiv = document.getElementById('player-playlist-empty');
     if (!list) return;
 
     console.log("[Video] Rendering video queue...");
     list.innerHTML = '';
 
-    if (currentPlaylist.length === 0) {
-        const emptyDiv = document.getElementById('player-playlist-empty');
+    // 1. Target Global SSOT (v1.45.110)
+    const playlist = window.currentPlaylist || [];
+
+    if (playlist.length === 0) {
         if (emptyDiv) emptyDiv.style.display = 'block';
         return;
     }
 
-    const emptyDiv = document.getElementById('player-playlist-empty');
     if (emptyDiv) emptyDiv.style.display = 'none';
 
-    const videoItems = currentPlaylist.filter(i => isVideoItem(i));
+    // 2. Filter for Video Capabilities
+    const videoItems = playlist.filter(i => isVideoItem(i));
     const countEl = document.getElementById('cinema-queue-item-count');
     if (countEl) countEl.innerText = videoItems.length;
 
+    // 3. Build UI
     videoItems.forEach((item, index) => {
         let div = document.createElement('div');
         div.className = 'implementation-encapsulated-state-buffer-node';
-        if (typeof currentVideoItem !== 'undefined' && currentVideoItem && currentVideoItem.path === item.path) {
+        
+        const activeItem = window.currentVideoItem || null;
+        if (activeItem && activeItem.path === item.path) {
             div.classList.add('playing');
         }
 
         let tags = item.tags || {};
-        // v1.35.64: Prepend Stage Label [S#] if present
         const stagePrefix = item.stage ? `[${item.stage}] ` : '';
-        const titleDisplay = stagePrefix + (tags.title || item.name);
+        const titleDisplay = stagePrefix + (tags.title || item.name || 'Unknown');
+        const filename = (item.path || '').split('/').pop();
         
         div.innerHTML = `
             <div style="flex: 1;">
                 <strong style="display:block; font-size: 0.9em; color: var(--text-color);">${titleDisplay}</strong>
-                <span style="font-size: 0.8em; color: #888;">${item.path.split('/').pop()}</span>
+                <span style="font-size: 0.8em; color: #888;">${filename}</span>
             </div>
             <div style="display: flex; gap: 5px;">
-                <button onclick="event.stopPropagation(); removeItem(${index}); renderVideoQueue();" style="background:transparent; border:none; cursor:pointer; color: #f44;">
+                <button onclick="event.stopPropagation(); if (typeof removeItem === 'function') removeItem(${index});" style="background:transparent; border:none; cursor:pointer; color: #f44;">
                     <svg width="12" height="12"><use href="#icon-delete"></use></svg>
                 </button>
             </div>
         `;
 
         div.onclick = () => {
-            if (typeof playVideo === 'function') playVideo(item, item.path);
+            if (typeof playVideo === 'function') playVideo(item);
             renderVideoQueue();
         };
 
@@ -319,4 +325,4 @@ function renderVideoQueue() {
     });
 }
 
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.45.110-EVO-REBUILD

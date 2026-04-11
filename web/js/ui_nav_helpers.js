@@ -8,7 +8,7 @@ window.mwv_init_actions = {
     'player': () => {
         const runInit = () => {
             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof renderAudioQueue === 'function') renderAudioQueue();
             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
         };
 
@@ -20,7 +20,7 @@ window.mwv_init_actions = {
             runInit();
         }
     },
-    'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+    'playlist': () => { if (typeof renderAudioQueue === 'function') renderAudioQueue(); },
     'multimedia': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
     'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
     'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
@@ -619,7 +619,7 @@ function switchPlayerView(viewId) {
         });
 
         // Trigger logic based on view
-        if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') renderPlaylist();
+        if (viewId === 'warteschlange' && typeof renderAudioQueue === 'function') renderAudioQueue();
         if (viewId === 'visualizer' && typeof initVisualizer === 'function') initVisualizer();
         if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') refreshSavedPlaylists();
 
@@ -873,7 +873,19 @@ const SUB_NAV_ALIASES = {
     "logbuch": "logbuch",
     "video": "video",
     "tests": "tests",
-    "status": "status"
+    "status": "status",
+    // [v1.45.220] Forensic Content Aliases -> Media Controller
+    "audio": "media",
+    "audio_native": "media",
+    "audio_transcode": "media",
+    "album": "media",
+    "single": "media",
+    "hörbuch": "media",
+    "sampler": "media",
+    "soundtrack": "media",
+    "video_iso": "media",
+    "bilder": "media",
+    "epub": "media"
 };
 
 /**

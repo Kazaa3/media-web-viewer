@@ -50,9 +50,9 @@ function mwv_force_hydration() {
     window.allLibraryItems = mockTracks;
     
     // Notify Components
-    if (typeof renderPlaylist === 'function') {
+    if (typeof renderAudioQueue === 'function') {
         console.log(">>> [RECOVERY] Triggering manual playlist render...");
-        renderPlaylist();
+        renderAudioQueue();
     }
     
     if (typeof updateLibraryUI === 'function') {

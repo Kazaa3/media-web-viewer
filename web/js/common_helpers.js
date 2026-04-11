@@ -50,7 +50,7 @@ async function syncCoreRegistry() {
             }
             
             console.info("[FE-AUDIT] STAGE 1 COMPLETE: Forensic Handshake synchronized.");
-            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof renderAudioQueue === 'function') renderAudioQueue();
         } catch (e) {
             console.warn("[FE-AUDIT] STAGE 1 CRITICAL: Forensic Handshake stalling or failed.", e.message);
         }
@@ -526,33 +526,50 @@ function setAppModeUI(mode) {
  * Controls whether the UI shows Mock, Real DB, or Both items.
  * M: Mock | R: Real | B: Both
  */
+/**
+ * Hydration Mode Controller (v1.45.105).
+ * Controls whether the UI shows Mock, Real DB, or Both items.
+ * Centralized in common_helpers.js as the SSOT for hydration state.
+ */
 function setHydrationMode(mode) {
-    console.info(`>>> [Hydration] Switching to mode: ${mode}`);
+    console.info(`>>> [Hydration] Switching to mode: ${mode.toUpperCase()}`);
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
     
+    // 1. Sync Backend if available
     if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
         eel.set_hydration_mode(mode)();
     }
     
-    // Update HUD LEDs
-    const ledMap = { 'mock': 'hud-btn-M', 'real': 'hud-btn-R', 'both': 'hud-btn-B' };
-    document.querySelectorAll('.hud-btn-tiny').forEach(btn => {
-        btn.style.color = 'rgba(255,255,255,0.4)';
-        btn.style.background = 'transparent';
+    // 2. UI Feedback: Update LED indicators in both HUD and Footer
+    ['M', 'R', 'B'].forEach(id => {
+        const btnId = `hydr-btn-${id}`;
+        const hudId = `hud-btn-${id}`;
+        [btnId, hudId].forEach(elId => {
+            const btn = document.getElementById(elId);
+            if (btn) {
+                const isActive = (mode === 'mock' && id === 'M') || (mode === 'real' && id === 'R') || (mode === 'both' && id === 'B');
+                btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
+                btn.style.background = isActive ? 'rgba(46, 204, 113, 0.1)' : 'transparent';
+                if (isActive) btn.classList.add('active'); else btn.classList.remove('active');
+            }
+        });
     });
-    
-    const activeBtn = document.getElementById(ledMap[mode]);
-    if (activeBtn) {
-        activeBtn.style.color = '#fff';
-        activeBtn.style.background = 'var(--accent-color)';
-    }
 
     if (typeof showToast === 'function') showToast(`Hydration: ${mode.toUpperCase()}`, 1000);
     
-    // Trigger Re-hydration
-    if (typeof refreshLibrary === 'function') refreshLibrary();
-    else if (typeof loadLibrary === 'function') loadLibrary();
+    // 3. TRIGGER ATOMIC RE-HYDRATION PULSE (v1.45.105)
+    // We use the bridge to ensure both Player and Library are updated.
+    if (typeof triggerModuleHydration === 'function') {
+        const activeWin = (window.WindowManager && window.WindowManager.activeWindow) || 'media';
+        triggerModuleHydration(activeWin);
+        // Force secondary update for library if we aren't there
+        if (activeWin !== 'library') triggerModuleHydration('library');
+    } else {
+        // Fallback for standalone modules
+        if (typeof loadLibrary === 'function') loadLibrary();
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+    }
 }
 
 // Initial UI Sync for Hydration Mode

@@ -21,33 +21,33 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
     <!-- Core Styles -->
-    <link rel="stylesheet" href="css/main.css?v=1775841125">
+    <link rel="stylesheet" href="css/main.css?v=1.45.105">
 
     <!-- System & Backend Integration (Load Early) -->
     <script src="/eel.js"></script>
     <!-- Modular Application Helpers -->
-    <script src="js/theme_helpers.js?v=1.45.100"></script>
-    <script src="js/fragment_loader.js?v=1.45.100"></script>
-    <script src="js/window_manager.js?v=1.45.100"></script>
-    <script src="js/environment.js?v=1.45.100"></script>
-    <script src="js/common_helpers.js?v=1.45.100"></script>
-    <script src="js/system_helpers.js?v=1.45.100"></script>
-    <script src="js/ui_core.js?v=1.45.100"></script>
-    <script src="js/ui_nav_helpers.js?v=1.45.100"></script>
-    <script src="js/trace_helpers.js?v=1.45.100"></script>
-    <script src="js/db.js?v=1.45.100"></script>
-    <script src="js/video.js?v=1.45.100"></script>
-    <script src="js/audioplayer.js?v=1.45.100"></script>
-    <script src="js/mwv_hotkeys.js?v=1.45.100"></script>
-    <script src="js/mediacontrols.js?v=1.45.100"></script>
-    <script src="js/bibliothek.js?v=1.45.100"></script>
-    <script src="js/translations.js?v=1.45.100"></script>
-    <script src="js/item.js?v=1.45.100"></script>
-    <script src="js/options_helpers.js?v=1.45.100"></script>
-    <script src="js/diagnostics/sidebar_controller.js?v=1.45.100"></script>
-    <script src="js/app_core.js?v=1.45.100"></script>
-    <script src="js/gui_diagnostics.js?v=1.45.100"></script>
-    <script src="js/dom_hud.js?v=1.45.100"></script>
+    <script src="js/theme_helpers.js?v=1.45.105"></script>
+    <script src="js/fragment_loader.js?v=1.45.105"></script>
+    <script src="js/window_manager.js?v=1.45.105"></script>
+    <script src="js/environment.js?v=1.45.105"></script>
+    <script src="js/common_helpers.js?v=1.45.105"></script>
+    <script src="js/system_helpers.js?v=1.45.105"></script>
+    <script src="js/ui_core.js?v=1.45.105"></script>
+    <script src="js/ui_nav_helpers.js?v=1.45.105"></script>
+    <script src="js/trace_helpers.js?v=1.45.105"></script>
+    <script src="js/db.js?v=1.45.105"></script>
+    <script src="js/video.js?v=1.45.105"></script>
+    <script src="js/audioplayer.js?v=1.45.105"></script>
+    <script src="js/mwv_hotkeys.js?v=1.45.105"></script>
+    <script src="js/mediacontrols.js?v=1.45.105"></script>
+    <script src="js/bibliothek.js?v=1.45.105"></script>
+    <script src="js/translations.js?v=1.45.105"></script>
+    <script src="js/item.js?v=1.45.105"></script>
+    <script src="js/options_helpers.js?v=1.45.105"></script>
+    <script src="js/diagnostics/sidebar_controller.js?v=1.45.105"></script>
+    <script src="js/app_core.js?v=1.45.105"></script>
+    <script src="js/gui_diagnostics.js?v=1.45.105"></script>
+    <script src="js/dom_hud.js?v=1.45.105"></script>
 
     <style>
         .theme-toggle {
@@ -79,10 +79,46 @@
     </style>
     </style>
 
-    <!-- Modulo-Core Synchronized Bootstrapper (v1.35.21) -->
-    <!-- Legacy inline bootstrapper deactivated to prevent race conditions -->
+    <!-- [v1.45.105] PROACTIVE ATOMIC BOOTSTRAPPER -->
     <script>
-        console.log("DOM: Unified Orchestration Layer active.");
+        /**
+         * Unified Forensic Bootstrap Loop (v1.45.105)
+         * Ensures Backend Config is synced before UI activation.
+         */
+        async function runAtomicBootstrap() {
+            console.warn("[ATOMIC-BOOT] Starting Orchestration Loop...");
+            try {
+                // 1. Handshake with Core Registry
+                if (typeof syncCoreRegistry === 'function') {
+                    await syncCoreRegistry();
+                }
+
+                // 2. Proactive Configuration Wait
+                let attempts = 0;
+                while (!window.CONFIG && attempts < 50) {
+                    await new Promise(r => setTimeout(r, 100));
+                    attempts++;
+                }
+
+                if (!window.CONFIG) {
+                    console.error("[ATOMIC-BOOT] CONFIG Handshake Timeout.");
+                } else {
+                    console.info("[ATOMIC-BOOT] CONFIG Load Complete. Activating Hydra Pulse...");
+                }
+
+                // 3. Initiate Window Management & Hydration Bridge
+                if (window.WindowManager) {
+                    await WindowManager.activate('player', true);
+                }
+                
+                console.log("[ATOMIC-BOOT] Bootstrap Heartbeat Established.");
+
+            } catch (err) {
+                console.error("[ATOMIC-BOOT] CRITICAL ORCHESTRATION FAILURE:", err);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', runAtomicBootstrap);
     </script>
 </head>
 
@@ -898,33 +934,28 @@
                 <button class="hud-btn-tiny"
                     onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
             </div>
-            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..."
-                title="Database layer (SQLite / Connection)">
+            <!-- Swiss Army Cluster (v1.45.105 Integration) -->
+            <div id="hud-fe" class="hud-group" title="Frontend: DOM-Sync & Registry">
+                <span class="hud-label">FE</span>
+                <div class="hud-led"></div>
+                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+            </div>
+            <div id="hud-be" class="hud-group" title="Backend: Eel & Process">
+                <span class="hud-label">BE</span>
+                <div class="hud-led"></div>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
+            </div>
+            <div id="hud-db" class="hud-group" title="Database: SQLite & Con">
                 <span class="hud-label">DB</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
-                <button class="hud-btn-tiny"
-                    onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
             </div>
-
-            <!-- Hydration Master Control (v1.41.00) -->
-            <div id="hud-hydr" class="hud-group"
-                title="Hydration Mode: 1:Connection | 2:FS-Mock | 3:Realistic | 4:Database">
+            <div id="hud-hydr" class="hud-group" title="Hydration: M(ock) R(eal) B(oth)">
                 <span class="hud-label">HYDR</span>
                 <div class="hud-led"></div>
-                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')"
-                    title="Stage 1-3: Mock Only">M</button>
-                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')"
-                    title="Stage 4: Real Database Only">R</button>
-                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')"
-                    title="Hybrid: Mock + Real">B</button>
-            </div>
-            <div id="hud-diag" class="hud-group" title="Diagnostic Toggles (RAW/BYPS)">
-                <span class="hud-label">RX</span>
-                <div class="hud-led"></div>
-                <button id="footer-btn-RAW" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
-                <button id="footer-btn-BYPS" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')">M</button>
+                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')">R</button>
+                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')">B</button>
             </div>
             <button class="footer-classic-btn yellow"
                 onclick="if(window.MWV_Diagnostics) window.MWV_Diagnostics.toggle();"
@@ -987,23 +1018,23 @@
 
     <!-- Cleaned up redundant layout-footer -->
 
-    <script src="js/version.js?v=1.45.100"></script>
-    <script src="js/coverflow_controller.js?v=1.45.100"></script>
-    <script src="js/video_test_suite.js?v=1.45.100"></script>
-    <script src="js/stats-overlay.js?v=1.45.100"></script>
-    <script src="js/diagnostics_helpers.js?v=1.45.100"></script>
+    <script src="js/version.js?v=1.45.105"></script>
+    <script src="js/coverflow_controller.js?v=1.45.105"></script>
+    <script src="js/video_test_suite.js?v=1.45.105"></script>
+    <script src="js/stats-overlay.js?v=1.45.105"></script>
+    <script src="js/diagnostics_helpers.js?v=1.45.105"></script>
     <!-- Modular Recovery & Data Audit Diagnostics (v1.41.00) -->
-    <script src="js/diagnostics/recovery_manager.js?v=1.45.100"></script>
-    <script src="js/diagnostics/gui_integrity.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_negative.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_positive.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/bibliothek_stages.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_transcoding.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_real.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_ffmpeg_mock.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_format_real.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_transcode_real.js?v=1.45.100"></script>
-    <script src="js/diagnostics/stages/stage_video_universal.js?v=1.45.100"></script>
+    <script src="js/diagnostics/recovery_manager.js?v=1.45.105"></script>
+    <script src="js/diagnostics/gui_integrity.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_negative.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_positive.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/bibliothek_stages.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_transcoding.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_real.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_ffmpeg_mock.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_format_real.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_transcode_real.js?v=1.45.105"></script>
+    <script src="js/diagnostics/stages/stage_video_universal.js?v=1.45.105"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
 
     <!-- Externally loaded SVG icons/* --- Context Menu (Modernized v1.34) --- */
@@ -1017,7 +1048,7 @@
     <div id="dom-auditor-container"></div>
     <!-- NEW: Status Notifications Container (Integrated v1.34-1.37 Bridge) -->
     <div id="status-notification-container"></div>
-    <script src="js/diagnostics/dom_auditor.js?v=1.45.100"></script>
+    <script src="js/diagnostics/dom_auditor.js?v=1.45.105"></script>
 </body>
 
 </html>

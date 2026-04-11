@@ -79,10 +79,10 @@ window.addEventListener('error', function (e) {
  * Central entry point for cross-module coordination and global event handling.
  */
 
-// --- Global Application State ---
+// --- Global Application State (Consolidated v1.45.110) ---
 let activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
-// let currentLogbuchEntries = [];
-let currentPlaylist = []; // Shared across Audio/Video modules
+window.currentPlaylist = [];    // Unified Global Queue (SSOT)
+window.playlistIndex = -1;      // Unified Global Pointer (SSOT)
 let currentVideoItem = null;
 let currentVideoPath = null;
 let vjsPlayer = null; // Defined as a shared global in Orchestrator
@@ -319,7 +319,7 @@ function addToQueue(item) {
     // Avoid duplicates in the active queue if desired
     if (!currentPlaylist.find(i => i.path === item.path)) {
         currentPlaylist.push(item);
-        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof showToast === 'function') showToast(t('pl_added_to_queue') || "Added to queue");
     } else {
         if (typeof showToast === 'function') showToast(t('pl_already_in_queue') || "Already in queue", "info");
@@ -347,8 +347,8 @@ window.switchTab = function (tabId, btn) {
     }
 
     // Cross-tab logic requirements
-    if ((tabId === 'playlist' || tabId === 'player') && typeof renderPlaylist === 'function') {
-        renderPlaylist();
+    if ((tabId === 'playlist' || tabId === 'player') && typeof renderAudioQueue === 'function') {
+        renderAudioQueue();
     }
     if (tabId === 'library' && typeof renderLibrary === 'function') {
         renderLibrary();
@@ -560,7 +560,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         fragmentPath: 'fragments/player_queue.html',
         onActivate: () => {
             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
-            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof renderAudioQueue === 'function') renderAudioQueue();
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
         }
     });
@@ -805,6 +805,84 @@ async function showStartupDashboard() {
 }
 
 // Map globally for sidebar access
+/**
+ * triggerModuleHydration (v1.45.100)
+ * Mandatory bridge for the WindowManager to ensure data integrity during window swaps.
+ */
+async function triggerModuleHydration(name) {
+    console.info(`[HYDRATION] Pulse triggered for module: ${name.toUpperCase()}`);
+    
+    // 1. Ensure Library is loaded if targeting data-heavy views
+    if (['player', 'library', 'explorer'].includes(name)) {
+        if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+            console.warn(`[HYDRATION] Library empty during ${name} activation. Forcing loadLibrary...`);
+            if (typeof loadLibrary === 'function') {
+                await loadLibrary();
+            }
+        }
+    }
+
+    // 2. Specific Module Sync
+    if (name === 'player' || name === 'audioplayer') {
+        if (typeof syncQueueWithLibrary === 'function') {
+            await syncQueueWithLibrary();
+        }
+    } else if (name === 'library' || name === 'multimedia') {
+        if (typeof renderLibrary === 'function') {
+            renderLibrary();
+        }
+    }
+
+    console.log(`[HYDRATION] Pulse complete for: ${name}`);
+}
+
+window.triggerModuleHydration = triggerModuleHydration;
 window.showStartupDashboard = showStartupDashboard;
 
-// Created with MWV v1.45.100-EVO-REBUILD
+
+/**
+ * syncQueueWithLibrary (v1.45.110 Centralized)
+ * Hydrates the global currentPlaylist from the localized library cache.
+ * Branch-aware filtering is primarily handled by the backend, this stage
+ * performs final capability mapping and UI notification.
+ */
+function syncQueueWithLibrary() {
+    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+        console.warn("[Sync] Library empty. Skipping queue hydration.");
+        return;
+    }
+
+    const hmode = window.__mwv_hydration_mode || 'both';
+    console.warn(`[Sync] Hydrating Global Queue... Mode: ${hmode}, Items: ${allLibraryItems.length}`);
+
+    // Stage 1: Local Filter Pulse (Mock/Real/Both)
+    // Branch-level filtering happened in the backend library fetch.
+    let filtered = allLibraryItems.filter(item => {
+        const nameMock = item.name && item.name.startsWith('[MOCK]');
+        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
+        
+        if (hmode === 'mock') return mockFlag || !!item.stage;
+        if (hmode === 'real') return !mockFlag && !item.stage;
+        return true; // 'both'
+    });
+
+    // Stage 2: Shared State Injection
+    window.currentPlaylist = filtered;
+    
+    console.info(`[Sync] Global Queue ready: ${window.currentPlaylist.length} items.`);
+
+    // Stage 3: Multi-Module UI Refresh Pulse
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
+    if (typeof renderVideoQueue === 'function') renderVideoQueue();
+    
+    // Stage 4: Centralized Technical Anchors
+    if (typeof updateSyncAnchor === 'function') {
+        const dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
+                        ? window.__mwv_all_library_items.length 
+                        : (window.__mwv_last_db_count || 0);
+        const guiCount = filtered.length;
+        updateSyncAnchor(dbCount, guiCount);
+    }
+}
+
+// Created with MWV v1.45.110-EVO-REBUILD

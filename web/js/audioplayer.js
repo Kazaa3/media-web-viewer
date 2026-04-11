@@ -3,25 +3,22 @@
  * Manages the HTML5 Audio Pipeline, playlists, and playback state.
  */
 
-// --- Audio State ---
-let currentPlaylist = []; // Global Queue
-let playlistIndex = -1;
+// --- Audio State (Now Anchored into window for Orchestration v1.45.110) ---
 let isShuffle = false;
 let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
 window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 
-window.playlistIndex = playlistIndex;
-window.currentPlaylist = currentPlaylist;
+// Local access shorthand (v1.45.110 Sync)
+const currentPlaylist = window.currentPlaylist;
+// Note: playlistIndex is accessed directly via window.playlistIndex to ensure SSOT.
 
 /**
  * Empties the current player queue (v1.41.00).
  */
 function clearQueue() {
     console.warn(">>> [Queue] Clearing all items.");
-    currentPlaylist = [];
     window.currentPlaylist = [];
-    playlistIndex = -1;
     window.playlistIndex = -1;
     
     // Stop playback if something is playing
@@ -31,7 +28,7 @@ function clearQueue() {
         pipeline.src = "";
     }
     
-    if (typeof renderPlaylist === 'function') renderPlaylist();
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
     if (typeof showToast === 'function') showToast("Queue geleert", 1500);
 }
 
@@ -461,7 +458,7 @@ function toggleShuffle() {
             playlistIndex = currentPlaylist.indexOf(currentItem);
         }
     }
-    if (typeof renderPlaylist === 'function') renderPlaylist();
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
 }
 
 function toggleRepeat() {
@@ -526,15 +523,19 @@ async function playPrev() {
 function changeQueueFilter(filter) {
     console.info(">>> [Queue] Changing filter to:", filter);
     window.activeQueueFilter = filter;
-    renderPlaylist();
+    renderAudioQueue();
     if (typeof showToast === 'function') showToast(`Filter: ${filter.toUpperCase()}`, 1500);
 }
 
 /**
  * Renders the global playlist in the Playlist tab.
  */
-function renderPlaylist() {
-    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'RENDER-START', { count: currentPlaylist.length });
+/**
+ * renderAudioQueue (v1.45.110)
+ * Renders the audio-only portion of the unified global queue.
+ */
+function renderAudioQueue() {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'RENDER-START', { count: window.currentPlaylist.length });
     
     const containers = [
         document.getElementById('playlist-content-render-target'),
@@ -545,58 +546,56 @@ function renderPlaylist() {
 
     if (containers.length === 0) return;
 
-    // 1. Apply active filter (v1.35.61)
-    let isRaw = window.__mwv_raw_mode === true;
-    let filteredItems = [...(isShuffle ? shuffledPlaylist : currentPlaylist)];
+    // 1. Unified State Access (v1.45.110 SSOT)
+    let baseItems = [...(isShuffle ? shuffledPlaylist : window.currentPlaylist)];
+    
+    // 2. Branch-Aware Rendering Pruning (Audio Player only shows Audio)
+    let filteredItems = baseItems.filter(item => !isVideoItem(item));
 
-    // v1.41.00: Use Centralized CATEGORY_MAP and TECH_MAP from backend
+    // 3. Apply active sub-filters (v1.35.61)
+    let isRaw = window.__mwv_raw_mode === true;
     if (window.activeQueueFilter !== 'all' && !isRaw) {
         const catInfo = CATEGORY_MAP[window.activeQueueFilter] || { aliases: [] };
-        const allowedLabels = catInfo.aliases || [];
-        const allowedLower = allowedLabels.map(l => l.toLowerCase());
+        const allowedLower = (catInfo.aliases || []).map(l => l.toLowerCase());
         const markers = TECH_MAP[window.activeQueueFilter] || [];
 
         filteredItems = filteredItems.filter(item => {
             const rawCat = (item.category || "").toLowerCase();
             const filename = (item.name || "").toLowerCase();
-            
-            // 1. Technical Marker Check (e.g. transcoded, iso, mock, stage)
             const hasMarker = markers.some(m => {
-                if (m.startsWith('.')) return filename.endsWith(m); // Extension check
-                if (m.startsWith('_')) return filename.includes(m); // Substring check
-                return item[m] === true; // Boolean property check (e.g. is_mock, stage)
+                if (m.startsWith('.')) return filename.endsWith(m);
+                if (m.startsWith('_')) return filename.includes(m);
+                return item[m] === true;
             });
             if (hasMarker) return true;
-
-            // 2. Regular Category Match
             return allowedLower.includes(rawCat);
         });
     }
 
+    // 4. Update UI Counts
     const countEls = document.querySelectorAll('.synced-count');
     countEls.forEach(el => {
         el.innerText = `${filteredItems.length} Titel`;
         el.style.opacity = filteredItems.length === 0 ? '0.3' : '1';
     });
     
-    // Explicit ID-based counts for legacy compat
     ['queue-item-count', 'queue-item-count-warteschlange', 'queue-item-count-legacy'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerText = `${filteredItems.length} Titel`;
     });
 
+    // 5. Build Item DOM
     containers.forEach(list => {
-        list.innerHTML = ''; // Clear existing
-
+        list.innerHTML = '';
         list.ondragover = (e) => e.preventDefault();
-    list.ondrop = (e) => {
-        e.preventDefault();
-        const data = e.dataTransfer.getData("text/plain");
-        if (data) {
-            try {
-                const item = JSON.parse(data);
-                currentPlaylist.push(item);
-                renderPlaylist();
+        list.ondrop = (e) => {
+            e.preventDefault();
+            const data = e.dataTransfer.getData("text/plain");
+            if (data) {
+                try {
+                    const item = JSON.parse(data);
+                    window.currentPlaylist.push(item);
+                    renderAudioQueue();
             } catch (err) { console.error("[Playlist] Drop error", err); }
         }
     };
@@ -681,7 +680,7 @@ function renderPlaylist() {
             } else {
                 playAudio(item, 0);
             }
-            renderPlaylist();
+            renderAudioQueue();
         };
 
         // Internal Sortable DnD
@@ -709,7 +708,7 @@ function renderPlaylist() {
                     if (fromIndex === toIndex) return;
                     const movedItem = currentPlaylist.splice(fromIndex, 1)[0];
                     currentPlaylist.splice(toIndex, 0, movedItem);
-                    renderPlaylist();
+                    renderAudioQueue();
                 }
             } catch(err) {}
         };
@@ -736,7 +735,7 @@ function resetAllFilters() {
     if (filterSelect) filterSelect.value = 'all';
     
     if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-    if (typeof renderPlaylist === 'function') renderPlaylist();
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
     
     if (typeof showToast === 'function') showToast("Alle Filter zurückgesetzt & Sync erzwungen.", "success");
 }
@@ -746,7 +745,7 @@ function moveItemUp(index) {
     [currentPlaylist[index], currentPlaylist[index - 1]] = [currentPlaylist[index - 1], currentPlaylist[index]];
     if (playlistIndex === index) playlistIndex--;
     else if (playlistIndex === index - 1) playlistIndex++;
-    renderPlaylist();
+    renderAudioQueue();
 }
 
 function moveItemDown(index) {
@@ -754,14 +753,14 @@ function moveItemDown(index) {
     [currentPlaylist[index], currentPlaylist[index + 1]] = [currentPlaylist[index + 1], currentPlaylist[index]];
     if (playlistIndex === index) playlistIndex++;
     else if (playlistIndex === index + 1) playlistIndex--;
-    renderPlaylist();
+    renderAudioQueue();
 }
 
 function removeItem(index) {
     currentPlaylist.splice(index, 1);
     if (playlistIndex === index) playlistIndex = -1;
     else if (playlistIndex > index) playlistIndex--;
-    renderPlaylist();
+    renderAudioQueue();
 }
 
 // --- Player Dashboard Logic (v1.34) ---
@@ -782,7 +781,7 @@ function switchPlayerMainView(viewId) {
         setTimeout(() => target.classList.add('active'), 10);
     }
 
-    if (viewId === 'warteschlange') renderPlaylist();
+    if (viewId === 'warteschlange') renderAudioQueue();
 }
 
 
@@ -798,7 +797,7 @@ function handlePlayerLibrarySearch(val) {
 function addToQueue(idx) {
     if (typeof allLibraryItems !== 'undefined' && allLibraryItems[idx]) {
         currentPlaylist.push(allLibraryItems[idx]);
-        renderPlaylist();
+        renderAudioQueue();
         if (typeof showToast === 'function') showToast("Zur Warteschlange hinzugefügt", "success");
     }
 }
@@ -842,7 +841,7 @@ function addAndPlayNow(el, item) {
     if (typeof currentPlaylist !== 'undefined') {
         currentPlaylist.push(item);
         playlistIndex = currentPlaylist.length - 1;
-        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof playAudio === 'function') playAudio(item);
         // Switch back to now playing to show the progress
         switchPlayerMainView('now-playing');
@@ -850,201 +849,17 @@ function addAndPlayNow(el, item) {
 }
 
 /**
- * Synchronizes the player queue with the current library state.
+ * Synchronizes the player queue with the current library state (v1.45.110).
+ * Populates window.currentPlaylist with branch-aut/**
+ * renderGlobalPlaylist (Wrapper for compatibility)
  */
-function syncQueueWithLibrary() {
-    const isDiagnosticMode = localStorage.getItem('mwv_diagnostic_mode') === 'true';
-    const isRealDbMode = localStorage.getItem('mwv_real_db_mode') === 'true';
-    
-    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        console.warn("[Recovery] No library items found for sync. (window.__mwv_all_library_items size:", window.__mwv_all_library_items ? window.__mwv_all_library_items.length : 'null', ")");
-        // [BYPS] Handshake (v1.37.06)
-        if (localStorage.getItem('mwv_bypass_db') === 'true' || window.__mwv_bypass_db) {
-            console.info("[BYPS] Bypass active with empty library. Triggering bootstrapMockQueue...");
-            if (typeof bootstrapMockQueue === 'function') {
-                bootstrapMockQueue();
-                return;
-            }
-        }
-        return;
-    }
-    console.warn(`[FORENSIC-DOM] syncQueueWithLibrary starting with ${allLibraryItems.length} items. Diag:${isDiagnosticMode}, Real:${isRealDbMode}`);
-
-    let filtered;
-    const isRaw = window.__mwv_raw_mode === true;
-    
-    // v1.41.00 Sync Audit
-    const audit = { audio: 0, video: 0, dropped: 0, total: allLibraryItems.length };
-
-    // v1.41.00 Unified Sync Strategy
-    // We prioritize real media but don't drop them if Diagnostic Mode is on.
-    filtered = allLibraryItems.filter(item => {
-        const isStage = !!item.stage;
-        const isReal = !isStage;
-        const video = isVideoItem(item);
-        const isRaw = window.__mwv_raw_mode === true;
-        
-        // Diagnostic Mode Logic: Keep Stages but don't exclude Real unless specified
-        if (isDiagnosticMode && !isRealDbMode) {
-            const isRecovery = item.tags && item.tags.comment && item.tags.comment.includes('RECOVERY');
-            if (isStage || isRecovery) return true;
-            // Fallback: If it's a real item and NOT video, keep it in the pool!
-            return isReal && !video;
-        }
-
-        // Productive Mode / v1.41.00 Hybrid Logic
-        const hmode = window.__mwv_hydration_mode || 'real';
-        const nameMock = item.name && item.name.startsWith('[MOCK]');
-        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
-        
-        if (hmode === 'mock') return mockFlag || !!item.stage;
-        if (hmode === 'real') return !mockFlag && !item.stage;
-        if (hmode === 'both') return true;
-
-        const isAudioCandidate = !video || isRaw;
-        const keep = isRaw || (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
-        
-        if (keep) audit.audio++; else audit.dropped++;
-        return keep;
-    });
-
-    console.info(`[Sync-Audit] Stage 1: Filtered ${filtered.length}/${allLibraryItems.length} items. (Diag: ${isDiagnosticMode}, RealDB: ${isRealDbMode})`);
-
-    // [BD-AUDIT] (v1.37.06) - Rejection Report Parity Check
-    if (allLibraryItems.length > 0 && filtered.length === 0) {
-        console.warn(`[BD-AUDIT] CRITICAL: Filtered 0/${allLibraryItems.length} items. Library is populated but Queue is empty!`);
-        // Detailed rejection report (Sample first 5)
-        allLibraryItems.slice(0, 5).forEach(item => {
-            console.groupCollapsed(`[BD-AUDIT] Rejection: ${item.name}`);
-            console.log("Category:", item.category);
-            console.log("Is Video:", typeof isVideoItem === 'function' ? isVideoItem(item) : 'Unknown');
-            console.log("Diagnostic Mode:", isDiagnosticMode);
-            console.groupEnd();
-        });
-    } else if (allLibraryItems.length > 0) {
-        console.info(`[BD-AUDIT] Filtered ${filtered.length}/${allLibraryItems.length}`);
-    }
-
-    // v1.41.00: Master-audit logging (Automated Chain)
-    if (filtered.length > 0 && filtered.length < 5) {
-        filtered.forEach(item => {
-            const audit = `AUDIT: [${item.name}] DB_CAT: ${item.category} -> MASTER: ${window.activeQueueFilter} -> STATUS: KEEP`;
-            console.info(audit);
-        });
-    }
-
-    // --- EMERGENCY RESCUE: If library is NOT empty but filtered IS, force fallback! ---
-    if (filtered.length === 0 && allLibraryItems.length > 0) {
-        console.warn("[Recovery] Sync Black Hole detected. Forcing raw fallback to all non-video items.");
-        filtered = allLibraryItems.filter(i => {
-            const isVid = isVideoItem(i);
-            // v1.41.00: Use standardized video detection (multimedia is now video)
-            return !isVid || (i.category && i.category.toLowerCase() === 'video');
-        });
-        console.info(`[Sync-Audit] Stage 2 (Rescue): Now has ${filtered.length} items.`);
-    }
-    
-    const countMsg = isRaw ? `FORCED RAW SYNC: ${filtered.length} Items` : `Sync Audit: ${filtered.length} Items found. (Diagnostic: ${isDiagnosticMode})`;
-    console.info(`[Sync] ${countMsg}`);
-    
-    if (filtered.length > 0 || isRaw) {
-        currentPlaylist = [...filtered];
-        if (playlistIndex === -1) playlistIndex = 0;
-        
-        if (typeof renderPlaylist === 'function') renderPlaylist();
-        if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
-        
-        // --- v1.41.00: Synchronize technical anchors ---
-        if (typeof updateSyncAnchor === 'function') {
-            const dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
-                            ? window.__mwv_all_library_items.length 
-                            : (window.__mwv_last_db_count || 0);
-            const guiCount = filtered.length;
-            updateSyncAnchor(dbCount, guiCount);
-        }
-    }
+function renderGlobalPlaylist() {
+    renderAudioQueue();
 }
 
-/**
- * Hydration Master Control (v1.41.00)
- * Switches between Mock, Real, and Both modes.
- */
-window.setHydrationMode = function(mode) {
-    console.info(`[Hydration] Switching to mode: ${mode.toUpperCase()}`);
-    window.__mwv_hydration_mode = mode;
-    localStorage.setItem('mwv_hydration_mode', mode);
-    
-    // UI Feedback: Update button states in footer
-    ['M', 'R', 'B'].forEach(id => {
-        const btnId = `hydr-btn-${id}`;
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            const isActive = (mode === 'mock' && id === 'M') || (mode === 'real' && id === 'R') || (mode === 'both' && id === 'B');
-            btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
-            btn.style.background = isActive ? 'rgba(46, 204, 113, 0.1)' : 'transparent';
-        }
-    });
-
-    // --- RE-HYDRATION PIPELINE (v1.41.00) ---
-    // 1. Sync the playback queue
-    if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-    
-    // 2. Sync the main Library explorer (if visible)
-    if (typeof renderLibrary === 'function') renderLibrary();
-    
-    if (typeof showToast === 'function') {
-        showToast(`Hydration: ${mode.toUpperCase()} aktiv`, "info");
-    }
-}
-
-// v1.41.00 Override initialization
-window.addEventListener('DOMContentLoaded', () => {
-    const librarySubTab = localStorage.getItem('mwv_multimedia_sub_tab') || 'coverflow';
-    const saved = localStorage.getItem('mwv_hydration_mode') || 'real';
-    setHydrationMode(saved);
-});
-
-// Initialize
-window.addEventListener('DOMContentLoaded', () => {
-    initAudioPipeline();
-    
-    // Sync with library if already loaded
-    if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
-        syncQueueWithLibrary();
-    }
-});
-// --- Initialize on module load ---
-document.addEventListener('DOMContentLoaded', () => {
-    initAudioPipeline();
-    // Register global playback probe hook
-    window._probe_playback = (index = 0) => {
-        const items = document.querySelectorAll('.legacy-track-item');
-        if (items[index]) items[index].click();
-    };
-});
-
-// v1.34 Auto-Sync: Populate queue when library settles
-document.addEventListener('mwv_library_ready', (e) => {
-    console.log(`[Audio] Library Ready Event: ${e.detail.count} items. Syncing queue...`);
-    syncQueueWithLibrary();
-});
-
-/**
- * Stage 0: Mock Bootstrap Fail-safe (Diagnostic Utility)
- * Ensures the GUI can be verified even without real files.
- */
-window.bootstrapMockQueue = async function() {
-    if (currentPlaylist.length > 0 && !window.__mwv_force_reboot) return;
-    
-    console.warn("[Audio] [Debug] Bootstrapping mock queue from Backend (Stage 3)...");
-    
-    try {
-        const response = await eel.get_library(false, 3)();
-        if (response && response.media) {
-            currentPlaylist = [...response.media];
-            console.info(`[Audio] [Debug] Bootstrapped with ${currentPlaylist.length} mock items from Stage 3.`);
-            
-            if (typeof renderPlaylist === 'function') renderPlaylist();
+window.renderGlobalPlaylist = renderGlobalPlaylist;
+window.renderAudioQueue = renderAudioQueue;
+ renderAudioQueue();
             if (typeof appendUiTrace === 'function') {
                 appendUiTrace(`[Debug] Audio Queue Bootstrapped with ${currentPlaylist.length} items.`);
             }
@@ -1200,7 +1015,7 @@ function startAtomicHydrationWatcher() {
             
             if (currentPlaylist.length !== initialCount) {
                 console.error(`[Watcher] Purged ${initialCount - currentPlaylist.length} zombie items from queue.`);
-                renderPlaylist();
+                renderAudioQueue();
             }
 
             // 3. UI Status Sync (Optional extension for Diagnostic Hub)

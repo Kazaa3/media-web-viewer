@@ -399,15 +399,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         "branch_architecture_registry": {
             "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub"],
             "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
-            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"], 
-            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
+            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"], 
+            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"]
         },
 
         # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---

@@ -136,7 +136,7 @@ window.MWV_Diagnostics = (() => {
         }
 
         // 3. Force Global Re-Render
-        if (typeof window.renderPlaylist === 'function') window.renderPlaylist();
+        if (typeof window.renderAudioQueue === 'function') window.renderAudioQueue();
         if (typeof window.renderLibrary === 'function') window.renderLibrary();
 
         // 4. Update HUD and Toast

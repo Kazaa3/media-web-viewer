@@ -44,7 +44,8 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
                 if (syncResult === 'timeout') console.warn("[DATA-LIB] syncCategoryMaster STALLED. Proceeding with hydration...");
             }
 
-            library = await getLibrary(auditStage); 
+            const activeBranch = window.GLOBAL_CONFIG?.active_branch || null;
+            library = await getLibrary(auditStage, activeBranch); 
         } catch (e) {
             console.error("[FE-BRIDGE-FAULT] CRITICAL: Calling getLibrary failed!", e);
             if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Bridge Fault: ${e.message}`, "ERROR");

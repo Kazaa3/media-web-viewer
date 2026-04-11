@@ -7,13 +7,16 @@
 /**
  * Fetches the entire library from the backend.
  */
-async function getLibrary(auditStage = 0) {
+async function getLibrary(auditStage = 0, activeBranch = null) {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('DB-EEL', `CALL-START (Stage: ${auditStage})`);
     if (typeof eel === 'undefined') return { media: [] };
     
     // Auto-fallback for stage names
     const forceRaw = (auditStage === 2);
-    const activeBranch = window.activeTab || 'media';
+    // [v1.45.110] Centralized Branch Resolution
+    if (!activeBranch) {
+        activeBranch = (window.CONFIG && window.CONFIG.active_branch) ? window.CONFIG.active_branch : (window.activeTab || 'media');
+    }
 
     try {
         console.info(`[DB] getLibrary Request: Stage=${auditStage}, ForceRaw=${forceRaw}, Branch=${activeBranch}`);
@@ -31,7 +34,8 @@ async function getLibrary(auditStage = 0) {
  */
 async function getLibraryFiltered(search = "", genre = "all", year = "all", sortBy = "name") {
     if (typeof eel === 'undefined') return { media: [] };
-    const activeBranch = window.activeTab || 'media';
+    // [v1.45.110] Centralized Branch Resolution
+    const activeBranch = (window.CONFIG && window.CONFIG.active_branch) ? window.CONFIG.active_branch : (window.activeTab || 'media');
     try {
         return await eel.get_library_filtered(search, genre, year, sortBy, false, activeBranch)();
     } catch (e) {

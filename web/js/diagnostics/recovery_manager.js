@@ -86,7 +86,7 @@ const RecoveryManager = {
 
         // Trigger UI Refresh (v1.35.55)
         if (typeof renderLibrary === 'function') renderLibrary();
-        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof window.renderQueue === 'function') window.renderQueue();
         if (typeof window.updateQueueDisplay === 'function') window.updateQueueDisplay();
     },
