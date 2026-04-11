@@ -155,17 +155,24 @@ def shutdown_backend():
     
     log.warning("☢️ [BACKEND] [SHUTDOWN-VERIFIED] PURGING ENVIRONMENT. BYE.")
     
-    # [v1.41.167] Forensic Log Flush
+    # [v1.41.169] Forensic Log Flush with Bootstrap Safety
     try:
         import time
         import signal
-        for handler in log.handlers:
-            handler.flush()
-        time.sleep(0.12) # Brief grace period for disk I/O
         
+        # Check if we have a real logger with handlers to flush
+        if hasattr(log, 'handlers'):
+            for handler in log.handlers:
+                try:
+                    handler.flush()
+                except Exception: pass
+        
+        time.sleep(0.2) # Increased grace period for disk I/O (v1.41.169)
+        
+        # Final Purge
         os.killpg(os.getpgrp(), signal.SIGKILL)
     except Exception as e:
-        log.error(f"[SHUTDOWN] Nuclear failover: {e}")
+        print(f"STDOUT: [SHUTDOWN] Nuclear failover: {e}")
         os._exit(0)
 
 @eel.expose
