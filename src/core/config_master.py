@@ -12,7 +12,7 @@ v1.41.103-SSOT - Unified source of truth for tiered versioning.
 APP_VERSION_CORE = "v1.45.100"
 APP_VERSION_FRONTEND = "v1.45.100-HYDRATED-STAGE"
 APP_VERSION_BACKEND = "v1.45.100-STABLE-RECON"
-APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-REBUILD"
+APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
 APP_VERSION = APP_VERSION_FULL
@@ -578,11 +578,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- SUB-NAVIGATION REGISTRY ---
         "sub_nav_registry": {
             "media": [
-                { "id": "warteschlange", "label": "Queue",         "action": "switchPlayerView('warteschlange')" },
-                { "id": "mediengalerie", "label": "Mediengalerie", "action": "switchMainCategory('library')" },
-                { "id": "visualizer",    "label": "Visualizer",    "action": "switchPlayerView('visualizer')" },
-                { "id": "lyrics",        "label": "Lyrics",        "action": "switchPlayerView('lyrics')" },
-                { "id": "videocinema",   "label": "Video Cinema",  "action": "switchMainCategory('video')" }
+                { "id": "warteschlange", "label": "QUEUE",            "action": "switchPlayerView('warteschlange')" },
+                { "id": "playlist",      "label": "PLAYLIST MANAGER", "action": "switchPlayerView('playlist')" },
+                { "id": "visualizer",    "label": "VISUALIZER",       "action": "switchPlayerView('visualizer')" },
+                { "id": "lyrics",        "label": "LYRICS",           "action": "switchPlayerView('lyrics')" },
+                { "id": "videocinema",   "label": "VIDEO CINEMA",     "action": "switchMainCategory('video')" }
             ],
             "library": [
                 { "id": "lib-cinema", "label": "Cinema",    "action": "switchLibrarySubTab('cinema')" },

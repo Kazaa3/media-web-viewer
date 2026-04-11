@@ -28,22 +28,51 @@ const NuclearPulsar = {
         if (!this.isActive) return;
         this.iterations++;
 
-        // 1. Audit and Force Parent Chain
-        const targetId = 'rebuild-stage';
-        const target = document.getElementById(targetId);
-        
-        if (target) {
-            this.shoutAtElement(target);
-            this.ensureParentVisibility(target);
-            
-            // 2. Inject Forced Status Anchor (Proof of Life)
-            this.injectForensicAnchor(target);
-            
-            if (this.iterations % 5 === 0) {
-                this.auditLog(`NUCLEAR SHOUT [${this.iterations}] - Viewport Health: OK`);
+        // 1. Audit and Force ALL content areas
+        const targets = ['player-panel-container', 'player-main-viewport', 'rebuild-stage', 'main-content-area'];
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                this.shoutAtElement(el);
+                this.forceRecursiveFlex(el);
             }
-        } else {
-            this.auditLog(`CRITICAL: #${targetId} NOT FOUND IN DOM`, 'error');
+        });
+
+        // 2. Localized Split Visibility
+        const deck = document.getElementById('player-deck-column');
+        const queue = document.getElementById('player-playlist-column');
+        if (deck) this.shoutAtElement(deck);
+        if (queue) this.shoutAtElement(queue);
+
+        // 3. Inject Recovery Badge (Global Visibility Indicator)
+        this.injectRecoveryBadge();
+
+        // 4. Inject Forensic Anchors
+        this.injectForensicAnchor();
+
+        if (this.iterations % 10 === 0 && typeof eel !== 'undefined' && eel.log_spawn_event) {
+            eel.log_spawn_event('recovery-pulsar', `ultra_pulse_active_iter_${this.iterations}`);
+        }
+    },
+
+    /**
+     * Deep recursion to force flex layout on all children.
+     */
+    forceRecursiveFlex(root) {
+        if (!root) return;
+        const children = root.children;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            if (child.classList.contains('player-view-container') || child.classList.contains('tab-content')) {
+                if (child.classList.contains('active')) {
+                    child.style.setProperty('display', 'flex', 'important');
+                    child.style.setProperty('visibility', 'visible', 'important');
+                    child.style.setProperty('opacity', '1', 'important');
+                }
+            }
+            if (child.id === 'player-tab-split-container' || child.id === 'player-main-viewport') {
+                this.forceRecursiveFlex(child);
+            }
         }
     },
 
@@ -54,38 +83,56 @@ const NuclearPulsar = {
         if (!el) return;
         
         // CSS Brute-Force
-        el.style.setProperty('display', 'flex', 'important');
+        if (el.classList.contains('active') || el.id === 'main-content-area' || el.id.includes('panel-container')) {
+            el.style.setProperty('display', 'flex', 'important');
+        }
         el.style.setProperty('visibility', 'visible', 'important');
         el.style.setProperty('opacity', '1', 'important');
-        el.style.setProperty('z-index', '999', 'important');
         
-        // Ensure dimensions
-        if (el.id === 'rebuild-stage') {
+        // Ensure dimensions for root containers
+        if (el.id === 'main-content-area' || el.id.includes('viewport')) {
             el.style.setProperty('height', '100%', 'important');
             el.style.setProperty('width', '100%', 'important');
-            el.style.setProperty('flex', '1', 'important');
         }
     },
 
     /**
-     * Recursively shouts at all parents to ensure a visible path to root.
+     * Injects a pulsing red "RECOVERY MODE" badge.
      */
-    ensureParentVisibility(el) {
-        let parent = el.parentElement;
-        while (parent && parent.tagName !== 'BODY') {
-            // Some parents (like split-containers) MUST be flex
-            if (parent.classList.contains('main-split-container') || parent.id === 'main-content-area') {
-                parent.style.setProperty('display', 'flex', 'important');
-            } else {
-                // Generic visible path
-                if (window.getComputedStyle(parent).display === 'none') {
-                    parent.style.setProperty('display', 'block', 'important');
+    injectRecoveryBadge() {
+        let badge = document.getElementById('recovery-mode-badge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'recovery-mode-badge';
+            badge.style = `
+                position: fixed;
+                top: 60px;
+                right: 20px;
+                background: #ff3366;
+                color: #fff;
+                padding: 5px 15px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 10px;
+                font-weight: 900;
+                z-index: 999999;
+                border-radius: 20px;
+                box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+                animation: recovery-pulse 1.5s infinite;
+                pointer-events: none;
+            `;
+            
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes recovery-pulse {
+                    0% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.1); opacity: 0.7; }
+                    100% { transform: scale(1); opacity: 1; }
                 }
-            }
-            parent.style.setProperty('visibility', 'visible', 'important');
-            parent.style.setProperty('opacity', '1', 'important');
-            parent = parent.parentElement;
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(badge);
         }
+        badge.innerHTML = `☢️ RECOVERY MODE ACTIVE [${this.iterations}]`;
     },
 
     /**
