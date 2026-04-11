@@ -97,45 +97,7 @@ function appendUiTrace(message) {
     const logLine = `[UI-Trace ${timestamp}] ${message}`;
     console.warn(logLine);
 
-    /**
- * Forcefully terminates the application (v1.41.164).
- */
-async function exitApplication() {
-    console.warn("☢️ [APP-EXIT] Triggering Nuclear Shutdown...");
-    
-    // 1. Immediate Visual Feedback
-    const overlay = document.createElement('div');
-    overlay.id = 'shutdown-nuclear-overlay';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.95); z-index: 999999;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: #ff3366; font-family: monospace; font-weight: 900;
-        backdrop-filter: blur(10px); text-align: center;
-    `;
-    overlay.innerHTML = `
-        <div style="font-size: 3em; margin-bottom: 20px;">☢️</div>
-        <div style="font-size: 1.5em; letter-spacing: 2px;">SHUTDOWN IN PROGRESS</div>
-        <div style="margin-top: 10px; opacity: 0.6; font-size: 0.8em;">Purging process tree & releasing locks...</div>
-    `;
-    document.body.appendChild(overlay);
-
-    // 2. Trigger Backend Exit
-    if (typeof eel !== 'undefined' && typeof eel.shutdown_backend === 'function') {
-        try {
-            // No await needed, backend will kill itself mid-flight
-            eel.shutdown_backend()();
-        } catch (e) {
-            console.error("[APP-EXIT] RPC Failed:", e);
-        }
-    }
-
-    // 3. Last Resort: Close Window (after 500ms grace period for RPC)
-    setTimeout(() => {
-        window.close();
-        // If window.close() is blocked, we still leave the overlay up.
-    }, 500);
-}
+    // No logic here, just placeholder for clean split
 
 const isErrorOrAlert = message.toLowerCase().includes('js-error') || message.toLowerCase().includes('alert');
     if (isErrorOrAlert) {
