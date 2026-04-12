@@ -9,10 +9,10 @@ v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
-APP_VERSION_CORE = "v1.46.003"
-APP_VERSION_FRONTEND = "v1.46.003-HYDRATED-FINAL"
-APP_VERSION_BACKEND = "v1.46.003-FORENSIC-READY"
-# Created with MWV v1.46.003-MASTER
+APP_VERSION_CORE = "v1.46.004"
+APP_VERSION_FRONTEND = "v1.46.004-MASTER-FINAL"
+APP_VERSION_BACKEND = "v1.46.004-PURE-DOM"
+# Created with MWV v1.46.004-MASTER
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
@@ -540,8 +540,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         # --- [v1.46.03] SYSTEM STEERING: HEADER & THEME (NEW) ---
         "header_layout": {
-            "btn_size": 34,              # Pixel size (Default: 34)
-            "btn_gap": 8,               # Spacing between buttons (Default: 8)
+            "btn_size": 28,              # Pixel size (Default: 28)
+            "btn_gap": 6,               # Spacing between buttons (Default: 6)
             "btn_border_radius": "50%", # Shape (50% = Circle, 6px = Rounded Square)
             "hover_scale": "1.1",       # Animation scale factor
             "show_tooltips": True       # Enable hover comments
