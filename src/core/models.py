@@ -133,6 +133,26 @@ MASTER_CAT_MAP = {
         "aliases": ["documentation", "dokumentation", "doku", "report"],
         "extensions": ALL_VIDEO_EXTENSIONS
     },
+    "spiel": {
+        "internal": "video",
+        "aliases": ["spiel", "game", "games", "exe", "binary"],
+        "extensions": ALL_VIDEO_EXTENSIONS | {".exe", ".bat", ".sh"}
+    },
+    "games": {
+        "internal": "video",
+        "aliases": ["games", "interaktiv"],
+        "extensions": ALL_VIDEO_EXTENSIONS
+    },
+    "beigabe": {
+        "internal": "video",
+        "aliases": ["beigabe", "supplements", "supplement", "extra"],
+        "extensions": ALL_VIDEO_EXTENSIONS | ALL_AUDIO_EXTENSIONS
+    },
+    "supplements": {
+        "internal": "video",
+        "aliases": ["supplements", "anhang"],
+        "extensions": ALL_VIDEO_EXTENSIONS
+    },
     "pictures": {
         "internal": "pictures",
         "aliases": ["bilder", "grafik", "foto", "images", "pictures"],
@@ -265,6 +285,7 @@ def get_allowed_internal_cats(displayed_cats: list[str]) -> list[str]:
         "dokumente": "documents", "docs": "documents", "documents": "documents", "dokumente": "docs",
         "disk_images": "disk_images", "isos": "disk_images",
         "ebooks": "ebooks", "bücher": "ebooks", "epub": "epub",
+        "spiel": "video", "games": "video", "beigabe": "video", "supplements": "video",
         "unknown": "unknown", "unbekannt": "unknown"
     }
 

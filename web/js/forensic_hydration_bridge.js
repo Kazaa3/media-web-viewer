@@ -68,9 +68,10 @@ const ForensicHydrationBridge = {
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
 
-        // Sync Footer (v1.46.003 Format [FS|DB|GUI])
+        // Sync Footer (v1.46.014: Handshake with real DB count)
         if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(0, this.mockCount);
+            const realCount = window.__mwv_last_db_count || 0;
+            updateSyncAnchor(realCount, this.mockCount);
         }
     },
 
@@ -86,8 +87,17 @@ const ForensicHydrationBridge = {
         console.log(`%c[HYDRATION-BRIDGE] STAGE 2: Applying ${mode.toUpperCase()} Hydration Logic...`, "color: #2ecc71; font-weight: 900;");
 
         // Split current registry
-        const realItems = [...window.allLibraryItems].filter(it => !it.id.toString().startsWith('emergency-'));
-        const mockItems = [...window.allLibraryItems].filter(it => it.id.toString().startsWith('emergency-'));
+        const allItems = window.allLibraryItems || [];
+        const realItems = allItems.filter(it => it.id && !it.id.toString().startsWith('emergency-'));
+        const mockItems = allItems.filter(it => it.id && it.id.toString().startsWith('emergency-'));
+
+        // If we have 0 real items despite transition trigger, we force a fallback mock set
+        if (realItems.length === 0 && (window.__mwv_last_db_count || 0) > 0) {
+            console.warn("[HYDRATION-BRIDGE] STAGE 2 Handshake Failed: Real items missing in registry. Forcing Backend Pulse.");
+            if (typeof refreshLibrary === 'function') refreshLibrary();
+            this.isLocked = false;
+            return;
+        }
 
         if (mode === 'real') {
             window.allLibraryItems = realItems;
@@ -102,8 +112,7 @@ const ForensicHydrationBridge = {
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
         
-        // Final Parity Flush
-        // Final Parity Flush (v1.46.004 Fix: Use Backend DB Count)
+        // Final Parity Flush (v1.46.004/014 Fix: Use Backend DB Count)
         if (typeof updateSyncAnchor === 'function') {
             const db_count = window.__mwv_last_db_count || realItems.length;
             updateSyncAnchor(db_count, window.allLibraryItems.length);

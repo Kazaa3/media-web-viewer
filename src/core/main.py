@@ -4614,13 +4614,13 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
 
-    # [v1.46.012] Forensic Category Alignment
-    # The 577 database items use 'klassik' and 'documentation' - we must map them to shells.
+    # [v1.46.012/014] Forensic Category Alignment
+    # The database items use legacy types - we must map them to technical shells.
     for item in all_media:
         cat = str(item.get('category', '')).lower()
         if cat in ['klassik', 'audiobook', 'hörbuch', 'musik']:
             item['category'] = 'audio'
-        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie']:
+        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie', 'spiel', 'games', 'beigabe', 'supplements']:
             item['category'] = 'video'
 
     # --- FILTERING & BYPASS (The Motor) ---
