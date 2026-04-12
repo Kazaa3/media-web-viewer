@@ -69,11 +69,13 @@ const ForensicHydrationBridge = {
             });
         }
 
-        // Hydrate both states to prove rendering path (v1.46.003)
+        // Hydrate both states to prove rendering path (v1.46.017 Fix: Dual-Variable Sync)
         window.allLibraryItems = emergencyMocks;
+        window.__mwv_all_library_items = emergencyMocks; 
         window.currentPlaylist = [...emergencyMocks];
         
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
+        if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
 
         // Sync Footer (v1.46.014/015: Handshake with real DB count)
@@ -115,8 +117,12 @@ const ForensicHydrationBridge = {
             window.allLibraryItems = mockItems;
         }
 
+        // [v1.46.017] Sync SSOT Dual-Variable
+        window.__mwv_all_library_items = window.allLibraryItems;
+
         // Surgical update of the active queue
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
         
         // Final Parity Flush (v1.46.004/014 Fix: Use Backend DB Count)
