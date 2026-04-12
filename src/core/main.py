@@ -4614,6 +4614,15 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
 
+    # [v1.46.012] Forensic Category Alignment
+    # The 577 database items use 'klassik' and 'documentation' - we must map them to shells.
+    for item in all_media:
+        cat = str(item.get('category', '')).lower()
+        if cat in ['klassik', 'audiobook', 'hörbuch', 'musik']:
+            item['category'] = 'audio'
+        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie']:
+            item['category'] = 'video'
+
     # --- FILTERING & BYPASS (The Motor) ---
     # Apply production filters unless force_raw is requested
     filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, active_branch=active_branch)
@@ -4638,18 +4647,18 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     else:  # both
         final_media = filtered_media[:]
 
-    # [v1.46.12] ABSOLUTE TERMINAL FAILOVER
+    # [v1.46.012] ABSOLUTE TERMINAL FAILOVER
     if len(final_media) == 0:
         log.critical("[BD-RECOVERY] TOTAL HYDRATION FAILURE. Injecting Emergency Mock Items.")
         final_media = [
             {
                 "id": "recovery-1", "name": "[RECOVERY] Database Connection Error?", "artist": "System", "album": "Hydration Guard",
-                "category": "audio", "path": "", "is_mock": True, "available": False,
+                "category": "audio", "path": "", "is_mock": True, "available": False, "is_recovery": True,
                 "tags": {"title": "DB DISCONNECT / 0 ITEMS", "artist": "Forensic Unit"}
             },
             {
                 "id": "recovery-2", "name": "[RECOVERY] Check active_branch settings", "artist": "System", "album": "Hydration Guard",
-                "category": "audio", "path": "", "is_mock": True, "available": False,
+                "category": "audio", "path": "", "is_mock": True, "available": False, "is_recovery": True,
                 "tags": {"title": "BRANCH FILTER COLLISION?", "artist": "Forensic Unit"}
             }
         ]

@@ -260,21 +260,26 @@ def init_db(depth: int = 0):
         ("discogs", "TEXT"),
         ("amazon_cover", "TEXT"),
         ("parent_id", "INTEGER"),
-        ("playback_position", "REAL"),
+        ("playback_position", "REAL DEFAULT 0"),
         ("last_played", "TEXT"),
-        ("duration_sec", "REAL"),
+        ("duration_sec", "REAL DEFAULT 0"),
         ("is_mock", "BOOLEAN DEFAULT 0"),
         ("mock_stage", "INTEGER DEFAULT 0"),
         ("available", "BOOLEAN DEFAULT 1")
     ]
+    
+    # Get existing columns
+    cursor.execute("PRAGMA table_info(media)")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+    
     for col_name, col_type in new_columns:
-        try:
-            cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass  # Already exists
-        except Exception as e:
-            log.error(f"Migration error for column {col_name}: {e}")
+        if col_name not in existing_cols:
+            try:
+                log.warning(f"[DB-MIGRATION] Adding missing column: {col_name} ({col_type})")
+                cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
+                conn.commit()
+            except Exception as e:
+                log.error(f"Migration error for column {col_name}: {e}")
 
     # Migration: Rename categories to new SSOT standards (v1.35.75)
     try:

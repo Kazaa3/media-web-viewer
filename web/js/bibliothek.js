@@ -164,9 +164,12 @@ async function renderLibrary() {
         console.warn("[FE-FORENSIC] Early filter dropped all items. Check search/category sync.");
     }
 
-    // 1. Hydration Mode Filter (Mock/Real/Both) - v1.41.00
+    // 1. Hydration Mode Filter (Mock/Real/Both) - v1.46.012
     projectedItems = projectedItems.filter(item => {
-        const hmode = window.__mwv_hydration_mode || 'real';
+        // [v1.46.012] Recovery Exemption: Safety items must always show
+        if (item.is_recovery || (item.id && String(item.id).startsWith('recovery-'))) return true;
+        
+        const hmode = window.__mwv_hydration_mode || 'both'; // Default to both if unsure
         const nameMock = item.name && item.name.startsWith('[MOCK]');
         const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
         
@@ -177,8 +180,8 @@ async function renderLibrary() {
 
     // 2. HIDB (Diagnostic Hide) - Should usually be OFF
     if (window.__mwv_hide_db) {
-        projectedItems = projectedItems.filter(i => i.is_mock);
-        console.log(`[FE-AUDIT] HIDB active - showing only mock items.`);
+        projectedItems = projectedItems.filter(i => i.is_mock || i.is_recovery);
+        console.log(`[FE-AUDIT] HIDB active - showing only mock/recovery items.`);
     }
 
     // 2. Main Category Filter
