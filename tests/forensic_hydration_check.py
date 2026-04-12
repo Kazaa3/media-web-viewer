@@ -12,7 +12,10 @@ sys.path.append(str(PROJECT_ROOT))
 import types
 mock_eel = types.ModuleType("eel")
 mock_eel.expose = lambda x: x
+mock_eel.sleep = lambda x: None
+mock_eel.chrome = types.ModuleType("chrome") # Mock chrome module
 sys.modules["eel"] = mock_eel
+sys.modules["eel.chrome"] = mock_eel.chrome # Mock sub-package
 
 # Mock GLOBAL_CONFIG for standalone execution
 from src.core.config_master import GLOBAL_CONFIG
