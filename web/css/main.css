@@ -51,6 +51,26 @@
     --shadow-medium: 0 16px 60px rgba(0, 0, 0, 0.85);
 }
 
+/* --- [v1.46.007] Dark Mode Component Overrides --- */
+[data-theme="dark"] .tab-btn,
+[data-theme="forensic_dark"] .tab-btn,
+[data-theme="cyber_grid"] .tab-btn,
+[data-theme="matrix_core"] .tab-btn {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .tab-btn.active,
+[data-theme="forensic_dark"] .tab-btn.active,
+[data-theme="cyber_grid"] .tab-btn.active,
+[data-theme="matrix_core"] .tab-btn.active {
+    background: rgba(0, 242, 255, 0.08) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--accent-color) !important;
+    box-shadow: 0 0 12px rgba(0, 242, 255, 0.1);
+}
+
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
