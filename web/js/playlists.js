@@ -6,6 +6,7 @@
 // --- Global Queue State (Single Source of Truth) ---
 window.currentPlaylist = [];
 window.playlistIndex = -1;
+window.activeQueueFilter = 'all'; // [v1.46.019] Initialized for Forensic Workstation Parity
 
 /**
  * syncQueueWithLibrary (v1.45.120 Centralized)
@@ -33,15 +34,28 @@ function syncQueueWithLibrary() {
         return;
     }
 
-    // Stage 1: Local Filter Pulse (Mock/Real/Both)
+    // Stage 1: Local Filter Pulse (Mock/Real/Both + Category)
     // Branch-level filtering happened in the backend library fetch.
+    const activeFilter = window.activeQueueFilter || 'all';
+    
     let filtered = allLibraryItems.filter(item => {
+        // 1.1 Hydration Mode Filter
         const nameMock = item.name && item.name.startsWith('[MOCK]');
         const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
         
-        if (hmode === 'mock') return mockFlag || !!item.stage;
-        if (hmode === 'real') return !mockFlag && !item.stage;
-        return true; // 'both'
+        let passMode = true;
+        if (hmode === 'mock') passMode = (mockFlag || !!item.stage);
+        else if (hmode === 'real') passMode = (!mockFlag && !item.stage);
+
+        if (!passMode) return false;
+
+        // 1.2 Category/Type Filter (v1.46.019)
+        if (activeFilter === 'all') return true;
+        
+        const itemCat = (item.category || item.type || 'unknown').toLowerCase();
+        
+        // Exact match or contains (e.g., 'audio' matches 'audio_native')
+        return itemCat === activeFilter.toLowerCase() || itemCat.startsWith(activeFilter.toLowerCase());
     });
 
     // Stage 2: Shared State Injection

@@ -257,6 +257,13 @@ window.hydrateCategoryDropdown = function (branchId) {
     if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
         select.value = currentVal;
     }
+
+    // [v1.46.019] Attach Filter Pulse Listener
+    select.onchange = (e) => {
+        window.activeQueueFilter = e.target.value;
+        console.info(`[UI-NAV] Filter Change Detected: ${window.activeQueueFilter}. Triggering Sync Pulse...`);
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+    };
 };
 
 /**
