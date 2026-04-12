@@ -103,8 +103,10 @@ const ForensicHydrationBridge = {
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
         
         // Final Parity Flush
+        // Final Parity Flush (v1.46.004 Fix: Use Backend DB Count)
         if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(realItems.length, window.allLibraryItems.length);
+            const db_count = window.__mwv_last_db_count || realItems.length;
+            updateSyncAnchor(db_count, window.allLibraryItems.length);
         }
 
         setTimeout(() => { this.isLocked = false; }, 3000);

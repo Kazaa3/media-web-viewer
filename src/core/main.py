@@ -4381,6 +4381,17 @@ def _apply_library_filters(all_media: List[Dict],
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
 
+            # [v1.46.004] LEGACY CATEGORY RECOVERY
+            # Map legacy types (e.g. 'klassik') to standard branches BEFORE enforcement
+            if cat not in allowed_internal_cats or cat in ['klassik', 'musik', 'music']:
+                ext = os.path.splitext(str(item.get('path', '')))[1].lower()
+                if ext in AUDIO_EXTENSIONS or cat in ['klassik', 'musik', 'music']:
+                    cat = 'audio'
+                    item['category'] = 'audio'
+                elif ext in VIDEO_EXTENSIONS:
+                    cat = 'video'
+                    item['category'] = 'video'
+
             # [V1.45.142] ARCHITECTURAL BRANCH ENFORCEMENT
             # If a branch is active, we check if this item's capability is supported.
             if supported_by_branch and "all" not in supported_by_branch:
@@ -4414,19 +4425,6 @@ def _apply_library_filters(all_media: List[Dict],
             if cat == 'multimedia':
                 cat = 'video'
                 item['category'] = 'video'  # Immediate re-map for UI consistency
-
-            if cat not in allowed_internal_cats:
-                dropped_reasons["category_mismatch"] += 1
-                # [v1.41.00-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
-                ext = os.path.splitext(str(item.get('path', '')))[1].lower()
-                if ext in ['.mp3', '.flac', '.wav', '.m4a', '.ogg', '.opus']:
-                    item['category'] = 'audio'
-                    filtered.append(item)
-                    continue
-                elif ext in ['.mp4', '.mkv', '.avi', '.mov', '.webm']:
-                    item['category'] = 'video'
-                    filtered.append(item)
-                    continue
 
                 # If still unknown, use multimedia as fallback instead of dropping
                 item['category'] = 'multimedia'

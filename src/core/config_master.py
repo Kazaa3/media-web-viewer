@@ -540,7 +540,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         # --- [v1.46.03] SYSTEM STEERING: HEADER & THEME (NEW) ---
         "header_layout": {
-            "btn_size": 28,              # Pixel size (Default: 28)
+            "btn_size": 26,              # Pixel size (Default: 26)
             "btn_gap": 6,               # Spacing between buttons (Default: 6)
             "btn_border_radius": "50%", # Shape (50% = Circle, 6px = Rounded Square)
             "hover_scale": "1.1",       # Animation scale factor
@@ -555,7 +555,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "technical_overlay": {
             "stable_mode_visible": True,
             "stable_mode_position": {
-                "top": 60,
+                "top": 110,
                 "right": 280
             },
             "forensic_anchors_visible": True,
