@@ -51,17 +51,29 @@
     --shadow-medium: 0 16px 60px rgba(0, 0, 0, 0.85);
 }
 
-/* --- [v1.46.009] High-Specificity Tab Inversion (Black Field / White Text) --- */
+/* --- [v1.46.010] Level 1 & 2 Inversion (Black Field / White Text) --- */
 html[data-theme="dark"] body .tab-btn,
 html[data-theme="forensic_dark"] body .tab-btn,
 html[data-theme="cyber_grid"] body .tab-btn,
-html[data-theme="matrix_core"] body .tab-btn {
+html[data-theme="matrix_core"] body .tab-btn,
+html[data-theme="dark"] body .menu-item-btn,
+html[data-theme="forensic_dark"] body .menu-item-btn,
+html[data-theme="cyber_grid"] body .menu-item-btn,
+html[data-theme="matrix_core"] body .menu-item-btn,
+html[data-theme="dark"] body .header-orchestrated-btn,
+html[data-theme="forensic_dark"] body .header-orchestrated-btn,
+html[data-theme="cyber_grid"] body .header-orchestrated-btn,
+html[data-theme="matrix_core"] body .header-orchestrated-btn {
     background: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
 }
 
+html[data-theme="dark"] body .menu-item-btn.active,
+html[data-theme="forensic_dark"] body .menu-item-btn.active,
+html[data-theme="cyber_grid"] body .menu-item-btn.active,
+html[data-theme="matrix_core"] body .menu-item-btn.active,
 html[data-theme="dark"] body .tab-btn.active,
 html[data-theme="forensic_dark"] body .tab-btn.active,
 html[data-theme="cyber_grid"] body .tab-btn.active,
@@ -69,7 +81,7 @@ html[data-theme="matrix_core"] body .tab-btn.active {
     background: #000000 !important;
     border: 1px solid var(--accent-color) !important;
     color: var(--accent-color) !important;
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.2) !important;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.25) !important;
 }
 
 * {
