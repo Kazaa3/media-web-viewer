@@ -104,18 +104,23 @@ function applyDiagnosticsSidebarState(isVisible) {
  * Toggles the global diagnostics overlay sidebar.
  */
 function toggleDiagnosticsSidebar(forceState = null) {
-    const sb = document.getElementById('global-diagnostics-sidebar');
+    let sb = document.getElementById('global-diagnostics-sidebar');
     const nextState = (typeof forceState === 'boolean') ? forceState : !diagnosticsSidebarVisible;
 
-    if (!sb && nextState) {
-        console.info("[UI-NAV] Loading Modular Diagnostics Overlay...");
-        if (typeof FragmentLoader !== 'undefined') {
-            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => {
-                if (typeof initDiagnosticsSidebar === 'function') initDiagnosticsSidebar();
-                applyDiagnosticsSidebarState(true);
-            });
+    if (nextState) {
+        // [v1.46.017] Robust Modular Load: Only load if empty OR missing
+        if (!sb || sb.children.length === 0) {
+            console.info("[UI-NAV] Loading Modular Diagnostics Overlay...");
+            if (typeof FragmentLoader !== 'undefined') {
+                FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => {
+                    // Update reference as it might have been replaced/created
+                    sb = document.getElementById('global-diagnostics-sidebar');
+                    if (typeof initDiagnosticsSidebar === 'function') initDiagnosticsSidebar();
+                    applyDiagnosticsSidebarState(true);
+                });
+            }
+            return true;
         }
-        return true;
     }
 
     const isActive = applyDiagnosticsSidebarState(nextState);
@@ -2066,3 +2071,44 @@ window.dumpNavDom = function () {
 
 
 // Created with MWV v1.46.00-MASTER
+/**
+ * [v1.46.017] Centralized Level 4 Fragment Orchestrator
+ */
+function loadLevel4Fragment(viewId, containerId = 'lib-results-container') {
+    const config = window.CONFIG?.navigation_orchestrator?.level_4?.[viewId];
+    if (!config) {
+        console.warn(`[UI-NAV] No Level 4 mapping for ${viewId}`);
+        return false;
+    }
+
+    if (typeof FragmentLoader !== 'undefined') {
+        const target = document.getElementById(containerId);
+        if (target) target.style.display = 'block';
+
+        FragmentLoader.load(containerId, config.fragment, () => {
+            console.log(`[UI-NAV] Level 4 Success: Loaded ${config.fragment}`);
+            if (config.init && typeof window[config.init] === 'function') {
+                window[config.init]();
+            }
+        });
+        return true;
+    }
+    return false;
+}
+window.loadLevel4Fragment = loadLevel4Fragment;
+
+/**
+ * [v1.46.017] Global Diagnostic Keyboard Hooks
+ */
+document.addEventListener('keydown', (e) => {
+    // Alt + F2: System Reset Prompt
+    if (e.altKey && e.key === 'F2') {
+        console.warn("[MWV-UI] Diagnostic Reset Triggered (Alt+F2)");
+        if (typeof resetDatabase === 'function') {
+            resetDatabase();
+        } else if (confirm("System Reset angefordert. Alle Einstellungen löschen und neu starten?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+});

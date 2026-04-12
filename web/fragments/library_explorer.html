@@ -118,34 +118,20 @@
             const btn = document.getElementById('lib-tab-btn-' + viewId);
             document.getElementById('lib-results-container').style.display = 'block';
 
-            const fragmentViewId = viewId === 'films' ? 'film_view.html' :
-                viewId === 'series' ? 'serie_view.html' :
-                    viewId === 'albums' ? 'album_view.html' :
-                        viewId === 'audiobooks' ? 'audiobook_view.html' : 
-                            viewId === 'cinema' ? 'video_view.html' : null;
+            // [v1.46.017] Centralized Level 4 Fragment Loading
+            if (typeof loadLevel4Fragment === 'function' && loadLevel4Fragment(viewId)) {
+                return; // Orchestrator handled it
+            }
 
-            if (fragmentViewId && typeof FragmentLoader !== 'undefined') {
-                // Inject specialized high-fidelity view into results pane
-                FragmentLoader.load('lib-results-container', 'fragments/' + fragmentViewId, () => {
-                    console.log(`[Library] Loaded specialized fragment: ${fragmentViewId}`);
-                    // Hydrate specialized view
-                    if (viewId === 'films' && typeof initFilmsView === 'function') initFilmsView();
-                    else if (viewId === 'series' && typeof initSeriesView === 'function') initSeriesView();
-                    else if (viewId === 'albums' && typeof initAlbumsView === 'function') initAlbumsView();
-                    else if (viewId === 'audiobooks' && typeof initAudiobooksView === 'function') initAudiobooksView();
-                    else if (viewId === 'cinema' && typeof initCinemaView === 'function') initCinemaView();
-                });
-            } else {
-                // Standard categories (v1.41.00)
-                if (viewId === 'pictures' && typeof initPicturesView === 'function') initPicturesView();
-                else if (viewId === 'documents' && typeof initDocumentsView === 'function') initDocumentsView();
-                else if (typeof renderLibrary === 'function') {
-                    // Reset category filter if clicking 'Alle Medien' (overview) or a generic view
-                    if (viewId === 'overview' || viewId === 'coverflow' || viewId === 'grid' || viewId === 'details') {
-                        if (typeof setLibraryFilter === 'function') setLibraryFilter('all');
-                    }
-                    renderLibrary();
+            // Standard categories (v1.41.00)
+            if (viewId === 'pictures' && typeof initPicturesView === 'function') initPicturesView();
+            else if (viewId === 'documents' && typeof initDocumentsView === 'function') initDocumentsView();
+            else if (typeof renderLibrary === 'function') {
+                // Reset category filter if clicking 'Alle Medien' (overview) or a generic view
+                if (viewId === 'overview' || viewId === 'coverflow' || viewId === 'grid' || viewId === 'details') {
+                    if (typeof setLibraryFilter === 'function') setLibraryFilter('all');
                 }
+                renderLibrary();
             }
 
             if (btn) btn.classList.add('active');

@@ -391,6 +391,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     {"id": "dashboard", "label": "Dashboard", "action": "switchToolsTab('dashboard')"},
                     {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
                 ]
+            },
+            "level_4": {
+                "films":      {"fragment": "fragments/film_view.html",      "init": "initFilmsView"},
+                "series":     {"fragment": "fragments/serie_view.html",     "init": "initSeriesView"},
+                "albums":     {"fragment": "fragments/album_view.html",     "init": "initAlbumsView"},
+                "audiobooks": {"fragment": "fragments/audiobook_view.html", "init": "initAudiobooksView"},
+                "cinema":     {"fragment": "fragments/video_view.html",     "init": "initCinemaView"}
             }
         },
 
@@ -447,24 +454,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             {"id": "series",          "label": "serie"},
             {"id": "documentation",   "label": "dokumentation"},
             {"id": "bilder",          "label": "bilder"},
+            {"id": "pictures",        "label": "bilder"},
             {"id": "epub",            "label": "epub"},
+            {"id": "ebooks",          "label": "ebooks"},
             {"id": "docs",            "label": "dokumente"},
+            {"id": "documents",       "label": "dokumente"},
             {"id": "archives",        "label": "archiv"},
+            {"id": "disk_images",     "label": "disk_images"},
+            {"id": "spiel",           "label": "spiel / games"},
+            {"id": "games",           "label": "spiel / games"},
+            {"id": "beigabe",         "label": "beigabe"},
+            {"id": "supplements",     "label": "supplements"},
             {"id": "nfo",             "label": "nfo"},
-            {"id": "unknown",         "label": "unbekannt"}
+            {"id": "unknown",         "label": "unbekannt"},
+            {"id": "unbekannt",       "label": "unbekannt"}
         ],
 
         "branch_architecture_registry": {
             "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub"],
-            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "nfo", "unknown"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "pictures", "ebooks", "spiel", "beigabe"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "nfo", "unknown", "pictures", "ebooks", "documents", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
-            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown"], 
-            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown"],
-            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown"],
-            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown"],
-            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown"]
+            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"], 
+            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
+            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
+            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
+            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"]
         },
 
         # --- [v1.46.00] BRANCH IDENTITY & BUILD REGISTRY ---
