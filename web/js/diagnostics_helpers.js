@@ -1045,11 +1045,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 });
 /**
- * Deep Data Flow Probe (v1.41.00 Recovery)
+ * Deep Data Flow Probe (v1.46.009 Recovery)
  */
 async function probeDataFlow() {
-    // Stage 1 (Mock) is the starting baseline
-    await auditSwitchStage(1);
+    console.warn("[RECOVERY] Manual Force-Pulse triggered via Sync Anchor...");
+    
+    // 1. Stage 1 (Mock) is the starting baseline for repair
+    if (typeof auditSwitchStage === 'function') {
+        await auditSwitchStage(1);
+    }
+
+    // 2. Trigger the Nuclear Recovery Pulse to force-render items (v1.46.009)
+    if (typeof runNuclearRecoveryPulse === 'function') {
+        await runNuclearRecoveryPulse();
+    } else {
+        console.error("[RECOVERY] Nuclear Recovery Pulse ENGINE NOT FOUND!");
+    }
 }
 window.probeDataFlow = probeDataFlow;
 
