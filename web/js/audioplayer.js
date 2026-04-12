@@ -695,25 +695,14 @@ function renderFullLibraryInPlayer() {
 // [v1.45.120] addAndPlayNow relocated to playlists.js
 
 /**
- * Synchronizes the player queue with the current library state (v1.45.110).
- * Populates window.currentPlaylist with branch-aut/**
  * renderGlobalPlaylist (Wrapper for compatibility)
  */
 function renderGlobalPlaylist() {
-    renderAudioQueue();
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
 }
 
 window.renderGlobalPlaylist = renderGlobalPlaylist;
 window.renderAudioQueue = renderAudioQueue;
- renderAudioQueue();
-            if (typeof appendUiTrace === 'function') {
-                appendUiTrace(`[Debug] Audio Queue Bootstrapped with ${currentPlaylist.length} items.`);
-            }
-        }
-    } catch (err) {
-        console.error("[Audio] [Debug] Failed to fetch mock stage 3:", err);
-    }
-}
 
 // [v1.34 REMOVED: Automatic timeout relocated to Quick Sign-off Test script]
 

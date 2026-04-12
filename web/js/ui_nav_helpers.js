@@ -41,8 +41,6 @@ window.mwv_init_actions = {
 };
 
 // Global state variables
-let librarySubTab = 'coverflow';
-let librarySubFilter = 'all';
 let currentMainCategory = 'audio';
 
 window.__mwv_ui_nav_loaded = true;
