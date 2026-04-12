@@ -2790,8 +2790,16 @@ def update_startup_config(config):
 
 @eel.expose
 def get_ui_settings():
-    """Returns the current UI registry (v1.37 Restoration)."""
-    return GLOBAL_CONFIG.get("ui_settings", {})
+    """Returns the current UI registry (v1.46.007 Refined Structure)."""
+    # Synthesize the structure expected by ui_core.js
+    return {
+        **GLOBAL_CONFIG,
+        "ui_settings": {
+            **GLOBAL_CONFIG,
+            "footer_settings": GLOBAL_CONFIG.get("footer_settings", {}),
+            "ui_flag_registry": GLOBAL_CONFIG.get("ui_flag_registry", {})
+        }
+    }
 
 
 @eel.expose
