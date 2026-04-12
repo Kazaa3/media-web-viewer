@@ -200,6 +200,29 @@ window.addAndPlayNow = addAndPlayNow;
 window.resetAllFilters = resetAllFilters;
 window.startAtomicHydrationWatcher = startAtomicHydrationWatcher;
 
+/**
+ * [v1.46.12] Hook for UI sub-navigation 'Playlist' tab.
+ */
+function refreshSavedPlaylists() {
+    console.info("[Playlist] Refreshing saved playlists...");
+    const container = document.getElementById('player-playlist-grid');
+    if (container) {
+        container.innerHTML = '<div style="padding: 40px; color: var(--text-secondary); text-align: center; opacity: 0.5;">KEINE GESPEICHERTEN PLAYLISTS GEFUNDEN</div>';
+        
+        // FUTURE: Connect to backend playlist fetch here
+        if (typeof eel !== 'undefined' && typeof eel.get_playlists === 'function') {
+            eel.get_playlists()((results) => {
+                if (results && results.length > 0) {
+                     console.log(`[Playlist] Loaded ${results.length} playlists.`);
+                     // Render logic...
+                }
+            });
+        }
+    }
+}
+
+window.refreshSavedPlaylists = refreshSavedPlaylists;
+
 // Initialize Diagnostic Pulse
 document.addEventListener('DOMContentLoaded', () => {
     startAtomicHydrationWatcher();

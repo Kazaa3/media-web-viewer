@@ -1528,7 +1528,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
 
-    # --- [v1.46.018] LEGACY NAVIGATION REGISTRY (For Rebuild Context) ---
+    # --- [v1.46.018] LEGACY NAVIGATION REGISTRY (For Rebuild Context) Level 4 Legacy unused ---
     "legacy_navigation": {
         "sub_nav_registry": {
             "media": [

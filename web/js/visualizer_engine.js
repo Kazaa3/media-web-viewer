@@ -169,3 +169,27 @@ function setVisualizerStyle(style) {
 
 window.setupVisualizer = setupVisualizer;
 window.setVisualizerStyle = setVisualizerStyle;
+
+/**
+ * [v1.46.12] Hook for UI sub-navigation 'Visualizer' tab.
+ */
+function initVisualizer() {
+    console.info("[Visualizer] Initializing Forensic Visualizer...");
+    const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+    if (pipeline) {
+        setupVisualizer(pipeline);
+    } else {
+        console.warn("[Visualizer] Audio Pipeline not found. Waiting for playback...");
+        // Fallback for cases where the view is switched before playback starts
+        const checkInterval = setInterval(() => {
+            const p = document.getElementById('native-html5-audio-pipeline-element');
+            if (p) {
+                setupVisualizer(p);
+                clearInterval(checkInterval);
+            }
+        }, 1000);
+        setTimeout(() => clearInterval(checkInterval), 10000); // 10s safety timeout
+    }
+}
+
+window.initVisualizer = initVisualizer;
