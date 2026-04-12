@@ -13,6 +13,12 @@
     --text-secondary: rgba(255, 255, 255, 0.6);
     --radius-main: 12px;
     --glass-blur: 20px;
+    
+    /* --- [v1.46.017] ELITE INVERSION VARIABLES --- */
+    --bg-header-elite: #ffffff;
+    --text-header-elite: #000000;
+    --accent-header-elite: #007aff;
+    --border-header-elite: #e5e5e7;
 }
 
 * {
@@ -221,6 +227,37 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
     padding: 0 20px;
     z-index: 1000;
     transition: height var(--transition-fluid), opacity var(--transition-snappy);
+}
+
+/* [v1.46.017] ELITE INVERSION (Black-on-White) */
+.master-header.elite-inversion {
+    background: var(--bg-header-elite) !important;
+    border-bottom: 1px solid var(--border-header-elite) !important;
+    backdrop-filter: none !important;
+}
+
+.master-header.elite-inversion .menu-item-btn {
+    color: var(--text-header-elite) !important;
+    font-weight: 800 !important;
+}
+
+.master-header.elite-inversion .menu-item-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.master-header.elite-inversion .menu-item-btn.active {
+    background: rgba(0, 122, 255, 0.1) !important;
+    color: var(--accent-header-elite) !important;
+    border-color: rgba(0, 122, 255, 0.2) !important;
+}
+
+.master-header.elite-inversion .elite-hud .hud-pill {
+    color: #333 !important;
+}
+
+.master-header.elite-inversion .logo-text {
+    color: #000 !important;
+    font-weight: 900 !important;
 }
 
 /* [v1.41.121] Header Slot Configuration */

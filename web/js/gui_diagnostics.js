@@ -81,6 +81,11 @@ window.MWV_Diagnostics = (() => {
     }
 
     function toggle() {
+        if (!document.getElementById('mwv-log-overlay')) {
+            console.warn("[MWV-DIAG] Log overlay missing during toggle. Re-creating...");
+            createLogOverlay();
+        }
+        
         const overlay = document.getElementById('mwv-log-overlay');
         if (!overlay) return;
 
