@@ -4620,7 +4620,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         cat = str(item.get('category', '')).lower()
         if cat in ['klassik', 'audiobook', 'hörbuch', 'musik']:
             item['category'] = 'audio'
-        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie', 'spiel', 'games', 'beigabe', 'supplements']:
+        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie', 'spiel', 'beigabe', 'supplements']:
             item['category'] = 'video'
 
     # --- FILTERING & BYPASS (The Motor) ---

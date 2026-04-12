@@ -135,13 +135,8 @@ MASTER_CAT_MAP = {
     },
     "spiel": {
         "internal": "video",
-        "aliases": ["spiel", "game", "games", "exe", "binary"],
+        "aliases": ["spiel", "game", "games", "exe", "binary", "interaktiv"],
         "extensions": ALL_VIDEO_EXTENSIONS | {".exe", ".bat", ".sh"}
-    },
-    "games": {
-        "internal": "video",
-        "aliases": ["games", "interaktiv"],
-        "extensions": ALL_VIDEO_EXTENSIONS
     },
     "beigabe": {
         "internal": "video",

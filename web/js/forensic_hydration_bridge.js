@@ -43,6 +43,14 @@ const ForensicHydrationBridge = {
      * Stage 1: Explicitly injects 12 hardcoded recovery items into Library & Queue.
      */
     forceEmergencyHydration() {
+        // [v1.46.015] COLLISION GUARD: Do not inject mocks if we already have real items loaded
+        const realDbCount = window.__mwv_last_db_count || 0;
+        if (realDbCount > 0) {
+            console.log("[HYDRATION-BRIDGE] Skip Stage 1: Real Items detected in registry.");
+            this.transitionToRealData();
+            return;
+        }
+
         this.stage = 1;
         console.warn("[HYDRATION-BRIDGE] STAGE 1: Injecting 12 Emergency Mocks...");
 
@@ -68,10 +76,9 @@ const ForensicHydrationBridge = {
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
 
-        // Sync Footer (v1.46.014: Handshake with real DB count)
+        // Sync Footer (v1.46.014/015: Handshake with real DB count)
         if (typeof updateSyncAnchor === 'function') {
-            const realCount = window.__mwv_last_db_count || 0;
-            updateSyncAnchor(realCount, this.mockCount);
+            updateSyncAnchor(realDbCount, this.mockCount);
         }
     },
 
