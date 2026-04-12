@@ -59,11 +59,15 @@ const ForensicFlagCenter = {
         const content = `
             <div class="flag-center-modal">
                 <div class="flag-center-header">
-                    <div class="flag-center-title">
-                        <svg class="icon"><use xlink:href="#icon-diagnostics"></use></svg>
-                        FORENSIC FLAG CENTER <span class="v-tag">v1.46.005</span>
+                    <div class="f2c-header">
+                        <div class="f2c-title">
+                            FORENSIC FLAG CENTER <span class="v-tag">v1.46.010</span>
+                        </div>
+                        <button class="f2c-reset-btn" onclick="ForensicFlagCenter.factoryReset()">
+                            RESTORE DEFAULTS
+                        </button>
+                        <button class="f2c-close" onclick="ForensicFlagCenter.hide()">&times;</button>
                     </div>
-                    <button class="flag-center-close" onclick="ForensicFlagCenter.toggle()">&times;</button>
                 </div>
                 <div class="flag-center-body" id="flag-center-grid">
                     <!-- Categories will be injected here -->
@@ -196,6 +200,36 @@ const ForensicFlagCenter = {
             cur = cur[parts[i]];
         }
         cur[parts[parts.length - 1]] = value;
+    },
+
+    /**
+     * Resets all configuration flags to system defaults (v1.46.010).
+     */
+    async factoryReset() {
+        if (!confirm("RESTORE ALL DEFAULTS? This will reset all visibility flags and layout presets.")) return;
+        
+        console.warn("[FLAG-CENTER] Initiating Factory Reset...");
+        try {
+            if (typeof eel !== 'undefined' && typeof eel.reset_config === 'function') {
+                const result = await eel.reset_config()();
+                console.log("[FLAG-CENTER] Backend Reset Result:", result);
+                
+                // Re-sync local config
+                if (typeof syncCoreRegistry === 'function') {
+                    await syncCoreRegistry();
+                }
+                
+                // Force UI Pulse
+                if (typeof applySystemFlags === 'function') {
+                    applySystemFlags();
+                }
+                
+                this.injectCategories(); // Refresh UI
+                if (typeof showToast === 'function') showToast("Workstation Restored", 2000);
+            }
+        } catch (e) {
+            console.error("[FLAG-CENTER] Reset Failed:", e);
+        }
     }
 };
 
@@ -207,4 +241,4 @@ document.addEventListener('DOMContentLoaded', () => {
     ForensicFlagCenter.init();
 });
 
-// Created with MWV v1.46.005-MASTER
+// Created with MWV v1.46.010-MASTER

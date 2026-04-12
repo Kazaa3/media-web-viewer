@@ -2712,3 +2712,38 @@ input:checked + .forensic-slider:before { transform: translateX(16px); }
     background: var(--accent-color);
     color: #000;
 }
+
+/* --- [v1.46.010] Flag Center Reset Components --- */
+.f2c-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.f2c-reset-btn {
+    margin-left: auto;
+    margin-right: 15px;
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #e74c3c;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.f2c-reset-btn:hover {
+    background: #e74c3c;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+}
+
+.f2c-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+}
