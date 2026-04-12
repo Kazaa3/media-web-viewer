@@ -1528,6 +1528,129 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
 
+    # --- [v1.46.018] LEGACY NAVIGATION REGISTRY (For Rebuild Context) ---
+    "legacy_navigation": {
+        "sub_nav_registry": {
+            "media": [
+                { "id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')" },
+                { "id": "playlist", "label": "Playlist Manager", "action": "switchPlayerView('playlist')" },
+                { "id": "visualizer", "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
+                { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" },
+                { "id": "video-cinema", "label": "Video Cinema", "action": "switchMediaSubView('video')" }
+            ],
+            "library": [
+                { "id": "lib-visual", "label": "Visual Explorer", "action": "switchLibrarySubView('visual')" },
+                { "id": "lib-browse", "label": "FileSystem Browse", "action": "switchLibrarySubView('browse')" },
+                { "id": "lib-inventory", "label": "Database Inventory", "action": "switchLibrarySubView('inventory')" },
+                { "id": "lib-cinema", "label": "Cinema View", "action": "switchLibrarySubTab('cinema')" },
+                { "id": "lib-films", "label": "Filme / Movie", "action": "switchLibrarySubTab('films')" },
+                { "id": "lib-series", "label": "Serien / TV", "action": "switchLibrarySubTab('series')" }
+            ],
+            "database": [
+                { "id": "db-explorer", "label": "DB Explorer", "action": "switchLibrarySubView('inventory')" },
+                { "id": "db-integrity", "label": "Integrity Check", "action": "runNuclearDiagnostics()" },
+                { "id": "db-sync", "label": "Atomic Sync", "action": "triggerDeepSync()" },
+                { "id": "db-recovery", "label": "Recovery Hub", "action": "switchDiagnosticsSubView('recovery')" }
+            ],
+            "status": [
+                { "id": "status-health", "label": "Core Health", "action": "switchDiagnosticsSubView('health')" },
+                { "id": "status-logs", "label": "Live Logs", "action": "switchDiagnosticsSubView('logs')" },
+                { "id": "status-net", "label": "Network/Eel", "action": "switchDiagnosticsSubView('network')" },
+                { "id": "status-latency", "label": "Logic Latency", "action": "switchDiagnosticsSubView('latency')" }
+            ],
+            "file": [
+                { "id": "file-local", "label": "Lokale Medien", "action": "switchFileSubView('local')" },
+                { "id": "file-network", "label": "Netzwerk / SMB", "action": "switchFileSubView('network')" },
+                { "id": "file-mounted", "label": "Eingehängte Drv", "action": "switchFileSubView('mounted')" }
+            ],
+            "edit": [
+                { "id": "edit-basic", "label": "Basic Metadata", "action": "switchEditSubView('basic')" },
+                { "id": "edit-tech", "label": "Technical Specs", "action": "switchEditSubView('technical')" },
+                { "id": "edit-ffprobe", "label": "FFprobe Dump", "action": "switchEditSubView('ffprobe')" },
+                { "id": "edit-album", "label": "Artwork Editor", "action": "switchEditSubView('artwork')" }
+            ],
+            "system": [
+                { "id": "sys-general", "label": "Allgemein", "action": "switchOptionsView('general')" },
+                { "id": "sys-parser", "label": "Parser Chain", "action": "switchOptionsView('parser')" },
+                { "id": "sys-trans", "label": "Transcoding", "action": "switchOptionsView('transcoding')" },
+                { "id": "sys-env", "label": "Environments", "action": "switchOptionsView('environment')" },
+                { "id": "sys-helpers", "label": "Helper Scripts", "action": "switchOptionsView('helpers')" }
+            ],
+            "parser": [
+                { "id": "px-chain", "label": "Main Chain", "action": "switchParserView('main')" },
+                { "id": "px-extraction", "label": "Extraction Log", "action": "switchParserView('extraction')" },
+                { "id": "px-bench", "label": "Benchmarking", "action": "switchParserView('benchmark')" }
+            ],
+            "debug": [
+                { "id": "dbg-sentinel", "label": "UI Sentinel", "action": "switchDiagnosticsSubView('sentinel')" },
+                { "id": "dbg-audit", "label": "Forensic Audit", "action": "switchDiagnosticsSubView('audit')" },
+                { "id": "dbg-state", "label": "AppState Dump", "action": "switchDiagnosticsSubView('state')" }
+            ],
+            "tests": [
+                { "id": "test-suite", "label": "Active Suite", "action": "switchTestView('suite')" },
+                { "id": "test-scripts", "label": "Test Scripts", "action": "switchTestView('scripts')" },
+                { "id": "test-regress", "label": "Regression", "action": "switchTestView('regression')" }
+            ],
+            "tools": [
+                { "id": "tool-set", "label": "System Toolset", "action": "switchToolsSubView('main')" },
+                { "id": "tool-workers", "label": "Active Workers", "action": "switchToolsSubView('workers')" },
+                { "id": "tool-pipelines", "label": "AV Pipelines", "action": "switchToolsSubView('pipelines')" }
+            ],
+            "reporting": [
+                { "id": "rep-overview", "label": "Overview", "action": "switchReportingView('dashboard')" },
+                { "id": "rep-perf", "label": "Performance", "action": "switchReportingView('performance')" },
+                { "id": "rep-errors", "label": "Error Analytics", "action": "switchReportingView('errors')" }
+            ],
+            "logbuch": [
+                { "id": "log-project", "label": "Projekt Log", "action": "switchLogbookSubView('project')" },
+                { "id": "log-audit", "label": "Audit History", "action": "switchLogbookSubView('audit')" },
+                { "id": "log-feature", "label": "Feature Status", "action": "toggleFeatureStatus()" }
+            ],
+            "video": [
+                { "id": "vid-cinema", "label": "Cinema Cinema", "action": "switchMediaSubView('video')" },
+                { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" },
+                { "id": "vid-stream", "label": "Stream Relay", "action": "switchOptionsView('transcoding')" }
+            ],
+            "unsort": [
+                { "id": "unsort-probe", "label": "Deep Probe Hub", "action": "runHydrationAuditProbe()" },
+                { "id": "unsort-sync", "label": "Force Database Sync", "action": "if(window.triggerMasterSync) window.triggerMasterSync()" },
+                { "id": "unsort-ui", "label": "UI Refresh", "action": "refreshViewportLayout()" },
+                { "id": "unsort-log", "label": "System Log", "action": "switchMainCategory('logbuch')" },
+                { "id": "unsort-audit", "label": "System Audit", "action": "openDiagnosticsTab('status')" }
+            ]
+        },
+        "sub_nav_aliases": {
+            "player": "media",
+            "bibliothek": "library",
+            "database": "database",
+            "explorer": "library",
+            "tools": "tools",
+            "debug": "debug",
+            "diagnostics": "status",
+            "optionen": "system",
+            "report": "reporting",
+            "reporting_dashboard": "reporting",
+            "file": "file",
+            "edit": "edit",
+            "parser": "parser",
+            "logbuch": "logbuch",
+            "video": "video",
+            "tests": "tests",
+            "status": "status",
+            "audio": "media",
+            "audio_native": "media",
+            "audio_transcode": "media",
+            "album": "media",
+            "single": "media",
+            "hörbuch": "media",
+            "sampler": "media",
+            "soundtrack": "media",
+            "video_iso": "media",
+            "bilder": "media",
+            "epub": "media"
+        }
+    },
+
     # End of Registry
 }
 
