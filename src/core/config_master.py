@@ -9,10 +9,10 @@ v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
-APP_VERSION_CORE = "v1.46.004"
+APP_VERSION_CORE = "v1.46.005"
 APP_VERSION_FRONTEND = "v1.46.004-MASTER-FINAL"
-APP_VERSION_BACKEND = "v1.46.004-PURE-DOM"
-# Created with MWV v1.46.004-MASTER
+APP_VERSION_BACKEND = "v1.46.005-FLAG-CENTER"
+# Created with MWV v1.46.005-MASTER
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
@@ -603,6 +603,36 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "lyrics_panel_enabled": True,       # GLOBAL: Metadaten/Lyrics-Panel.
         "mini_player_allowed": True, 
         "global_search_allowed": True,
+        
+        # --- [v1.46.005] CONSOLIDATED FLAG REGISTRY (F2C) ---
+        "ui_flag_registry": {
+            "technical": {
+                "enable_technical_hud": "Technical HUD (PID/BOOT)",
+                "enable_diagnostics_hud": "Diagnostics HUD (Header)",
+                "enable_dom_auditor": "DOM Auditor (7-Point-Pulse)",
+                "enable_sync_anchor": "Sync Anchor [DB|GUI]",
+                "enable_footer_hud_cluster": "Swiss HUD LED Cluster"
+            },
+            "workstation": {
+                "enable_zen_mode": "Zen Mode (Clean Layout)",
+                "enable_footer_db_status": "Footer DB Status",
+                "enable_header_power_button": "Header Power Button",
+                "enable_rescue_failover": "Auto-Rescue UI"
+            },
+            "fragments": {
+                "ui_fragments.player": "Audio Player Sidebar",
+                "ui_fragments.library": "Media Library Sidebar",
+                "ui_fragments.video": "Video Cinema Sidebar",
+                "ui_fragments.edit": "Metadata Editor Sidebar",
+                "ui_fragments.debug": "Technical Debug Sidebar"
+            },
+            "engines": {
+                "audio_engine_enabled": "Audio Engine (Core)",
+                "video_engine_enabled": "Video Engine (Core)",
+                "queue_panel_enabled": "Media Queue Panel",
+                "lyrics_panel_enabled": "Lyrics/Metadata Panel"
+            }
+        },
 
         # --- BEHAVIOR & THEME ---
         "theme": "dark",
