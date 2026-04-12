@@ -523,6 +523,16 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
+        
+        // [v1.46.015] Manual Sync Trigger
+        if (!footerAnchor.onclick) {
+            footerAnchor.style.cursor = 'pointer';
+            footerAnchor.title = "Click to force Manual Hydration Pulse";
+            footerAnchor.onclick = () => {
+                console.warn("[UI-SYNC] Manual Pulse Triggered from Footer Anchor.");
+                if (typeof refreshLibrary === 'function') refreshLibrary();
+            };
+        }
     }
 
     // 3. SECONDARY: Diagnostics Sidebar Metrics
