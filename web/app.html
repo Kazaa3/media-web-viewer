@@ -178,9 +178,11 @@
             // 2. Left Cluster Orchestration (Sequential Rebuild)
             const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
             if (primaryCluster && config.left_cluster) {
-                // Collect existing logo node to preserve it
+                // Collect existing persistent nodes to prevent accidental deletion
                 const logoNode = document.querySelector('.header-logo-pulsar');
-                primaryCluster.innerHTML = ''; // Wipe and rebuild
+                const navButtonsNode = document.getElementById('header-nav-buttons');
+                
+                primaryCluster.innerHTML = ''; // Wipe and rebuild buttons
                 
                 config.left_cluster.forEach(btn => {
                     if (btn.visible === false) return; // Strict visibility check
@@ -191,7 +193,6 @@
                     el.className = 'tab-btn header-orchestrated-btn';
                     el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;";
                     
-                    // Specific styling for power button
                     if (btn.id === 'power') {
                         el.style.backgroundColor = "rgba(255, 51, 102, 0.1)";
                         el.style.color = "#ff3366";
@@ -200,15 +201,13 @@
                     }
 
                     el.innerHTML = `<svg class="icon" style="pointer-events: none;"><use xlink:href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
-                    el.onclick = () => {
-                        console.log(`[HEADER] Executing Action: ${btn.action}`);
-                        eval(btn.action);
-                    };
+                    el.onclick = () => eval(btn.action);
                     primaryCluster.appendChild(el);
                 });
                 
-                // Finally, append the logo if it exists and is visible
+                // Re-append persistent structural components
                 if (logoNode) primaryCluster.appendChild(logoNode);
+                if (navButtonsNode) primaryCluster.appendChild(navButtonsNode);
             }
 
             // 3. Middle Tabs Orchestration (Ordering & Visibility)
@@ -219,6 +218,7 @@
                     if (tab.visible === false) return;
                     const btn = document.createElement('button');
                     btn.id = `nav-btn-${tab.id}`;
+                    btn.setAttribute('data-category', tab.id); // [v1.46.03] RESTORED: Critical for CSS/JS hooks
                     btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
                     btn.innerText = tab.label;
                     btn.onclick = (e) => {
