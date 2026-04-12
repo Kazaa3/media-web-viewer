@@ -366,16 +366,32 @@ class MediaFormat:
         ext = self.extension
         if ext in self.registry.get("disk_images", {}):
             return 'disk_images'
-        if ext in self.registry.get("video", {}):
-            return 'video'
+        
+        # Audio Sub-categorization
         if ext in self.registry.get("audio", {}):
-            # Special case: Audiobook detection
+            # 1. Audiobook
             if ext == '.m4b' or any(k in str(self.path).lower() for k in ['h\u00f6rbuch', 'hörbuch', 'audiobook']):
-                return 'audiobook'
-            # Special case: Sampler / Compilation detection
-            if str(self.tags.get('compilation')).lower() in ('1', 'true', 'yes'):
-                return 'sampler'
+                return 'hörbuch'
+            # 2. Compilation / Sampler
+            if str(self.tags.get('compilation')).lower() in ('1', 'true', 'yes') or any(k in str(self.path).lower() for k in ['sampler', 'various artists', 'compilation']):
+                return 'compilation'
+            # 3. Album (Default for music)
+            if self.tags.get('album') or any(k in str(self.path).lower() for k in ['album', 'lp', 'cd']):
+                return 'album'
+            
             return 'audio'
+        
+        # Video Sub-categorization
+        if ext in self.registry.get("video", {}):
+            # 1. Series
+            if any(k in str(self.path).lower() for k in ['series', 'serie', 'tv-show', 'staffel']):
+                return 'serie'
+            # 2. Documentation
+            if any(k in str(self.path).lower() for k in ['documentation', 'dokumentation', 'doku', 'report']):
+                return 'documentation'
+            # 3. Film (Default for video)
+            return 'film'
+            
         if ext in self.registry.get("pictures", {}):
             return 'pictures'
         if ext in self.registry.get("ebooks", {}):
@@ -437,7 +453,7 @@ class MediaFormat:
 
         fmt_name = ext.upper().lstrip('.') or 'UNKNOWN'
 
-        if self.type == 'audio':
+        if self.type in ['audio', 'album', 'hörbuch', 'compilation']:
             bits = _tag('audio_bit_depth')
             sr = _tag('audio_sample_rate')
             try:
@@ -451,7 +467,7 @@ class MediaFormat:
             except (ValueError, AttributeError, ImportError):
                 pass
 
-        if self.type == 'video':
+        if self.type in ['video', 'film', 'serie']:
             hdr = _tag('video_hdr')
             scan = _tag('video_scan_type')
             bits = _tag('video_bit_depth')
@@ -532,6 +548,15 @@ class MediaItem:
         # 2. SSOT Categorization (Quadrant Consolidation)
         self.format_info = MediaFormat(self.path, self.tags)
         self.category = self.format_info.type  # Canonical lowercase ID
+        
+        # [v1.46.013] Category/Subtype Decoupling
+        # Category is for Level 1 tabs, Subtype is for Level 2 granular classification.
+        if self.category in ['album', 'hörbuch', 'compilation']:
+             self.category = 'audio'
+        elif self.category in ['film', 'serie', 'documentation']:
+             self.category = 'video'
+
+        self.subtype = self.format_info.type # Standardize on granular ID
         self.file_format = self.format_info.format
         self.content_type = self.format_info.content
         self.extension = self.format_info.extension.lstrip('.').lower()

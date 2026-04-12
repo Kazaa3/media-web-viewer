@@ -66,7 +66,7 @@ function syncGlobalDiagnosticsNav(viewId) {
 function applyDiagnosticsSidebarState(isVisible) {
     const sb = document.getElementById('global-diagnostics-sidebar');
     const footerBtn = document.getElementById('footer-btn-diag-overlay');
-    const headerBtn = document.getElementById('header-btn-diag-overlay');
+    const headerBtn = document.getElementById('header-btn-r-diag');
 
     // Check if we need to load the module first
     if (!sb && isVisible) {
@@ -158,7 +158,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
  */
 function toggleTechnicalHUD(forceState = null) {
     const hud = document.getElementById('header-technical-hud');
-    const btn = document.getElementById('header-btn-status');
+    const btn = document.getElementById('header-btn-r-status');
     if (!hud) return;
 
     const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
@@ -177,7 +177,7 @@ window.toggleTechnicalHUD = toggleTechnicalHUD;
  */
 function toggleDomAuditor(forceState = null) {
     const hud = document.getElementById('dom-auditor-hud');
-    const btn = document.getElementById('header-btn-auditor');
+    const btn = document.getElementById('header-btn-r-auditor');
     if (!hud) {
         console.warn("[UI-NAV] DOM Auditor HUD container not found.");
         return;
@@ -199,7 +199,7 @@ window.toggleDomAuditor = toggleDomAuditor;
  */
 function toggleSyncAnchor(forceState = null) {
     const el = document.getElementById('footer-sync-anchor');
-    const btn = document.getElementById('header-btn-sync-anchor');
+    const btn = document.getElementById('header-btn-r-sync');
     if (!el) return;
     const isVisible = (typeof forceState === 'boolean') ? forceState : (el.style.display === 'none');
     el.style.display = isVisible ? 'inline-block' : 'none';
@@ -212,7 +212,7 @@ window.toggleSyncAnchor = toggleSyncAnchor;
  */
 function toggleFooterHUD(forceState = null) {
     const clusters = document.querySelectorAll('#footer-hud-cluster, .footer-hud-cluster');
-    const btn = document.getElementById('header-btn-footer-hud');
+    const btn = document.getElementById('header-btn-r-footer_hud');
     if (clusters.length === 0) return;
 
     // Check first cluster for state
@@ -228,7 +228,7 @@ window.toggleFooterHUD = toggleFooterHUD;
  */
 function toggleFooterDBStatus(forceState = null) {
     const el = document.getElementById('footer-db-status-cluster');
-    const btn = document.getElementById('header-btn-db-status');
+    const btn = document.getElementById('header-btn-r-db_status');
     if (!el) return;
     const isVisible = (typeof forceState === 'boolean') ? forceState : (el.style.display === 'none');
     el.style.display = isVisible ? 'flex' : 'none';
@@ -288,7 +288,7 @@ async function toggleDiagnosticsFlag(flagId) {
 function toggleLibrarySidebar(forceState = null) {
     const sidebar = document.getElementById('lib-sidebar-left');
     const splitter = document.getElementById('lib-splitter');
-    const btn = document.getElementById('header-btn-lib-sidebar');
+    const btn = document.getElementById('header-btn-r-lib_sidebar');
     
     if (!sidebar) {
         console.warn("[UI-NAV] Global Library Sidebar element not found.");
