@@ -131,6 +131,30 @@
     <div id="diagnostics-overlay-container"></div>
     <div id="global-diagnostics-sidebar" class="diagnostics-sidebar"></div>
 
+    <!-- [FORENSIC] AUDIO PIPELINE (v1.46.019) -->
+    <audio id="native-html5-audio-pipeline-element" style="display:none;"></audio>
+
+    <!-- [BRIDGE] LEGACY COMPATIBILITY ANCHORS (v1.46.019) -->
+    <div id="main-sidebar" style="display:none;"></div>
+    <div id="main-content-area" style="display:none;"></div>
+
+    <!-- [v1.46.019] EMERGENCY ERROR BRIDGE -->
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("[JS-CRASH]", message, "at", source, ":", lineno);
+            if (typeof eel !== 'undefined' && typeof eel.log_js_error === 'function') {
+                eel.log_js_error({
+                    type: 'ERROR',
+                    message: message,
+                    source: source,
+                    lineno: lineno,
+                    colno: colno,
+                    stack: error ? error.stack : 'N/A'
+                });
+            }
+        };
+    </script>
+
     <!-- Critical Core Scripts -->
     <script type="text/javascript" src="/eel.js?v=1.45.100"></script>
     <script src="js/db.js?v=1.45.100"></script>

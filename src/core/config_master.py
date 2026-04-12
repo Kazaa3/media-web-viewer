@@ -294,7 +294,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     },
     
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
-    "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
+    "ui_evolution_mode": "rebuild",  # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
     "unicode_safety_map": {
         "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 
