@@ -734,8 +734,7 @@ def start_app():
             now = time.time()
             if now - start_wait > timeout:
                 print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
-                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(
-                    port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
                 print(f"Python: {sys.version.split()[0]}", flush=True)
                 print(f"Eel Mode: {eel_mode}", flush=True)
                 print(f"Working Dir: {os.getcwd()}", flush=True)
