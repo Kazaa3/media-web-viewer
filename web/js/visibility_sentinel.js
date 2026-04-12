@@ -15,9 +15,10 @@ const VisibilitySentinel = {
         console.info("[SENTINEL] Initializing Forensic Visibility Watchdog...");
         if (this.interval) clearInterval(this.interval);
         
+        const auditMs = window.CONFIG?.technical_orchestrator?.intervals?.sentinel_audit_ms || 2000;
         this.interval = setInterval(() => {
             this.audit();
-        }, 2000); // 2s Forensic Pulse
+        }, auditMs); // Forensic Pulse
     },
 
     /**

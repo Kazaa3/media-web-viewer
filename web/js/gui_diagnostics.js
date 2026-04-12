@@ -94,7 +94,8 @@ window.MWV_Diagnostics = (() => {
 
         if (isMonitoring) {
             pollLogs();
-            pollInterval = setInterval(pollLogs, 1000);
+            const pollMs = window.CONFIG?.technical_orchestrator?.intervals?.log_polling_ms || 1000;
+            pollInterval = setInterval(pollLogs, pollMs);
         } else {
             clearInterval(pollInterval);
         }

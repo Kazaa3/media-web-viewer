@@ -8,7 +8,7 @@ function startBootWatchdog() {
     if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'START', { ts: Date.now() });
     __mwv_boot_watchdog_status = 'STARTED';
     __mwv_boot_watchdog_ticks = 0;
-    const tickInterval = window.CONFIG?.sleep_times?.watchdog_tick * 1000 || 500;
+    const tickMs = window.CONFIG?.technical_orchestrator?.watchdog?.tick_ms || 500;
     __mwv_boot_watchdog_timer = setInterval(() => {
         try {
             __mwv_boot_watchdog_ticks++;
@@ -23,7 +23,7 @@ function startBootWatchdog() {
 
             if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: libCount });
 
-            const maxTicks = window.CONFIG?.boot_watchdog_max_ticks || 12;
+            const maxTicks = window.CONFIG?.technical_orchestrator?.watchdog?.max_ticks || 12;
             if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > maxTicks) {
                 if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
 
@@ -49,13 +49,14 @@ let __mwv_heartbeat_timer = null;
 function startHeartbeat() {
     if (typeof eel === 'undefined') return;
     console.log("[Health] Starting Heartbeat Service...");
+    const heartbeatMs = window.CONFIG?.technical_orchestrator?.intervals?.heartbeat_pulse_ms || 5000;
     __mwv_heartbeat_timer = setInterval(async () => {
         try {
             await eel.heartbeat()();
         } catch (e) {
             console.warn("[Health] Heartbeat failed (Backend possibly busy/restarting)");
         }
-    }, 5000); // 5s pulse
+    }, heartbeatMs); // Dynamic pulse
 }
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -78,11 +78,12 @@ if not LOCAL_LOG_DIR.exists():
 
 # UI Log Buffer (accessible by Eel)
 LOG_BUFFER: List[str] = []
-MAX_BUFFER_SIZE = REGISTRY.get("max_buffer_size", 10000)
+TECH_CONFIG = GLOBAL_CONFIG.get("technical_orchestrator", {})
+MAX_BUFFER_SIZE = TECH_CONFIG.get("logging", {}).get("max_buffer_size", REGISTRY.get("max_buffer_size", 10000))
 
 _debug_flags = {}
 _last_ui_broadcast = 0.0
-UI_BROADCAST_COOLDOWN = 0.02 # Max 50 messages/sec (v1.41.00)
+UI_BROADCAST_COOLDOWN = TECH_CONFIG.get("intervals", {}).get("ui_broadcast_cooldown_ms", 20) / 1000.0 # From ms to sec (v1.46.017)
 
 def set_debug_flags(flags: dict):
     """Update internal reference to debug flags."""
@@ -362,7 +363,7 @@ def stall_watchdog(task_name: str, threshold: float = None):
     Logs start, duration, and warnings if threshold is exceeded.
     """
     if threshold is None:
-        threshold = REGISTRY.get("watchdog_threshold", 2.0)
+        threshold = GLOBAL_CONFIG.get("technical_orchestrator", {}).get("watchdog", {}).get("stall_threshold_s", 2.0)
     start_time = time.time()
     logging.info(f"[WATCHDOG] START: {task_name}")
     progress_update(task_name, 0, "active")

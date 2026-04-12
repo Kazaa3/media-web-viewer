@@ -401,6 +401,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             }
         },
 
+        # --- [v1.46.017] TECHNICAL & DIAGNOSTIC ORCHESTRATOR ---
+        "technical_orchestrator": {
+            "intervals": {
+                "log_polling_ms": 1000,
+                "hydration_audit_ms": 2000,
+                "heartbeat_pulse_ms": 5000,
+                "sentinel_audit_ms": 1000,
+                "recovery_pulse_ms": 1000,
+                "dom_hud_update_ms": 2000,
+                "ui_broadcast_cooldown_ms": 20
+            },
+            "logging": {
+                "max_buffer_size": 10000,
+                "unicode_safety_mode": True,
+                "enable_ui_console": True
+            },
+            "hydration": {
+                "mock_count": 12,
+                "auto_hydrate_enabled": True
+            },
+            "watchdog": {
+                "tick_ms": 500,
+                "max_ticks": 12,
+                "stall_threshold_s": 2.0
+            }
+        },
+
         # --- [v1.45.300] LIBRARY SIDEBAR ORCHESTRATOR ---
         "library_sidebar_orchestrator": {
             "visible": True,

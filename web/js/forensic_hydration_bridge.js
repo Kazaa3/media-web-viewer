@@ -21,6 +21,7 @@ const ForensicHydrationBridge = {
      * Periodic audit to move through hydration stages.
      */
     auditLoop() {
+        const auditMs = window.CONFIG?.technical_orchestrator?.intervals?.hydration_audit_ms || 2000;
         setInterval(() => {
             const hasLib = (typeof allLibraryItems !== 'undefined' && Array.isArray(allLibraryItems) && allLibraryItems.length > 0);
             const queueLen = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
@@ -36,7 +37,7 @@ const ForensicHydrationBridge = {
                     this.transitionToRealData();
                 }
             }
-        }, 2000);
+        }, auditMs);
     },
 
     /**
@@ -52,10 +53,11 @@ const ForensicHydrationBridge = {
         }
 
         this.stage = 1;
-        console.warn("[HYDRATION-BRIDGE] STAGE 1: Injecting 12 Emergency Mocks...");
+        const mockCount = window.CONFIG?.technical_orchestrator?.hydration?.mock_count || 12;
+        console.warn(`[HYDRATION-BRIDGE] STAGE 1: Injecting ${mockCount} Emergency Mocks...`);
 
         const emergencyMocks = [];
-        for (let i = 1; i <= this.mockCount; i++) {
+        for (let i = 1; i <= mockCount; i++) {
             emergencyMocks.push({
                 id: `emergency-${i}`,
                 filename: `mock_asset_${i}.wav`,

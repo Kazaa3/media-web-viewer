@@ -37,7 +37,8 @@ window.MWV_DOM_HUD = (() => {
     }
 
     function startMonitoring() {
-        timer = setInterval(updateStats, 2000);
+        const updateMs = window.CONFIG?.technical_orchestrator?.intervals?.dom_hud_update_ms || 2000;
+        timer = setInterval(updateStats, updateMs);
     }
 
     function updateStats() {
