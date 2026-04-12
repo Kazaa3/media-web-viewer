@@ -1,5 +1,5 @@
 /**
- * Forensic Flag Center (v1.46.005)
+ * Forensic Flag Center (v1.46.011)
  * Centralized steering overlay for all internal system flags and HUDs.
  */
 
@@ -11,7 +11,7 @@ const ForensicFlagCenter = {
      * Initializes the Flag Center and binds the UI entry points.
      */
     init() {
-        console.log("%c[FLAG-CENTER] ARMED. Version v1.46.005", "color: #00f2ff; font-weight: 900;");
+        console.log("%c[FLAG-CENTER] ARMED. Version v1.46.011", "color: #00f2ff; font-weight: 900;");
         this.registry = window.CONFIG?.ui_flag_registry || null;
         this.bindEvents();
     },
@@ -23,26 +23,35 @@ const ForensicFlagCenter = {
         // Close on ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.visible) this.toggle();
-        });
+    toggle() {
+        if (this.visible) this.hide();
+        else this.show();
     },
 
     /**
-     * Toggles the visibility of the Flag Center overlay.
+     * Forces the Flag Center to become visible.
      */
-    toggle() {
+    show() {
         const overlay = document.getElementById('forensic-flag-center');
         if (!overlay) {
             this.render();
-            return this.toggle();
+            return this.show();
         }
+        this.visible = true;
+        overlay.style.display = 'flex';
+        console.log("[FLAG-CENTER] UI Steering Active.");
+        this.refreshToggles();
+    },
 
-        this.visible = !this.visible;
-        overlay.style.display = this.visible ? 'flex' : 'none';
-        
-        if (this.visible) {
-            console.log("[FLAG-CENTER] UI Steering Active.");
-            this.refreshToggles();
-        }
+    /**
+     * Forces the Flag Center to hide.
+     */
+    hide() {
+        const overlay = document.getElementById('forensic-flag-center');
+        if (!overlay) return;
+        this.visible = false;
+        overlay.style.display = 'none';
+        console.log("[FLAG-CENTER] UI Steering Hibernated.");
     },
 
     /**
@@ -61,7 +70,7 @@ const ForensicFlagCenter = {
                 <div class="flag-center-header">
                     <div class="f2c-header">
                         <div class="f2c-title">
-                            FORENSIC FLAG CENTER <span class="v-tag">v1.46.010</span>
+                            FORENSIC FLAG CENTER <span class="v-tag">v1.46.011</span>
                         </div>
                         <button class="f2c-reset-btn" onclick="ForensicFlagCenter.factoryReset()">
                             RESTORE DEFAULTS
