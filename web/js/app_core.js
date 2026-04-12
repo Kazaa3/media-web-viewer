@@ -61,9 +61,9 @@ function startHeartbeat() {
 window.addEventListener('DOMContentLoaded', () => {
     try {
         startBootWatchdog();
-        // Initialize Diagnostic Suite if available
-        if (window.Diagnostics && typeof window.Diagnostics.init === 'function') {
-            window.Diagnostics.init();
+        // Initialize Diagnostic Suite (v1.46.017 Handshake)
+        if (window.MWV_Diagnostics && typeof window.MWV_Diagnostics.init === 'function') {
+            window.MWV_Diagnostics.init();
         }
     } catch (e) {
         if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'FAIL', { error: e.message });

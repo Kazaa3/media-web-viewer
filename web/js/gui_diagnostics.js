@@ -159,14 +159,11 @@ window.MWV_Diagnostics = (() => {
 })();
 
 // Auto-inject appendUiTrace hook for real-time (called by backend)
-window.appendUiTrace = (msg) => {
-    // Optional: Real-time update if overlay is open
-    const content = document.getElementById('mwv-log-content');
-    if (content && window.MWV_Diagnostics.getState().isMonitoring) {
-        // Manual append code...
+// Created with MWV v1.46.017-MASTER
+window.MWV_Diagnostics = MWV_Diagnostics;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.MWV_Diagnostics && typeof window.MWV_Diagnostics.init === 'function') {
+        window.MWV_Diagnostics.init();
     }
-};
-
-document.addEventListener('DOMContentLoaded', () => MWV_Diagnostics.init());
-
-// Created with MWV v1.46.00-MASTER
+});

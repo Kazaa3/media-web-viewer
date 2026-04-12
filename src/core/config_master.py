@@ -474,9 +474,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "extended":   {"label": "BUILD: EXTENDED",   "build_id": "MWV-E", "color": "#ff9500"}
         },
 
-        "build_configuration": {
-            "orchestrator_version": "v1.46.00-STABLE",
-            "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
+      # [v1.46.017] Log Center Restoration & Cache Break
+    "orchestrator_version": "v1.46.017-MASTER",
+    "build_id": "STABLE-FORENSIC-2026-04-12",
+    "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
             "release_channel": "development"
         },
         
