@@ -577,6 +577,7 @@ class MediaItem:
         self.content_type = self.format_info.content
         self.extension = self.format_info.extension.lstrip('.').lower()
         self.capability_stage = self.format_info.capability_stage
+        self.logical_type = self.category # [v1.46.019] Fix: Missing ID for serialization
 
         # 3. Features & Playability
         self.is_playable = self.format_info.is_playable
