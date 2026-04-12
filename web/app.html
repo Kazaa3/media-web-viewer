@@ -942,18 +942,7 @@
 
             <button id="btn-theme" class="theme-toggle" onclick="toggleTheme()"
                 style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" />
-                    <line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="18.36" x2="5.64" y2="16.92" />
-                    <line x1="18.36" y1="4.22" x2="19.78" y2="5.64" />
-                </svg>
+                <svg id="theme-icon-sun" class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-sun"></use></svg>
             </button>
         </div>
     </footer>
@@ -1028,51 +1017,28 @@
             <!-- Theme Toggle -->
             <!-- Theme Toggle -->
             <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" />
-                    <line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-sun"></use></svg>
             </button>
 
             <!-- More Options (Vertical Dots) -->
             <button class="footer-tool-btn" title="More Options">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="1" />
-                    <circle cx="12" cy="5" r="1" />
-                    <circle cx="12" cy="19" r="1" />
-                </svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-more"></use></svg>
             </button>
 
             <!-- Program Menu Burger (Circled) -->
             <button onclick="toggleMenuBar()" class="footer-tool-btn"
                 style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;"
                 title="Program Menu">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-burger"></use></svg>
             </button>
 
             <!-- Main Sidebar Toggle (Split View) -->
             <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="toggleSidebar()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <line x1="9" y1="3" x2="9" y2="21" />
-                </svg>
+                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-layout"></use></svg>
             </button>
             <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()"
                 title="Toggle Diagnostics Overlay" style="color: #ff3366;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
+                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-diagnostics"></use></svg>
             </button>
         </div>
     </footer>
