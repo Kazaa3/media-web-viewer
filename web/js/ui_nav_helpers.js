@@ -294,22 +294,22 @@ function toggleLibrarySidebar(forceState = null) {
     const sidebar = document.getElementById('lib-sidebar-left');
     const splitter = document.getElementById('lib-splitter');
     const btn = document.getElementById('header-btn-r-lib_sidebar');
-    
+
     if (!sidebar) {
         console.warn("[UI-NAV] Global Library Sidebar element not found.");
         return;
     }
 
     const isVisible = (typeof forceState === 'boolean') ? forceState : (sidebar.style.display === 'none');
-    
+
     sidebar.style.display = isVisible ? 'flex' : 'none';
     if (splitter) splitter.style.display = isVisible ? 'block' : 'none';
-    
+
     if (btn) btn.classList.toggle('active', isVisible);
-    
+
     localStorage.setItem('mwv_lib_sidebar_visible', isVisible);
     console.info(`[UI-NAV] Global Sidebar: ${isVisible ? 'OPEN' : 'CLOSED'}`);
-    
+
     // Refresh layout to adjust for global sidebar width
     if (typeof refreshViewportLayout === 'function') refreshViewportLayout();
 }
@@ -1610,33 +1610,25 @@ window.dumpNavRegistry = function () {
 // FRAGMENT HYDRATION AUDITOR (v1.37.46)
 // ==========================================
 
-const FRAGMENT_HYDRATION_REGISTRY = {
-    'modals': { id: 'diagnostics-overlay-container', path: 'fragments/diagnostics_sidebar.html', status: 'pending', time: 0 },
-    'modals-res': { id: 'modals-placeholder', path: 'fragments/modals_container.html', status: 'pending', time: 0 },
-    'player-tabs': { id: 'player-sub-nav-shell', path: 'app.html (inline)', status: 'pending', time: 0 },
-    'player-engine': { id: 'player-main-viewport', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
-    'player-sidebar': { id: 'player-detailed-sidebar', path: 'app.html (inline)', status: 'pending', time: 0 },
-    'player-view-lyrics': { id: 'player-view-lyrics', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
-    'library': { id: 'library-main-viewport', path: 'fragments/library_explorer.html', status: 'pending', time: 0 },
-    'database': { id: 'database-panel-container', path: 'fragments/database_panel.html', status: 'pending', time: 0 },
-    'editor': { id: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html', status: 'pending', time: 0 },
-    'icons': { id: 'svg-icons-placeholder', path: 'fragments/icons.html', status: 'pending', time: 0 },
-    'menus': { id: 'context-menu-placeholder', path: 'fragments/context_menu.html', status: 'pending', time: 0 }
-};
-
 window.auditFragmentHydration = function (name, status, details = '') {
-    const entry = FRAGMENT_HYDRATION_REGISTRY[name];
+    const orchestrator = window.CONFIG?.navigation_orchestrator?.fragment_hydration;
+    if (!orchestrator) {
+        console.error("[HYD-AUDIT] Fragment Hydration Orchestrator NOT FOUND in window.CONFIG.");
+        return;
+    }
+
+    let entry = orchestrator[name];
     if (!entry) {
-        // Dynamic registration for unknown fragments
+        // Dynamic registration for unknown fragments (v1.46 Global Guard)
         if (status === 'spawn') {
-            FRAGMENT_HYDRATION_REGISTRY[name] = { id: 'unknown', path: details, status: 'loading', time: Date.now() };
+            orchestrator[name] = { id: 'unknown', path: details, status: 'loading', time: Date.now() };
+            entry = orchestrator[name];
         } else return;
     }
 
-    const item = FRAGMENT_HYDRATION_REGISTRY[name];
-    item.status = status;
+    entry.status = status;
     if (status === 'success') {
-        item.time = Date.now();
+        entry.time = Date.now();
         console.info(`[HYD-AUDIT] Fragment '${name}' CONFIRMED.`);
     }
 
@@ -1827,20 +1819,20 @@ window.addEventListener('load', async () => {
     // 5.5. [v1.46.02] Forensic Global Sidebar Init
     console.info("[UI-INIT] Initializing Forensic Global Sidebar...");
     const config = window.CONFIG?.ui_settings || {};
-    
+
     // Check if sidebar is globally enabled
     const sidebarEnabled = config.forensic_sidebar_enabled !== false;
     const sidebarElement = document.getElementById('lib-sidebar-left');
-    
+
     if (sidebarEnabled && sidebarElement) {
         if (typeof renderLibrarySidebar === 'function') renderLibrarySidebar();
-        
+
         // Restore visibility: LocalStorage > Config Default
         const savedLibSidebar = localStorage.getItem('mwv_lib_sidebar_visible');
         const defaultVisible = config.forensic_sidebar_visible !== false;
-        
+
         const isVisible = (savedLibSidebar !== null) ? (savedLibSidebar === 'true') : defaultVisible;
-        
+
         if (typeof toggleLibrarySidebar === 'function') {
             toggleLibrarySidebar(isVisible);
         }

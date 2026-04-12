@@ -63,7 +63,9 @@ html[data-theme="matrix_core"] body .menu-item-btn,
 html[data-theme="dark"] body .header-orchestrated-btn,
 html[data-theme="forensic_dark"] body .header-orchestrated-btn,
 html[data-theme="cyber_grid"] body .header-orchestrated-btn,
-html[data-theme="matrix_core"] body .header-orchestrated-btn {
+html[data-theme="matrix_core"] body .header-orchestrated-btn,
+.rebuild-pill,
+.sub-pill-btn {
     background: #000000 !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
@@ -77,7 +79,9 @@ html[data-theme="matrix_core"] body .menu-item-btn.active,
 html[data-theme="dark"] body .tab-btn.active,
 html[data-theme="forensic_dark"] body .tab-btn.active,
 html[data-theme="cyber_grid"] body .tab-btn.active,
-html[data-theme="matrix_core"] body .tab-btn.active {
+html[data-theme="matrix_core"] body .tab-btn.active,
+.rebuild-pill.active,
+.sub-pill-btn.active {
     background: #000000 !important;
     border: 1px solid var(--accent-color) !important;
     color: var(--accent-color) !important;
@@ -393,10 +397,12 @@ body.mwv-hide-subnav #sub-nav-container {
 
 .tab-btn.active,
 .nav-btn.active,
-.action-btn.active {
-    background: var(--accent-color);
-    color: white;
-    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+.rebuild-pill.active {
+    background: var(--accent-color) !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 20px var(--accent-glow) !important;
+    border-color: #fff !important;
 }
 
 .sub-tab-btn,
