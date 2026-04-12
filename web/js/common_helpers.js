@@ -673,4 +673,62 @@ async function exitApplication() {
 
 window.exitApplication = exitApplication;
 
-// Created with MWV v1.46.00-MASTER
+/**
+ * UI Flag Pulse (v1.46.005)
+ * Applies all global system flags to the DOM instantly.
+ */
+function applySystemFlags() {
+    const config = window.CONFIG;
+    if (!config) return;
+
+    console.log("[UI-PULSE] Applying System Visibility Flags...");
+
+    // Map: Config Key -> Selector List
+    const flagMap = {
+        // Technical HUDs
+        "enable_technical_hud": [".header-pills-container"],
+        "enable_diagnostics_hud": ["#header-sync-anchor", "#header-btn-status"],
+        "enable_dom_auditor": [".footer-diag-cluster"],
+        "enable_sync_anchor": ["#footer-sync-anchor"],
+        "enable_footer_hud_cluster": [".footer-hud-cluster"],
+        "enable_footer_db_status": [".footer-db-status"],
+        "enable_header_power_button": ["#header-btn-power-exit"],
+        "enable_zen_mode": ["header", "footer"],
+
+        // Fragments (Sidebars)
+        "ui_fragments.player": ["#main-sidebar"],
+        "ui_fragments.video": ["#video-cinema-container"], 
+        "ui_fragments.library": ["#library-container"]
+    };
+
+    Object.keys(flagMap).forEach(key => {
+        const isEnabled = getConfigDeepValue(config, key);
+        const selectors = flagMap[key];
+
+        selectors.forEach(sel => {
+            const el = document.querySelector(sel);
+            if (el) {
+                if (isEnabled) el.classList.remove('mwv-flag-hidden');
+                else el.classList.add('mwv-flag-hidden');
+            }
+        });
+    });
+
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('UI', 'PULSED', { ts: Date.now() });
+    }
+}
+
+/**
+ * Helper for deep lookup in config object.
+ */
+function getConfigDeepValue(obj, path) {
+    if (!path.includes('.')) return !!obj[path];
+    return path.split('.').reduce((prev, curr) => (prev && prev[curr] !== undefined) ? prev[curr] : undefined, obj);
+}
+
+// Global Export
+window.applySystemFlags = applySystemFlags;
+window.getConfigDeepValue = getConfigDeepValue;
+
+// Created with MWV v1.46.005-MASTER

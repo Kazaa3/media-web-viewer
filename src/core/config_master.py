@@ -624,7 +624,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "ui_fragments.library": "Media Library Sidebar",
                 "ui_fragments.video": "Video Cinema Sidebar",
                 "ui_fragments.edit": "Metadata Editor Sidebar",
-                "ui_fragments.debug": "Technical Debug Sidebar"
+                "ui_fragments.debug": "Technical Debug Sidebar",
+                "ui_fragments.logbuch": "Logbook / Journal Sidebar"
+            },
+            "overlays": {
+                "technical_overlay.stable_mode_visible": "Stable Mode Active Badge",
+                "technical_overlay.forensic_anchors_visible": "Forensic AI Anchors",
+                "technical_overlay.deck_tag_visible": "Deck-Lift [27] Tag",
+                "technical_overlay.queue_tag_visible": "Queue-Lift [27] Tag"
             },
             "engines": {
                 "audio_engine_enabled": "Audio Engine (Core)",
