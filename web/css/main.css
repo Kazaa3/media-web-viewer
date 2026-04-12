@@ -65,7 +65,8 @@ html[data-theme="forensic_dark"] body .header-orchestrated-btn,
 html[data-theme="cyber_grid"] body .header-orchestrated-btn,
 html[data-theme="matrix_core"] body .header-orchestrated-btn,
 .rebuild-pill,
-.sub-pill-btn {
+.sub-pill-btn,
+.legacy-track-item {
     background: #000000 !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
@@ -656,6 +657,21 @@ body.mwv-hide-subnav #sub-nav-container {
     cursor: pointer;
     transition: all var(--transition-snappy);
     box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+}
+
+.legacy-track-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin: 8px 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 52px;
 }
 
 .side-reiter:hover {
@@ -1709,30 +1725,7 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
 }
 
 /* --- Classic Track Items (Right Column Queue) --- */
-.legacy-track-item {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
-}
-
-.legacy-track-item:hover {
-    transform: translateX(4px);
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-}
-
-.legacy-track-item.active {
-    background: rgba(0, 122, 255, 0.05);
-    border-color: var(--accent-color);
-}
+/* Redundant block removed for consolidation */
 
 .legacy-track-thumb {
     width: 60px;
@@ -2017,12 +2010,12 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     align-items: center;
     gap: 8px;
     padding: 0 20px;
-    background: rgba(10, 10, 15, 0.45);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    z-index: 10000;
-    height: 38px !important;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    height: var(--sub-nav-height, 35px) !important;
 }
 
 #sub-nav-container {
@@ -2068,48 +2061,7 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
    LEGACY RESTORATION COMPONENTS (v1.34)
    ========================================================================== */
 
-.legacy-track-item {
-    background: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 10px;
-    margin: 12px 24px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="dark"] .legacy-track-item {
-    display: flex;
-    align-items: center;
-    padding: 6px 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    height: 52px;
-    overflow: hidden;
-}
-
-[data-theme="dark"] .legacy-track-item {
-    background: #1c1c1e;
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.legacy-track-item:hover {
-    background: var(--border-color);
-    border-color: var(--accent-color);
-}
-
-.legacy-track-item.active {
-    background: rgba(0, 122, 255, 0.1);
-    border: 1.5px solid var(--accent-color);
-}
+/* Legacy Track System Cleaned - Consistently uses var() triggers */
 
 .legacy-track-thumb {
     width: 40px;
