@@ -695,6 +695,11 @@ function applySystemFlags() {
         "enable_header_power_button": ["#header-btn-power-exit"],
         "enable_zen_mode": ["header", "footer"],
 
+        // Overlays & Tags
+        "technical_overlay.stable_mode_visible": [".stable-mode-overlay"],
+        "technical_overlay.deck_tag_visible": ["#proof-deck-tag"],
+        "technical_overlay.queue_tag_visible": ["#proof-queue-tag"],
+
         // Fragments (Sidebars)
         "ui_fragments.player": ["#main-sidebar"],
         "ui_fragments.video": ["#video-cinema-container"], 
