@@ -11,6 +11,10 @@
             const key = e.key.toLowerCase();
 
             switch (key) {
+                case 'f2': // Alt+F2: [v1.46.011] Global Flag Center Toggle
+                    e.preventDefault();
+                    if (window.ForensicFlagCenter) window.ForensicFlagCenter.toggle();
+                    break;
                 case 'y': // Alt+H: Level 1 - MASTER MENU / HEADER
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleHeader();
