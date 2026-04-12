@@ -272,6 +272,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "branch_id": os.environ.get("MWV_BRANCH", "multimedia"),
+    "orchestrator_version": "v1.46.017-MASTER",
+    "build_id": "STABLE-FORENSIC-2026-04-12",
+    "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
+    "release_channel": "development",
     
     # --- NETWORK REGISTRY (v1.41.00 Centralized) ---
     "network_settings": {
@@ -665,13 +669,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "extended":   {"label": "BUILD: EXTENDED",   "build_id": "MWV-E", "color": "#ff9500"}
         },
 
-      # [v1.46.017] Log Center Restoration & Cache Break
-    "orchestrator_version": "v1.46.017-MASTER",
-    "build_id": "STABLE-FORENSIC-2026-04-12",
-    "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
-            "release_channel": "development"
-        },
-        
+
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---
         "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
         "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
