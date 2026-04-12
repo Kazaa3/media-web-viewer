@@ -22,22 +22,28 @@ function setTheme(theme) {
 
 function toggleTheme() {
     const config = window.CONFIG?.themes;
+    const current = document.documentElement.getAttribute('data-theme') || config?.active || 'forensic_dark';
+    
+    console.info(`[Theme-Steering] Triggering transition from: ${current}`);
+
     if (!config || !config.available) {
         // Fallback legacy toggle
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = (currentTheme === 'dark' || currentTheme === 'forensic_dark') ? 'light_pro' : 'forensic_dark';
+        const newTheme = (current === 'dark' || current === 'forensic_dark') ? 'light_pro' : 'forensic_dark';
         setTheme(newTheme);
         return;
     }
     
-    const current = document.documentElement.getAttribute('data-theme') || config.active;
     const currentIndex = config.available.indexOf(current);
     const nextIndex = (currentIndex + 1) % config.available.length;
     const nextTheme = config.available[nextIndex];
     
+    console.info(`[Theme-Steering] Orbit targeting: ${nextTheme} (Index: ${nextIndex})`);
+    
     setTheme(nextTheme);
-    if (typeof showToast === 'function') showToast(`Theme: ${nextTheme}`, 1500);
+    if (typeof showToast === 'function') showToast(`Skin: ${nextTheme}`, 1500);
 }
 
 // Auto-init on load
 document.addEventListener('DOMContentLoaded', initTheme);
+
+// Created with MWV v1.46.006-MASTER
