@@ -494,40 +494,59 @@ function getCategoryBadgeHtml(item) {
  * Format: [DB: X | GUI: Y]
  */
 /**
- * Updates the technical sync anchor in footer and sidebar (v1.46.03 Unified).
- * Format: [DB: X | GUI: Y]
+ * Updates the technical sync anchor in footer, sidebar, and HUD (v1.46.03 Unified SSOT).
+ * Format: [FS: Z | DB: X | GUI: Y]
+ * Orchestrates parity across all technical diagnostic containers.
  */
 function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
-    const footerAnchor = document.getElementById('footer-sync-anchor');
-    const sidebarAnchor = document.getElementById('sb-parity-anchor');
-    
-    // Persist counts for redundant updates
+    // 1. Capture and Persist Metrics
     if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
     if (guiCount !== undefined) window.__mwv_last_gui_count = guiCount;
     if (fsSize !== null) window.__mwv_last_fs_size = fsSize;
 
     const finalDb = (window.__mwv_last_db_count !== undefined) ? window.__mwv_last_db_count : '--';
     const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : '--');
-    
-    // 1. Update Footer Anchor
+    const finalFs = window.__mwv_last_fs_size || 0;
+
+    // Formatting filesystem size
+    let sizeStr = "--";
+    if (finalFs > 0) {
+        if (finalFs > 1024 * 1024) sizeStr = (finalFs / (1024 * 1024)).toFixed(1) + "MB";
+        else if (finalFs > 1024) sizeStr = (finalFs / 1024).toFixed(1) + "KB";
+        else sizeStr = finalFs + "B";
+    }
+
+    // 2. PRIMARY: Footer Minimalist Anchor
+    const footerAnchor = document.getElementById('footer-sync-anchor');
     if (footerAnchor) {
         footerAnchor.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
-        // Status visual: Green if parity, Amber otherwise
         const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
     }
 
-    // 2. Update Sidebar Anchor (if present)
+    // 3. SECONDARY: Diagnostics Sidebar Metrics
+    const sidebarAnchor = document.getElementById('sb-parity-anchor');
+    const sbDbCount = document.getElementById('diag-db-count-sidebar');
+    const sbGuiCount = document.getElementById('diag-gui-count-sidebar');
+    
     if (sidebarAnchor) {
-        let sizeStr = "--";
-        const finalFs = window.__mwv_last_fs_size || 0;
-        if (finalFs > 0) {
-            if (finalFs > 1024 * 1024) sizeStr = (finalFs / (1024 * 1024)).toFixed(1) + "MB";
-            else if (finalFs > 1024) sizeStr = (finalFs / 1024).toFixed(1) + "KB";
-            else sizeStr = finalFs + "B";
-        }
         sidebarAnchor.innerText = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
+        const isParityError = (parseInt(finalDb) !== parseInt(finalGui));
+        sidebarAnchor.style.color = isParityError ? '#e74c3c' : 'var(--accent-color)';
+    }
+    if (sbDbCount) sbDbCount.innerText = finalDb;
+    if (sbGuiCount) sbGuiCount.innerText = finalGui;
+
+    // 4. TERTIARY: Footer DB Status Cluster
+    const footerDbDisp = document.getElementById('footer-db-count');
+    const libCountLabel = document.getElementById('lib-count-label');
+    if (footerDbDisp) footerDbDisp.innerText = finalDb;
+    if (libCountLabel) libCountLabel.innerText = finalGui;
+
+    // 5. TRACE: Periodic parity audit log
+    if (window.iterations % 20 === 0) {
+        console.debug(`[SYNC-AUDIT] Parity check: DB(${finalDb}) vs GUI(${finalGui})`);
     }
 }
 

@@ -523,17 +523,29 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 {"id": "video",      "label": "Video",        "visible": True, "action": "switchMainCategory('video', this)"}
             ],
             "right_cluster": [
-                {"id": "status",       "visible": True,  "title": "Toggle Technical HUD",     "icon": "pulse",  "action": "toggleTechnicalHUD()"},
-                {"id": "sync",         "visible": False, "title": "Toggle Sync Anchor",      "icon": "shield", "action": "toggleSyncAnchor()"},
-                {"id": "swiss",        "visible": False, "title": "Toggle Swiss HUD LED",    "icon": "grid",   "action": "toggleFooterHUD()"},
-                {"id": "db_status",    "visible": False, "title": "Toggle DB Health",        "icon": "db",     "action": "toggleFooterDBStatus()"},
-                {"id": "diag",         "visible": True,  "title": "Toggle Diagnostics",      "icon": "diag",   "action": "toggleDiagnosticsSidebar()"},
-                {"id": "auditor",      "visible": False, "title": "Toggle DOM Auditor",      "icon": "check",  "action": "toggleDomAuditor()"},
-                {"id": "lib_sidebar",  "visible": True,  "title": "Toggle Library Sidebar",  "icon": "layout", "action": "toggleLibrarySidebar()"},
-                {"id": "sidebar",      "visible": True,  "title": "Toggle Main Sidebar",     "icon": "menu",   "action": "toggleSidebar()"},
-                {"id": "zen",          "visible": True,  "title": "Toggle Zen Mode",         "icon": "zen",    "action": "toggleZenMode()"},
-                {"id": "reset_db",     "visible": True,  "title": "Reset System Database",   "icon": "trash",  "action": "resetDatabase()"}
+                {"id": "status",       "visible": True,  "title": "Toggle Technical HUD",     "icon": "pulse",   "action": "toggleTechnicalHUD()",        "color": "#007aff"},
+                {"id": "sync",         "visible": True,  "title": "Toggle Sync Anchor",      "icon": "shield",  "action": "toggleSyncAnchor()",         "color": "#2ecc71"},
+                {"id": "theme",        "visible": True,  "title": "Switch System Theme",     "icon": "sun",     "action": "toggleTheme()",              "color": "#ff9500"},
+                {"id": "diag",         "visible": True,  "title": "Toggle Diagnostics",      "icon": "diag",    "action": "toggleDiagnosticsSidebar()",  "color": "#ff3366"},
+                {"id": "auditor",      "visible": False, "title": "Toggle DOM Auditor",      "icon": "check",   "action": "toggleDomAuditor()",         "color": "#00ffcc"},
+                {"id": "lib_sidebar",  "visible": True,  "title": "Toggle Library Sidebar",  "icon": "layout",  "action": "toggleLibrarySidebar()",     "color": "#007aff"},
+                {"id": "sidebar",      "visible": True,  "title": "Toggle Main Sidebar",     "icon": "menu",    "action": "toggleSidebar()",            "color": "#e5e5e7"},
+                {"id": "zen",          "visible": True,  "title": "Toggle Zen Mode",         "icon": "zen",     "action": "toggleZenMode()",            "color": "#2ecc71"},
+                {"id": "reset_db",     "visible": True,  "title": "Reset System Database",   "icon": "trash",   "action": "resetDatabase()",            "color": "#ff3300"}
             ]
+        },
+
+        # --- [v1.46.03] SYSTEM STEERING: HEADER & THEME (NEW) ---
+        "header_layout": {
+            "btn_size": 34,              # Pixel size (Default: 34)
+            "btn_gap": 8,               # Spacing between buttons (Default: 8)
+            "btn_border_radius": "50%", # Shape (50% = Circle, 6px = Rounded Square)
+            "hover_scale": "1.1",       # Animation scale factor
+            "show_tooltips": True       # Enable hover comments
+        },
+        "themes": {
+            "active": "forensic_dark",   # Default theme ID
+            "available": ["forensic_dark", "cyber_grid", "matrix_core", "light_pro"]
         },
 
         # --- [v1.46.01] TECHNICAL OVERLAY STEERING ---

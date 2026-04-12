@@ -738,55 +738,6 @@ window.showStatusNotification = function(msg, type = 'info') {
         setTimeout(() => pill.remove(), 500);
     }, 3000);
 };
-/**
- * Sync Anchor Orchestrator (v1.35.99 Unified technical layer)
- * Updates both the minimal footer (total count) and the detailed sidebar (full parity).
- */
-function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
-    const sidebarAnchor = document.getElementById('sb-parity-anchor');
-    const footerDbCount = document.getElementById('footer-db-count');
-    
-    // Persist counts for redundant updates
-    if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
-    if (guiCount !== undefined) window.__mwv_last_gui_count = guiCount;
-    if (fsSize !== null) window.__mwv_last_fs_size = fsSize;
-
-    const finalDb = window.__mwv_last_db_count || 0;
-    const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0);
-    const finalFsSize = window.__mwv_last_fs_size || 0;
-
-    // Formatting filesystem size for the detailed sidebar
-    let sizeStr = "--";
-    if (finalFsSize > 0) {
-        if (finalFsSize > 1024 * 1024) sizeStr = (finalFsSize / (1024 * 1024)).toFixed(1) + "MB";
-        else if (finalFsSize > 1024) sizeStr = (finalFsSize / 1024).toFixed(1) + "KB";
-        else sizeStr = finalFsSize + "B";
-    }
-
-    const fullParity = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
-
-    // 1. Sidebar: High-resolution parity audit (v1.37.01)
-    if (sidebarAnchor) {
-        sidebarAnchor.innerText = fullParity;
-        const isParityError = (parseInt(finalDb) !== parseInt(finalGui));
-        sidebarAnchor.style.color = isParityError ? '#e74c3c' : 'var(--accent-color)';
-    }
-
-    // 1b. Global Diagnostics Sidebar Sync (v1.37.05)
-    const sbDbCount = document.getElementById('diag-db-count-sidebar');
-    const sbGuiCount = document.getElementById('diag-gui-count-sidebar');
-    if (sbDbCount) sbDbCount.innerText = finalDb;
-    if (sbGuiCount) sbGuiCount.innerText = finalGui;
-
-    // 2. Footer: Minimalist DB indicator
-    const libCountLabel = document.getElementById('lib-count-label');
-    if (footerDbCount) {
-        footerDbCount.innerText = finalDb;
-    }
-    if (libCountLabel) {
-        libCountLabel.innerText = finalGui;
-    }
-
     // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16 Pulsar Upgrade)
     const hudFe = document.getElementById('hud-fe');
     const hudBe = document.getElementById('hud-be');
