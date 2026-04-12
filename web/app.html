@@ -1027,9 +1027,13 @@
                 <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-burger"></use></svg>
             </button>
 
-            <!-- Main Sidebar Toggle (Split View) -->
             <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="toggleSidebar()">
                 <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-layout"></use></svg>
+            </button>
+            <!-- [v1.46.005] Global Flag Center Toggle -->
+            <button id="footer-btn-flags" class="footer-tool-btn" onclick="if(window.ForensicFlagCenter) window.ForensicFlagCenter.toggle();"
+                title="Open Global Flag Center (Steering)" style="color: #00f2ff;">
+                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-diagnostics"></use></svg>
             </button>
             <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()"
                 title="Toggle Diagnostics Overlay" style="color: #ff3366;">
@@ -1047,7 +1051,8 @@
     <script src="js/diagnostics_helpers.js?v=1.46.001"></script>
     <!-- Modular Recovery & Data Audit Diagnostics (v1.41.00) -->
     <script src="js/diagnostics/recovery_manager.js?v=1.46.001"></script>
-    <script src="js/diagnostics/gui_integrity.js?v=1.46.001"></script>
+    <script src="js/diagnostics/gui_integrity.js?v=1.46.005"></script>
+    <script src="js/forensic_flag_center.js?v=1.46.005"></script>
     <script src="js/diagnostics/stages/stage_negative.js?v=1.46.001"></script>
     <script src="js/diagnostics/stages/stage_positive.js?v=1.46.001"></script>
     <script src="js/diagnostics/stages/bibliothek_stages.js?v=1.46.001"></script>
