@@ -498,6 +498,53 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "footer_visible": True,              # GLOBAL: Schwebende Media-Steuerung unten.
         "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
+
+        # --- [v1.46.01] SYSTEM HEADER ORCHESTRATOR ---
+        "header_orchestrator": {
+            "show_logo": True,
+            "logo_text": "dict",
+            "left_cluster": [
+                {"id": "power",   "visible": True, "title": "Exit Application", "icon": "power",   "action": "exitApplication()"},
+                {"id": "restart", "visible": True, "title": "Restart System",   "icon": "refresh", "action": "location.reload()"}
+            ],
+            "mid_tabs": [
+                {"id": "media",      "label": "Player",       "visible": True, "action": "switchMainCategory('media', this)"},
+                {"id": "library",    "label": "Bibliothek",   "visible": True, "action": "switchMainCategory('library', this)"},
+                {"id": "database",   "label": "Database",     "visible": True, "action": "switchMainCategory('database', this)"},
+                {"id": "file",       "label": "Browser",      "visible": True, "action": "switchMainCategory('file', this)"},
+                {"id": "edit",       "label": "Edit",         "visible": True, "action": "switchMainCategory('edit', this)"},
+                {"id": "system",     "label": "Optionen",     "visible": True, "action": "switchMainCategory('system', this)"},
+                {"id": "parser",     "label": "Parser",       "visible": True, "action": "switchMainCategory('parser', this)"},
+                {"id": "debug",      "label": "Debug & DB",   "visible": True, "action": "switchMainCategory('debug', this)"},
+                {"id": "tests",      "label": "Tests",        "visible": True, "action": "switchMainCategory('tests', this)"},
+                {"id": "tools",      "label": "Tools",        "visible": True, "action": "switchMainCategory('tools', this)"},
+                {"id": "reporting",  "label": "Report",       "visible": True, "action": "switchMainCategory('reporting', this)"},
+                {"id": "logbuch",    "label": "Logbuch",      "visible": True, "action": "switchMainCategory('logbuch', this)"},
+                {"id": "video",      "label": "Video",        "visible": True, "action": "switchMainCategory('video', this)"}
+            ],
+            "right_cluster": [
+                {"id": "status",       "visible": True,  "title": "Toggle Technical HUD",     "icon": "pulse",  "action": "toggleTechnicalHUD()"},
+                {"id": "sync",         "visible": False, "title": "Toggle Sync Anchor",      "icon": "shield", "action": "toggleSyncAnchor()"},
+                {"id": "swiss",        "visible": False, "title": "Toggle Swiss HUD LED",    "icon": "grid",   "action": "toggleFooterHUD()"},
+                {"id": "db_status",    "visible": False, "title": "Toggle DB Health",        "icon": "db",     "action": "toggleFooterDBStatus()"},
+                {"id": "diag",         "visible": True,  "title": "Toggle Diagnostics",      "icon": "diag",   "action": "toggleDiagnosticsSidebar()"},
+                {"id": "auditor",      "visible": False, "title": "Toggle DOM Auditor",      "icon": "check",  "action": "toggleDomAuditor()"},
+                {"id": "lib_sidebar",  "visible": True,  "title": "Toggle Library Sidebar",  "icon": "layout", "action": "toggleLibrarySidebar()"},
+                {"id": "sidebar",      "visible": True,  "title": "Toggle Main Sidebar",     "icon": "menu",   "action": "toggleSidebar()"},
+                {"id": "zen",          "visible": True,  "title": "Toggle Zen Mode",         "icon": "zen",    "action": "toggleZenMode()"},
+                {"id": "reset_db",     "visible": True,  "title": "Reset System Database",   "icon": "trash",  "action": "resetDatabase()"}
+            ]
+        },
+
+        # --- [v1.46.01] TECHNICAL OVERLAY STEERING ---
+        "technical_overlay": {
+            "stable_mode_visible": True,
+            "stable_mode_position": {
+                "top": 60,
+                "right": 280
+            },
+            "forensic_anchors_visible": True
+        }
         "enable_context_menu": True,         # GLOBAL: Rechtsklick-Menü für Items.
         "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.
         "enable_dom_auditor": True,          # GLOBAL: Echtzeit-Integritätsprüfung (7-Point Audit).

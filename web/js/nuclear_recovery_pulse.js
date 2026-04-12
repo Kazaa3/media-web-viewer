@@ -84,15 +84,25 @@ const NuclearPulsar = {
      * Injects a pulsing red "RECOVERY MODE" badge.
      */
     injectRecoveryBadge() {
+        // v1.46.01 Configuration Steering
+        const config = window.CONFIG?.ui_settings?.technical_overlay;
+        if (config && config.stable_mode_visible === false) {
+            const existing = document.getElementById('recovery-mode-badge');
+            if (existing) existing.remove();
+            return;
+        }
+
         let badge = document.getElementById('recovery-mode-badge');
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'recovery-mode-badge';
+            const pos = config?.stable_mode_position || { top: 12, right: 280 };
             badge.style = `
-                position: fixed; top: 12px; right: 280px; background: rgba(0, 255, 204, 0.2); 
+                position: fixed; top: ${pos.top}px; right: ${pos.right}px; background: rgba(0, 255, 204, 0.2); 
                 color: #00ffcc; border: 1px solid #00ffcc; padding: 4px 12px; 
                 font-family: 'JetBrains Mono', monospace; font-size: 10px; 
                 font-weight: 900; z-index: 999999; border-radius: 4px; pointer-events: none;
+                transition: top 0.3s ease, right 0.3s ease;
             `;
             document.body.appendChild(badge);
         }
@@ -103,6 +113,16 @@ const NuclearPulsar = {
      * Injects high-visibility text markers into the specific splits.
      */
     injectForensicAnchor() {
+        // v1.46.01 Configuration Steering
+        const config = window.CONFIG?.ui_settings?.technical_overlay;
+        if (config && config.forensic_anchors_visible === false) {
+            ['proof-deck-tag', 'proof-queue-tag'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            });
+            return;
+        }
+
         const deck = document.getElementById('player-deck-column');
         const queue = document.getElementById('player-playlist-column');
         const create = (id, label, color, pos, parent) => {
