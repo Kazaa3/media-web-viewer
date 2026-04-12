@@ -13,6 +13,15 @@ window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 const currentPlaylist = window.currentPlaylist;
 // Note: playlistIndex is accessed directly via window.playlistIndex to ensure SSOT.
 
+// --- GLOBAL UTILITIES (v1.46.12 Fallback) ---
+if (typeof window.isVideoItem !== 'function') {
+    window.isVideoItem = function(item) {
+        if (!item) return false;
+        const cat = (item.category || "").toLowerCase();
+        return (cat === 'video' || cat === 'movie' || cat === 'serie' || cat === 'documentation' || cat === 'multimedia');
+    };
+}
+
 /**
  * Empties the current player queue (v1.41.00).
  */
@@ -427,7 +436,10 @@ function renderAudioQueue() {
         document.getElementById('active-queue-list-render-target-warteschlange')
     ].filter(Boolean);
 
-    if (containers.length === 0) return;
+    if (containers.length === 0) {
+        console.warn("[PLAYER-QUEUE] No render targets found. Aborting render.");
+        return;
+    }
 
     // 1. Unified State Access (v1.45.110 SSOT)
     let baseItems = [...(isShuffle ? shuffledPlaylist : window.currentPlaylist)];
@@ -593,7 +605,11 @@ function renderAudioQueue() {
                 
                 fragment.appendChild(div);
             });
+            
+            // Atomic Injection
+            list.innerHTML = ''; // Final clear just before append
             list.appendChild(fragment);
+            console.debug(`[Queue-UI] Successfully injected ${activeList.length} items to ${list.id}`);
         }
     }); // v1.41.00 Final closing block
 }
