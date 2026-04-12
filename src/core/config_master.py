@@ -1536,9 +1536,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
 
-    # --- [v1.46.018] LEGACY NAVIGATION REGISTRY (For Rebuild Context) Level 4 Legacy unused ---
-    "legacy_navigation": {
-        "sub_nav_registry": {
+    # --- [v1.46.019] NAVIGATION ORCHESTRATOR (Modern SSOT) ---
+    "navigation_orchestrator": {
+        "level_2": {
             "media": [
                 { "id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')" },
                 { "id": "playlist", "label": "Playlist Manager", "action": "switchPlayerView('playlist')" },
@@ -1628,7 +1628,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 { "id": "unsort-ui", "label": "UI Refresh", "action": "refreshViewportLayout()" }
             ]
         },
-        "sub_nav_aliases": {
+        "aliases": {
             "player": "media",
             "bibliothek": "library",
             "database": "database",
