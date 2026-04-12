@@ -372,74 +372,9 @@
         </div>
 
 
-        <!-- System Controls (Right) -->
+        <!-- System Controls (Right Cluster): Dynamically Managed via orchestrateHeaderUI (v1.46.03) -->
         <div class="nav-cluster secondary-cluster"
             style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
-            <!-- Technical HUD Toggle (v1.41.152) -->
-            <button id="header-btn-status" class="tab-btn" title="Toggle Technical HUD"
-                onclick="if(typeof toggleTechnicalHUD === 'function') toggleTechnicalHUD()"
-                style="padding: 6px; border-radius: 50%; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2); cursor: pointer; display: none;">
-                <svg class="icon"><use xlink:href="#icon-pulse"></use></svg>
-            </button>
-
-            <!-- Sync Anchor Toggle (v1.41.153) -->
-            <button id="header-btn-sync-anchor" class="tab-btn" title="Toggle Sync Anchor Metrics"
-                onclick="if(typeof toggleSyncAnchor === 'function') toggleSyncAnchor()"
-                style="padding: 6px; border-radius: 50%; background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.2); cursor: pointer; display: none;">
-                <svg class="icon"><use xlink:href="#icon-shield"></use></svg>
-            </button>
-
-            <!-- Swiss HUD Cluster Toggle (v1.41.153) -->
-            <button id="header-btn-footer-hud" class="tab-btn" title="Toggle Swiss HUD LED Cluster"
-                onclick="if(typeof toggleFooterHUD === 'function') toggleFooterHUD()"
-                style="padding: 6px; border-radius: 50%; background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 1px solid rgba(155, 89, 182, 0.2); cursor: pointer; display: none;">
-                <svg class="icon"><use xlink:href="#icon-grid"></use></svg>
-            </button>
-
-            <!-- DB Status & Hydration Toggle (v1.41.155) -->
-            <button id="header-btn-db-status" class="tab-btn" title="Toggle DB Health & Hydration"
-                onclick="if(typeof toggleFooterDBStatus === 'function') toggleFooterDBStatus()"
-                style="padding: 6px; border-radius: 50%; background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.2); cursor: pointer; display: none;">
-                <svg class="icon"><use xlink:href="#icon-db"></use></svg>
-            </button>
-
-            <!-- Diagnostics Sidebar Overlay Toggle -->
-            <button id="header-btn-diag-overlay" class="tab-btn" title="Toggle System Diagnostics"
-                onclick="toggleDiagnosticsSidebar()"
-                style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); cursor: pointer;">
-                <svg class="icon pulse-icon-header"><use xlink:href="#icon-diagnostics"></use></svg>
-            </button>
-
-            <!-- DOM Integrity Auditor Toggle (v1.41.151) -->
-            <button id="header-btn-auditor" class="tab-btn" title="Toggle DOM Health Audit"
-                onclick="if(typeof toggleDomAuditor === 'function') toggleDomAuditor()"
-                style="padding: 6px; border-radius: 50%; background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.2); cursor: pointer; display: none;">
-                <svg class="icon"><use xlink:href="#icon-shield"></use></svg>
-            </button>
-
-            <!-- Library Sidebar Toggle Button (v1.45.300) -->
-            <button id="header-btn-lib-sidebar" title="Toggle Library Sidebar" class="tab-btn"
-                onclick="if(typeof toggleLibrarySidebar === 'function') toggleLibrarySidebar()"
-                style="padding: 6px; border-radius: 50%; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg class="icon"><use xlink:href="#icon-layout"></use></svg>
-            </button>
-
-            <!-- Sidebar Toggle Button -->
-            <button id="header-btn-sidebar-toggle" title="Toggle Sidebar" class="tab-btn"
-                onclick="if(typeof toggleSidebar === 'function') toggleSidebar()"
-                style="padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1);">
-                <svg class="icon"><use xlink:href="#icon-layout"></use></svg>
-            </button>
-
-            <!-- Zen Toggle (v1.37.52) -->
-            <button id="header-btn-zen-toggle" title="Toggle Zen Mode (Header)" class="tab-btn"
-                onclick="if(typeof toggleZenMode === 'function') toggleZenMode()"
-                style="padding: 6px; border-radius: 6px; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2);">
-                <svg class="icon"><use xlink:href="#icon-zen"></use></svg>
-            </button>
-
-            <button onclick="if(typeof resetDatabase === 'function') resetDatabase()" title="Reset DB" class="tab-btn"
-                style="padding: 6px; border-radius: 6px; background: transparent; color: #ff5252;"><svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-trash"></use></svg></button>
         </div>
     </header>
 
