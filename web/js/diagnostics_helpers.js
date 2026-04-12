@@ -779,8 +779,12 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     if (sbGuiCount) sbGuiCount.innerText = finalGui;
 
     // 2. Footer: Minimalist DB indicator
+    const libCountLabel = document.getElementById('lib-count-label');
     if (footerDbCount) {
         footerDbCount.innerText = finalDb;
+    }
+    if (libCountLabel) {
+        libCountLabel.innerText = finalGui;
     }
 
     // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16 Pulsar Upgrade)
