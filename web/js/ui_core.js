@@ -196,8 +196,10 @@ window.MWV_UI = (() => {
             dbStatusBtn.style.display = showDbStatus ? 'flex' : 'none';
         }
 
-        // --- Granular Footer Sub-Settings (v1.41.158 Extension) ---
-        const footerSub = registry.config.ui_settings.footer_settings || {};
+        // --- Granular Footer Sub-Settings (v1.46.007 Robust Patch) ---
+        const footerSub = (registry.config.ui_settings && registry.config.ui_settings.footer_settings) 
+                          || registry.config.footer_settings 
+                          || {};
 
         const versionEl = document.getElementById('mwv-footer-version');
         if (versionEl) {
