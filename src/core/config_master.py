@@ -544,7 +544,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "right": 280
             },
             "forensic_anchors_visible": True
-        }
+        },
         "enable_context_menu": True,         # GLOBAL: Rechtsklick-Menü für Items.
         "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.
         "enable_dom_auditor": True,          # GLOBAL: Echtzeit-Integritätsprüfung (7-Point Audit).

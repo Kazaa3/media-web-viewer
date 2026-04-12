@@ -158,8 +158,9 @@
         };
 
         /**
-         * orchestrateHeaderUI (v1.46.01)
+         * orchestrateHeaderUI (v1.46.02)
          * Dynamically rebuilds the header clusters based on GLOBAL_CONFIG.
+         * Ensures correct ordering and respects all visibility toggles.
          */
         function orchestrateHeaderUI() {
             const config = window.CONFIG?.ui_settings?.header_orchestrator;
@@ -167,32 +168,47 @@
 
             console.info("[HEADER] Starting Orchestration Pulse...");
 
-            // 1. Logo Management
+            // 1. Logo Management (Early return if hidden)
             const logo = document.querySelector('.header-logo-pulsar');
             if (logo) {
-                logo.style.display = config.show_logo ? 'block' : 'none';
+                logo.style.display = config.show_logo ? 'flex' : 'none';
                 logo.innerText = config.logo_text || "dict";
             }
 
-            // 2. Left Cluster Orchestration
+            // 2. Left Cluster Orchestration (Sequential Rebuild)
             const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
             if (primaryCluster && config.left_cluster) {
-                // Keep only the logo, clear others
-                Array.from(primaryCluster.children).forEach(child => {
-                    if (!child.classList.contains('header-logo-pulsar')) child.remove();
-                });
+                // Collect existing logo node to preserve it
+                const logoNode = document.querySelector('.header-logo-pulsar');
+                primaryCluster.innerHTML = ''; // Wipe and rebuild
                 
                 config.left_cluster.forEach(btn => {
-                    if (!btn.visible) return;
+                    if (btn.visible === false) return; // Strict visibility check
+                    
                     const el = document.createElement('button');
                     el.id = `header-btn-l-${btn.id}`;
                     el.title = btn.title;
-                    el.className = 'tab-btn';
-                    el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;";
-                    el.innerHTML = `<svg class="icon"><use xlink:href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
-                    el.onclick = () => eval(btn.action);
-                    primaryCluster.prepend(el);
+                    el.className = 'tab-btn header-orchestrated-btn';
+                    el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;";
+                    
+                    // Specific styling for power button
+                    if (btn.id === 'power') {
+                        el.style.backgroundColor = "rgba(255, 51, 102, 0.1)";
+                        el.style.color = "#ff3366";
+                        el.style.borderColor = "rgba(255, 51, 102, 0.2)";
+                        el.style.boxShadow = "0 0 10px rgba(255, 51, 102, 0.2)";
+                    }
+
+                    el.innerHTML = `<svg class="icon" style="pointer-events: none;"><use xlink:href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
+                    el.onclick = () => {
+                        console.log(`[HEADER] Executing Action: ${btn.action}`);
+                        eval(btn.action);
+                    };
+                    primaryCluster.appendChild(el);
                 });
+                
+                // Finally, append the logo if it exists and is visible
+                if (logoNode) primaryCluster.appendChild(logoNode);
             }
 
             // 3. Middle Tabs Orchestration (Ordering & Visibility)
@@ -200,7 +216,7 @@
             if (tabContainer && config.mid_tabs) {
                 tabContainer.innerHTML = '';
                 config.mid_tabs.forEach(tab => {
-                    if (!tab.visible) return;
+                    if (tab.visible === false) return;
                     const btn = document.createElement('button');
                     btn.id = `nav-btn-${tab.id}`;
                     btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
@@ -221,13 +237,13 @@
             if (secondaryCluster && config.right_cluster) {
                 secondaryCluster.innerHTML = '';
                 config.right_cluster.forEach(btn => {
-                    if (!btn.visible) return;
+                    if (btn.visible === false) return;
                     const el = document.createElement('button');
                     el.id = `header-btn-r-${btn.id}`;
                     el.title = btn.title;
-                    el.className = 'tab-btn';
-                    el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; display: flex; align-items: center; justify-content: center;";
-                    el.innerHTML = `<svg class="icon"><use xlink:href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
+                    el.className = 'tab-btn header-orchestrated-btn';
+                    el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1); margin-left: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;";
+                    el.innerHTML = `<svg class="icon" style="pointer-events: none;"><use xlink:href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
                     el.onclick = () => eval(btn.action);
                     secondaryCluster.appendChild(el);
                 });
