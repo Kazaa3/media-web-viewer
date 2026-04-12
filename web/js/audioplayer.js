@@ -534,6 +534,12 @@ function renderAudioQueue() {
                 div.draggable = true;
                 if (index === playlistIndex) div.classList.add('active');
 
+                // [v1.46.001] Forensic Debug Borders
+                if (window.FHB && window.FHB.stage === 1) {
+                    div.style.border = "1px solid #00ffcc44";
+                    div.style.boxShadow = "inset 0 0 5px #00ffcc22";
+                }
+
                 const isAvailable = item.available !== false;
                 if (!isAvailable) div.classList.add('offline');
 

@@ -59,7 +59,11 @@ const NuclearPulsar = {
         
         if (hasLibrary && queueEmpty) {
             console.warn(`[NUCLEAR-PULSE] HYDRATION GAP DETECTED. Library: ${allLibraryItems.length} | Queue: 0. Forcing Sync...`);
-            if (typeof syncQueueWithLibrary === 'function') {
+            
+            // v1.46.001 COORDINATION
+            if (window.FHB && window.FHB.stage === 0) {
+                window.FHB.forceEmergencyHydration();
+            } else if (typeof syncQueueWithLibrary === 'function') {
                 syncQueueWithLibrary();
             }
         }

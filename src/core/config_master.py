@@ -8,10 +8,10 @@ dict - Config Master (Centralized Config & Flag Orchestrator)
 v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
-# --- v1.45.100 Registry (Multi-Mode Evolution) ---
-APP_VERSION_CORE = "v1.45.100"
-APP_VERSION_FRONTEND = "v1.45.100-HYDRATED-STAGE"
-APP_VERSION_BACKEND = "v1.45.100-STABLE-RECON"
+# --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
+APP_VERSION_CORE = "v1.46.001"
+APP_VERSION_FRONTEND = "v1.46.001-HYDRATED-STAGE"
+APP_VERSION_BACKEND = "v1.46.001-STABLE-RECON"
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
