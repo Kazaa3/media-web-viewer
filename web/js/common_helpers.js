@@ -493,26 +493,41 @@ function getCategoryBadgeHtml(item) {
  * Updates the technical sync anchor in the footer (v1.41.00).
  * Format: [DB: X | GUI: Y]
  */
+/**
+ * Updates the technical sync anchor in footer and sidebar (v1.46.03 Unified).
+ * Format: [DB: X | GUI: Y]
+ */
 function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
-    const anchor = document.getElementById('footer-sync-anchor');
-    if (!anchor) {
-        console.warn("[Sync-UI] footer-sync-anchor NOT FOUND in DOM.");
-        return;
+    const footerAnchor = document.getElementById('footer-sync-anchor');
+    const sidebarAnchor = document.getElementById('sb-parity-anchor');
+    
+    // Persist counts for redundant updates
+    if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
+    if (guiCount !== undefined) window.__mwv_last_gui_count = guiCount;
+    if (fsSize !== null) window.__mwv_last_fs_size = fsSize;
+
+    const finalDb = (window.__mwv_last_db_count !== undefined) ? window.__mwv_last_db_count : '--';
+    const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : '--');
+    
+    // 1. Update Footer Anchor
+    if (footerAnchor) {
+        footerAnchor.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
+        // Status visual: Green if parity, Amber otherwise
+        const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
+        footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
+        footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
     }
 
-    // Capture latest counts if undefined (v1.41.00 Safety)
-    const finalDb = (dbCount !== undefined) ? dbCount : (window.__mwv_last_db_count || '--');
-    const finalGui = (guiCount !== undefined) ? guiCount : '--';
-    
-    anchor.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
-    
-    // Status visual: Green if parity, Amber otherwise
-    if (finalDb === finalGui && finalDb !== '--') {
-        anchor.style.borderColor = 'rgba(46, 204, 113, 0.4)';
-        anchor.style.color = '#2ecc71';
-    } else {
-        anchor.style.borderColor = 'rgba(241, 196, 15, 0.4)';
-        anchor.style.color = '#f1c40f';
+    // 2. Update Sidebar Anchor (if present)
+    if (sidebarAnchor) {
+        let sizeStr = "--";
+        const finalFs = window.__mwv_last_fs_size || 0;
+        if (finalFs > 0) {
+            if (finalFs > 1024 * 1024) sizeStr = (finalFs / (1024 * 1024)).toFixed(1) + "MB";
+            else if (finalFs > 1024) sizeStr = (finalFs / 1024).toFixed(1) + "KB";
+            else sizeStr = finalFs + "B";
+        }
+        sidebarAnchor.innerText = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
     }
 }
 
