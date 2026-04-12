@@ -934,11 +934,25 @@ function updateGlobalSubNav(category) {
 }
 
 function switchMediaSubView(tabId) {
-    if (tabId === 'audioplayer' || tabId === 'visualizer' || tabId === 'warteschlange' || tabId === 'mediengalerie') {
+    const playerSubViews = ['audioplayer', 'visualizer', 'warteschlange', 'mediengalerie', 'albums', 'audiobooks', 'playlist-mgr'];
+    const videoSubViews = ['video', 'vid-player', 'vid-engine'];
+
+    if (playerSubViews.includes(tabId)) {
         switchTab('player', null, () => {
             if (typeof switchPlayerMainView === 'function') {
                 switchPlayerMainView(tabId);
             }
+            // Explicitly load fragment if it's a new integration
+            if (tabId === 'albums') FragmentLoader.load('player-main-viewport', 'fragments/album_view.html');
+            if (tabId === 'audiobooks') FragmentLoader.load('player-main-viewport', 'fragments/audiobook_view.html');
+            if (tabId === 'playlist-mgr') FragmentLoader.load('player-main-viewport', 'fragments/playlist_manager.html');
+            
+            updateSubNavActiveState(tabId);
+        });
+    } else if (videoSubViews.includes(tabId)) {
+        switchTab('video', null, () => {
+            if (tabId === 'vid-player') FragmentLoader.load('main-content-area', 'fragments/video_player.html');
+            if (tabId === 'vid-engine') FragmentLoader.load('main-content-area', 'fragments/video_view.html');
             updateSubNavActiveState(tabId);
         });
     } else {
@@ -949,7 +963,9 @@ function switchMediaSubView(tabId) {
 
 function switchReportingSubView(viewId) {
     switchTab('reporting', null, () => {
-        if (typeof switchReportingView === 'function') {
+        if (viewId === 'health') {
+            FragmentLoader.load('reporting-main-viewport', 'fragments/status_panel.html');
+        } else if (typeof switchReportingView === 'function') {
             switchReportingView(viewId);
         }
         updateSubNavActiveState(viewId);
@@ -995,6 +1011,18 @@ function switchDiagnosticsSubView(viewId) {
         syncGlobalDiagnosticsNav(viewId);
         applyDiagnosticsSidebarState(true);
         switchMainCategory('logbuch');
+        return;
+    }
+    if (viewId === 'rescue') {
+        syncGlobalDiagnosticsNav(viewId);
+        applyDiagnosticsSidebarState(true);
+        FragmentLoader.load('main-content-area', 'fragments/diagnostic_rescue.html');
+        return;
+    }
+    if (viewId === 'dom-audit') {
+        syncGlobalDiagnosticsNav(viewId);
+        applyDiagnosticsSidebarState(true);
+        FragmentLoader.load('main-content-area', 'fragments/dom_auditor.html');
         return;
     }
     if (viewId === 'recovery') {
