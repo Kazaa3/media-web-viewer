@@ -4542,6 +4542,12 @@ def get_branch_identity(branch_id: str = None) -> Dict[str, Any]:
 
 
 @eel.expose
+def init_db():
+    from src.core import db
+    return db.init_db()
+
+
+@eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """
     @brief Unified library bridge with integrated forensics (v1.35.96)

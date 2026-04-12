@@ -61,6 +61,7 @@ async function syncCoreRegistry() {
  * Specialized Sync Wrappers for Module Compatibility (v1.41.00)
  */
 async function syncCategoryMaster() { await syncCoreRegistry(); }
+window.syncCategoryMaster = syncCategoryMaster;
 async function syncTechMarkers()    { await syncCoreRegistry(); }
 async function syncGlobalConfig()   { await syncCoreRegistry(); }
 

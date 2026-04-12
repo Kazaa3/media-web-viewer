@@ -697,4 +697,10 @@ window.initCinemaView = initCinemaView;
 window.initPicturesView = initPicturesView;
 window.initDocumentsView = initDocumentsView;
 
+// [v1.46.016] Global Orchestration Handshake
+window.loadLibrary = loadLibrary;
+window.refreshLibrary = refreshLibrary;
+window.scan = scan;
+window.renderLibrary = renderLibrary;
+
 // Created with MWV v1.46.00-MASTER
