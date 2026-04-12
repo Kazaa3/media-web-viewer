@@ -552,8 +552,9 @@ function renderAudioQueue() {
                     <div style="display: flex; align-items: center; width: 100%; pointer-events: none; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
                         <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover;">
                         <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                            <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                ${titleDisplay}
+                            <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center;">
+                                <span class="provenance-badge ${mockFlag ? 'mock' : 'real'}">${mockFlag ? '[M]' : '[R]'}</span>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${titleDisplay}</span>
                                 ${!isAvailable ? ' <span style="font-size: 9px; color: #ff5252; font-weight: 900; background: rgba(255,82,82,0.1); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">OFFLINE</span>' : ''}
                             </div>
                             <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">

@@ -2120,6 +2120,31 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     margin-top: 15px;
 }
 
+/* --- [v1.46.019] Provenance Badges (M/R/B Tests) --- */
+.provenance-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    margin-right: 8px;
+    border: 1px solid transparent;
+}
+
+.provenance-badge.mock {
+    background: rgba(0, 242, 255, 0.1);
+    color: #00f2ff;
+    border-color: rgba(0, 242, 255, 0.3);
+    box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
+}
+
+.provenance-badge.real {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.3);
+}
+
 /* End of Layout Rules */
 
 /* End of Multi-View Rules */

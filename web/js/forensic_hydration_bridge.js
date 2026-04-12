@@ -134,6 +134,41 @@ const ForensicHydrationBridge = {
         }
 
         setTimeout(() => { this.isLocked = false; }, 3000);
+    },
+    
+    /**
+     * STRESS TEST: Inject High-Density Mock Data (v1.46.019)
+     */
+    injectStressSet(count = 100) {
+        console.warn(`%c[HYDRATION-BRIDGE] TRIGGERING STRESS TEST: ${count} items`, "color: #ff3366; font-weight: 900;");
+        
+        const stressMocks = [];
+        const categories = ['audio', 'video', 'album', 'podcast', 'series', 'bilder'];
+        
+        for (let i = 1; i <= count; i++) {
+            const cat = categories[i % categories.length];
+            stressMocks.push({
+                id: `stress-${i}`,
+                name: `[STRESS] forensic_media_file_${i}_hd.mp4`,
+                path: `/stress/test/forensic_media_file_${i}_hd.mp4`,
+                title: `Stress Probe #${i}`,
+                artist: "Chaos Monkey Engine",
+                album: "Hydration Stress v1.46.019",
+                category: cat,
+                is_mock: true,
+                available: Math.random() > 0.1 // 10% chance of being 'offline'
+            });
+        }
+        
+        // Append to existing library
+        if (!window.allLibraryItems) window.allLibraryItems = [];
+        window.allLibraryItems = [...window.allLibraryItems, ...stressMocks];
+        window.__mwv_all_library_items = window.allLibraryItems;
+        
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof renderLibrary === 'function') renderLibrary();
+        
+        if (typeof showToast === 'function') showToast(`Stress Test: ${count} items injected.`, "info");
     }
 };
 

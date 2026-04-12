@@ -6,7 +6,7 @@
 const UiTestSuite = {
     results: [],
     isRunning: false,
-    
+
     config: {
         categories: ['media', 'management', 'governance', 'diagnostics'],
         subTabs: {
@@ -22,7 +22,7 @@ const UiTestSuite = {
         this.isRunning = true;
         this.results = [];
         console.log("--- Starting UI Self-Test Suite ---");
-        
+
         try {
             for (const cat of this.config.categories) {
                 await this.testCategory(cat);
@@ -46,7 +46,7 @@ const UiTestSuite = {
         // 1. Test clicking the main category
         btn.click();
         await this.delay(300);
-        
+
         const subNav = document.getElementById('sub-nav-container');
         if (!subNav || subNav.style.display === 'none') {
             this.logResult(cat, 'FAIL', `Sub-navigation bar did not appear for ${cat}.`);
@@ -64,8 +64,8 @@ const UiTestSuite = {
     async testSubTab(cat, subId) {
         console.log(`  Testing Sub-Tab: ${subId}`);
         const subBtn = Array.from(document.querySelectorAll('.sub-tab-btn'))
-                             .find(b => b.onclick && b.onclick.toString().includes(`'${subId}'`));
-        
+            .find(b => b.onclick && b.onclick.toString().includes(`'${subId}'`));
+
         if (!subBtn) {
             this.logResult(`${cat}:${subId}`, 'FAIL', `Sub-tab button for ${subId} not found.`);
             return;
@@ -99,7 +99,7 @@ const UiTestSuite = {
         const result = { test, status, message, time: new Date().toLocaleTimeString() };
         this.results.push(result);
         console.log(`[${status}] ${test}: ${message}`);
-        
+
         // Show in UI if the reporting dashboard is active
         this.updateUiReport(result);
     },
@@ -118,7 +118,7 @@ const UiTestSuite = {
         const passCount = this.results.filter(r => r.status === 'PASS').length;
         const failCount = this.results.filter(r => r.status === 'FAIL').length;
         console.log(`--- Test Suite Finished: ${passCount} PASS, ${failCount} FAIL ---`);
-        
+
         if (typeof showToast === 'function') {
             showToast(`Tests Finished: ${passCount} Pass, ${failCount} Fail`, failCount > 0 ? 'error' : 'success');
         }
