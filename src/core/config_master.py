@@ -903,10 +903,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "system": [
                 { "id": "general",      "label": "Allgemein",    "action": "switchOptionsView('general')" },
-                { "id": "appearance",   "label": "Darstellung",  "action": "switchOptionsView('appearance'')" }
+                { "id": "appearance",   "label": "Darstellung",  "action": "switchOptionsView('appearance')" }
             ]
         }
     },
+
     # --- DEBUGGING REGISTRY (v1.41.00 Centralized) ---
     
     # --- STREAMING & PIPELINE REGISTRY (v1.35.94 Unified) ---
