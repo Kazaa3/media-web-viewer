@@ -1543,14 +1543,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 { "id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')" },
                 { "id": "playlist", "label": "Playlist Manager", "action": "switchPlayerView('playlist')" },
                 { "id": "visualizer", "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
-                { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" },
-                { "id": "video-cinema", "label": "Video Cinema", "action": "switchMediaSubView('video')" }
+                { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" }
             ],
             "library": [
                 { "id": "lib-visual", "label": "Visual Explorer", "action": "switchLibrarySubView('visual')" },
                 { "id": "lib-browse", "label": "FileSystem Browse", "action": "switchLibrarySubView('browse')" },
-                { "id": "lib-inventory", "label": "Database Inventory", "action": "switchLibrarySubView('inventory')" },
-                { "id": "lib-cinema", "label": "Cinema View", "action": "switchLibrarySubTab('cinema')" },
                 { "id": "lib-films", "label": "Filme / Movie", "action": "switchLibrarySubTab('films')" },
                 { "id": "lib-series", "label": "Serien / TV", "action": "switchLibrarySubTab('series')" }
             ],
@@ -1591,7 +1588,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "debug": [
                 { "id": "dbg-sentinel", "label": "UI Sentinel", "action": "switchDiagnosticsSubView('sentinel')" },
-                { "id": "dbg-audit", "label": "Forensic Audit", "action": "switchDiagnosticsSubView('audit')" },
                 { "id": "dbg-state", "label": "AppState Dump", "action": "switchDiagnosticsSubView('state')" }
             ],
             "tests": [
@@ -1616,15 +1612,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "video": [
                 { "id": "vid-cinema", "label": "Cinema Cinema", "action": "switchMediaSubView('video')" },
-                { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" },
-                { "id": "vid-stream", "label": "Stream Relay", "action": "switchOptionsView('transcoding')" }
+                { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" }
             ],
             "unsort": [
                 { "id": "unsort-probe", "label": "Deep Probe Hub", "action": "runHydrationAuditProbe()" },
                 { "id": "unsort-sync", "label": "Force Database Sync", "action": "if(window.triggerMasterSync) window.triggerMasterSync()" },
-                { "id": "unsort-ui", "label": "UI Refresh", "action": "refreshViewportLayout()" },
-                { "id": "unsort-log", "label": "System Log", "action": "switchMainCategory('logbuch')" },
-                { "id": "unsort-audit", "label": "System Audit", "action": "openDiagnosticsTab('status')" }
+                { "id": "unsort-ui", "label": "UI Refresh", "action": "refreshViewportLayout()" }
             ]
         },
         "sub_nav_aliases": {
