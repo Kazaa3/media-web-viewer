@@ -410,7 +410,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "sentinel_audit_ms": 1000,
                 "recovery_pulse_ms": 1000,
                 "dom_hud_update_ms": 2000,
-                "ui_broadcast_cooldown_ms": 20
+                "ui_broadcast_cooldown_ms": 20,
+                "video_stats_update_ms": 1000
             },
             "logging": {
                 "max_buffer_size": 10000,

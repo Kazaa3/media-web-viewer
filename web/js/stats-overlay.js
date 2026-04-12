@@ -71,7 +71,8 @@ window.StatsOverlay = (function() {
 
     function startUpdating() {
         stopUpdating();
-        updateInterval = setInterval(updateStats, 1000);
+        const updateMs = window.CONFIG?.technical_orchestrator?.intervals?.video_stats_update_ms || 1000;
+        updateInterval = setInterval(updateStats, updateMs);
         updateStats();
     }
 

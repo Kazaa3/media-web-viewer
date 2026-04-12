@@ -14,7 +14,8 @@ const NuclearPulsar = {
     start() {
         if (this.interval) clearInterval(this.interval);
         console.log("%c[NUCLEAR-PULSE] SURGICAL STABILIZATION ACTIVE.", "color: #00ffcc; font-weight: 900;");
-        this.interval = setInterval(() => this.pulse(), 1000);
+        const pulseMs = window.CONFIG?.technical_orchestrator?.intervals?.recovery_pulse_ms || 1000;
+        this.interval = setInterval(() => this.pulse(), pulseMs);
     },
 
     /**
