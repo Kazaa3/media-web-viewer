@@ -67,6 +67,23 @@ body {
     user-select: none;
 }
 
+/* --- Global Icon Standardization (v1.46.01) --- */
+.icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--icon-stroke-width, 2.5);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+svg.icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
 /* --- Progress Bar --- */
 /* --- v1.34 Master Progress Bar (Ladebalken) --- */
 #app-progress-bar-container {
