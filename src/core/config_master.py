@@ -1543,13 +1543,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 { "id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')" },
                 { "id": "playlist", "label": "Playlist Manager", "action": "switchPlayerView('playlist')" },
                 { "id": "visualizer", "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
-                { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" }
+                { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" },
+                { "id": "albums", "label": "Alben-Galerie", "action": "switchMediaSubView('albums')" },
+                { "id": "audiobooks", "label": "Hörbuch-Sektor", "action": "switchMediaSubView('audiobooks')" },
+                { "id": "playlist-mgr", "label": "Playlist-Profi", "action": "switchMediaSubView('playlist-mgr')" }
             ],
             "library": [
                 { "id": "lib-visual", "label": "Visual Explorer", "action": "switchLibrarySubView('visual')" },
                 { "id": "lib-browse", "label": "FileSystem Browse", "action": "switchLibrarySubView('browse')" },
-                { "id": "lib-films", "label": "Filme / Movie", "action": "switchLibrarySubTab('films')" },
-                { "id": "lib-series", "label": "Serien / TV", "action": "switchLibrarySubTab('series')" }
+                { "id": "lib-films", "label": "Kinofilme", "action": "switchLibrarySubTab('films')" },
+                { "id": "lib-series", "label": "Serien-Katalog", "action": "switchLibrarySubTab('series')" }
             ],
             "database": [
                 { "id": "db-explorer", "label": "DB Explorer", "action": "switchLibrarySubView('inventory')" },
@@ -1588,6 +1591,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "debug": [
                 { "id": "dbg-sentinel", "label": "UI Sentinel", "action": "switchDiagnosticsSubView('sentinel')" },
+                { "id": "dbg-rescue", "label": "Rettungs-Konsole", "action": "switchDiagnosticsSubView('rescue')" },
+                { "id": "dbg-dom", "label": "DOM Auditor", "action": "switchDiagnosticsSubView('dom-audit')" },
                 { "id": "dbg-state", "label": "AppState Dump", "action": "switchDiagnosticsSubView('state')" }
             ],
             "tests": [
@@ -1602,6 +1607,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "reporting": [
                 { "id": "rep-overview", "label": "Overview", "action": "switchReportingView('dashboard')" },
+                { "id": "rep-health", "label": "System-Monitor", "action": "switchReportingView('health')" },
                 { "id": "rep-perf", "label": "Performance", "action": "switchReportingView('performance')" },
                 { "id": "rep-errors", "label": "Error Analytics", "action": "switchReportingView('errors')" }
             ],
@@ -1612,7 +1618,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ],
             "video": [
                 { "id": "vid-cinema", "label": "Cinema Cinema", "action": "switchMediaSubView('video')" },
-                { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" }
+                { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" },
+                { "id": "vid-player", "label": "Forensic-Player", "action": "switchMediaSubView('vid-player')" },
+                { "id": "vid-engine", "label": "Video-Engine", "action": "switchMediaSubView('vid-engine')" }
             ],
             "unsort": [
                 { "id": "unsort-probe", "label": "Deep Probe Hub", "action": "runHydrationAuditProbe()" },
