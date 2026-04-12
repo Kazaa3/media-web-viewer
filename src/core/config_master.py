@@ -9,9 +9,10 @@ v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
-APP_VERSION_CORE = "v1.46.002"
-APP_VERSION_FRONTEND = "v1.46.002-HYDRATED-STAGE"
-APP_VERSION_BACKEND = "v1.46.002-STABLE-RECON"
+APP_VERSION_CORE = "v1.46.003"
+APP_VERSION_FRONTEND = "v1.46.003-HYDRATED-FINAL"
+APP_VERSION_BACKEND = "v1.46.003-FORENSIC-READY"
+# Created with MWV v1.46.003-MASTER
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)

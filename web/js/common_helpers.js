@@ -519,7 +519,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     // 2. PRIMARY: Footer Minimalist Anchor
     const footerAnchor = document.getElementById('footer-sync-anchor');
     if (footerAnchor) {
-        footerAnchor.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
+        footerAnchor.innerText = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
         const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';

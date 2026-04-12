@@ -40,7 +40,7 @@ const ForensicHydrationBridge = {
     },
 
     /**
-     * Stage 1: Explicitly injects 12 hardcoded recovery items.
+     * Stage 1: Explicitly injects 12 hardcoded recovery items into Library & Queue.
      */
     forceEmergencyHydration() {
         this.stage = 1;
@@ -50,43 +50,68 @@ const ForensicHydrationBridge = {
         for (let i = 1; i <= this.mockCount; i++) {
             emergencyMocks.push({
                 id: `emergency-${i}`,
-                name: `[RECOVERY] Forensic Asset ${i}`,
+                filename: `mock_asset_${i}.wav`,
+                path: `media/mock_asset_${i}.wav`,
+                title: `Forensic Proof-of-Life ${i}`,
                 artist: "System Sentinel",
-                album: "Hydration Guard v1.46.001",
+                album: "Hydration Guard v1.46.003",
                 category: "audio",
-                path: "",
-                available: true,
                 is_mock: true,
-                stage: "PROVENANCE"
+                available: true
             });
         }
 
-        window.currentPlaylist = emergencyMocks;
-        if (typeof renderAudioQueue === 'function') {
-            renderAudioQueue();
-        }
+        // Hydrate both states to prove rendering path (v1.46.003)
+        window.allLibraryItems = emergencyMocks;
+        window.currentPlaylist = [...emergencyMocks];
+        
+        if (typeof renderAudioQueue === 'function') renderAudioQueue();
+        if (typeof updateLibraryUI === 'function') updateLibraryUI();
 
-        // Sync Footer (v1.46.001 Integration)
+        // Sync Footer (v1.46.003 Format [FS|DB|GUI])
         if (typeof updateSyncAnchor === 'function') {
             updateSyncAnchor(0, this.mockCount);
         }
     },
 
     /**
-     * Stage 2: Sync from allLibraryItems once real data arrives.
+     * Stage 2: Handshake transitioning based on M/R/B Mode.
      */
     transitionToRealData() {
+        if (this.isLocked) return;
         this.isLocked = true;
         this.stage = 2;
-        console.log("%c[HYDRATION-BRIDGE] STAGE 2: Real Data Detected. Performing Surgical Swap...", "color: #2ecc71; font-weight: 900;");
         
-        if (typeof syncQueueWithLibrary === 'function') {
-            syncQueueWithLibrary();
+        const mode = window.__mwv_hydration_mode || 'both';
+        console.log(`%c[HYDRATION-BRIDGE] STAGE 2: Applying ${mode.toUpperCase()} Hydration Logic...`, "color: #2ecc71; font-weight: 900;");
+
+        // Split current registry
+        const realItems = [...window.allLibraryItems].filter(it => !it.id.toString().startsWith('emergency-'));
+        const mockItems = [...window.allLibraryItems].filter(it => it.id.toString().startsWith('emergency-'));
+
+        if (mode === 'real') {
+            window.allLibraryItems = realItems;
+        } else if (mode === 'both') {
+            window.allLibraryItems = [...mockItems, ...realItems];
+        } else {
+            // Mode 'mock'
+            window.allLibraryItems = mockItems;
         }
+
+        // Surgical update of the active queue
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof updateLibraryUI === 'function') updateLibraryUI();
         
-        setTimeout(() => { this.isLocked = false; }, 5000); // Lock for 5s to stabilize
+        // Final Parity Flush
+        if (typeof updateSyncAnchor === 'function') {
+            updateSyncAnchor(realItems.length, window.allLibraryItems.length);
+        }
+
+        setTimeout(() => { this.isLocked = false; }, 3000);
     }
 };
+
+// Created with MWV v1.46.003-MASTER
 
 // Global Export
 window.ForensicHydrationBridge = ForensicHydrationBridge;
