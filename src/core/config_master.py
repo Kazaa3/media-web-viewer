@@ -9,9 +9,9 @@ v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
-APP_VERSION_CORE = "v1.46.001"
-APP_VERSION_FRONTEND = "v1.46.001-HYDRATED-STAGE"
-APP_VERSION_BACKEND = "v1.46.001-STABLE-RECON"
+APP_VERSION_CORE = "v1.46.002"
+APP_VERSION_FRONTEND = "v1.46.002-HYDRATED-STAGE"
+APP_VERSION_BACKEND = "v1.46.002-STABLE-RECON"
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
@@ -543,7 +543,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "top": 60,
                 "right": 280
             },
-            "forensic_anchors_visible": True
+            "forensic_anchors_visible": True,
+            "deck_tag_visible": True,
+            "deck_tag_position": {
+                "top": 5,
+                "left": 5
+            },
+            "queue_tag_visible": True,
+            "queue_tag_position": {
+                "top": 5,
+                "right": 5
+            }
         },
         "enable_context_menu": True,         # GLOBAL: Rechtsklick-Menü für Items.
         "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.

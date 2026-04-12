@@ -113,8 +113,9 @@ const NuclearPulsar = {
      * Injects high-visibility text markers into the specific splits.
      */
     injectForensicAnchor() {
-        // v1.46.01 Configuration Steering
         const config = window.CONFIG?.ui_settings?.technical_overlay;
+        
+        // Master override: If global forensic anchors are hidden
         if (config && config.forensic_anchors_visible === false) {
             ['proof-deck-tag', 'proof-queue-tag'].forEach(id => {
                 const el = document.getElementById(id);
@@ -125,20 +126,56 @@ const NuclearPulsar = {
 
         const deck = document.getElementById('player-deck-column');
         const queue = document.getElementById('player-playlist-column');
-        const create = (id, label, color, pos, parent) => {
-            if (!parent) return;
+
+        /**
+         * create (v1.46.02 Extension)
+         * Rebuilds or updates technical proof tags based on config.
+         */
+        const create = (id, label, color, posObj, parent, visible) => {
+            if (!parent || visible === false) {
+                const existing = document.getElementById(id);
+                if (existing) existing.remove();
+                return;
+            }
+
             let tag = document.getElementById(id);
             if (!tag) {
                 tag = document.createElement('div');
                 tag.id = id;
-                tag.style = `position: absolute; ${pos}; background: ${color}; color: #000; font-family: monospace; font-size: 9px; font-weight: 800; padding: 1px 6px; z-index: 99999; border-radius: 2px; opacity: 0.6;`;
+                tag.className = 'forensic-proof-tag pulse-indicator';
                 parent.style.position = 'relative';
                 parent.appendChild(tag);
             }
+
+            // Calculate coordinates (Support for both absolute units and defaults)
+            const top = posObj?.top !== undefined ? `${posObj.top}px` : '5px';
+            const left = posObj?.left !== undefined ? `${posObj.left}px` : 'auto';
+            const right = posObj?.right !== undefined ? `${posObj.right}px` : 'auto';
+
+            tag.style = `
+                position: absolute; 
+                top: ${top}; 
+                left: ${left}; 
+                right: ${right}; 
+                background: ${color}; 
+                color: #000; 
+                font-family: 'JetBrains Mono', monospace; 
+                font-size: 9px; 
+                font-weight: 900; 
+                padding: 1px 6px; 
+                z-index: 99999; 
+                border-radius: 2px; 
+                opacity: 0.6;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                pointer-events: none;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
             tag.innerHTML = `${label} [${this.iterations}]`;
         };
-        create('proof-deck-tag', 'DECK-LIFT', '#2ecc71', 'top: 5px; left: 5px;', deck);
-        create('proof-queue-tag', 'QUEUE-LIFT', '#e67e22', 'top: 5px; right: 5px;', queue);
+
+        // Create/Update Deck and Queue Tags independently
+        create('proof-deck-tag', 'DECK-LIFT', '#2ecc71', config?.deck_tag_position, deck, config?.deck_tag_visible);
+        create('proof-queue-tag', 'QUEUE-LIFT', '#e67e22', config?.queue_tag_position, queue, config?.queue_tag_visible);
         
         // Remove the legacy global bar if it exists
         const globalBar = document.getElementById('nuclear-forensic-anchor');
