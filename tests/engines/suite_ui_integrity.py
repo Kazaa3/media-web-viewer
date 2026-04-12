@@ -101,15 +101,15 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         
         # ID Audit (Level 3)
         target_ids = [
-            "main-sidebar", 
-            "main-content-area", 
-            "multiplexed-media-player-orchestrator-panel", 
-            "coverflow-library-panel"
+            "master-header-container", 
+            "main-viewport-container", 
+            "player-panel-container", 
+            "library-panel-container"
         ]
         missing = [i for i in target_ids if f'id="{i}"' not in content and f"id='{i}'" not in content]
         
         return DiagnosticResult(3, "Critical Selectors", "PASS" if not missing else "WARN", 
-                                f"Missing IDs: {missing}" if missing else "Critical UI anchors found.")
+                                f"Missing IDs: {missing}" if missing else "Critical UI anchors found in shell_master.")
 
     def level_4_backend_leakage(self) -> DiagnosticResult:
         """Scans for unescaped Python/EEL snippets or raw placeholders in the HTML."""
@@ -208,13 +208,13 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         html_path = PROJECT_ROOT / "web" / "app.html"
         content = html_path.read_text(encoding='utf-8')
         
-        # Check for mock data toggle
-        has_toggle = 'id="config-mock-data-toggle"' in content
-        has_logic = "async function toggleMockData" in content
+        # Check for modern hydration buttons (M/R/B)
+        has_toggle = 'id="hydr-btn-M"' in content or 'id="hydr-btn-R"' in content
+        has_logic = "function setHydrationMode" in content or "setHydrationMode(" in content
         
         success = has_toggle and has_logic
         return DiagnosticResult(12, "Mock System", "PASS" if success else "FAIL", 
-                                "Mock toggle and logic verified." if success else f"Toggle: {has_toggle}, Logic: {has_logic}")
+                                "Modern hydration controls (M/R/B) and logic verified." if success else f"Toggle: {has_toggle}, Logic: {has_logic}")
 
     def level_13_audio_playback_readiness(self) -> DiagnosticResult:
         """Verifies the UI structural readiness for media playback."""
