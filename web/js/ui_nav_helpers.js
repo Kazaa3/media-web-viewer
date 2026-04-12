@@ -871,10 +871,10 @@ function updateGlobalSubNav(category) {
     // [v1.46.019] Strictly Configuration-Driven Orchestration
     const normalizedCategory = category ? category.toLowerCase() : 'media';
     const orchestrator = window.CONFIG?.navigation_orchestrator || {};
-    
+
     // Resolve registry key through aliases
     const registryKey = (orchestrator.aliases && orchestrator.aliases[normalizedCategory]) || normalizedCategory;
-    
+
     // Fetch Level 2 Entries
     let entries = orchestrator.level_2 ? orchestrator.level_2[registryKey] : null;
 

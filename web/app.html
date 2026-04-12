@@ -181,18 +181,18 @@
                 // Collect existing persistent nodes to prevent accidental deletion
                 const logoNode = document.querySelector('.header-logo-pulsar');
                 const navButtonsNode = document.getElementById('header-nav-buttons');
-                
+
                 primaryCluster.innerHTML = ''; // Wipe and rebuild buttons
-                
+
                 config.left_cluster.forEach(btn => {
                     if (btn.visible === false) return; // Strict visibility check
-                    
+
                     const el = document.createElement('button');
                     el.id = `header-btn-l-${btn.id}`;
                     el.title = btn.title;
                     el.className = 'tab-btn header-orchestrated-btn';
                     el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;";
-                    
+
                     if (btn.id === 'power') {
                         el.style.backgroundColor = "rgba(255, 51, 102, 0.1)";
                         el.style.color = "#ff3366";
@@ -204,7 +204,7 @@
                     el.onclick = () => eval(btn.action);
                     primaryCluster.appendChild(el);
                 });
-                
+
                 // Re-append persistent structural components
                 if (logoNode) primaryCluster.appendChild(logoNode);
                 if (navButtonsNode) primaryCluster.appendChild(navButtonsNode);
@@ -240,21 +240,21 @@
                 secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
                 secondaryCluster.style.display = 'flex';
                 secondaryCluster.style.alignItems = 'center';
-                
+
                 secondaryCluster.innerHTML = ''; // Wipe and rebuild
                 config.right_cluster.forEach(btn => {
                     if (btn.visible === false) return; // Strict visibility enforcement
-                    
+
                     const el = document.createElement('button');
                     el.id = `header-btn-r-${btn.id}`;
                     if (layout.show_tooltips !== false) el.title = btn.title;
                     el.className = 'tab-btn header-orchestrated-btn';
-                    
+
                     // Dynamic Styling from Config Registry
                     const size = (layout.btn_size || 34) + 'px';
                     const color = btn.color || '#e5e5e7';
                     const radius = layout.btn_border_radius || '50%';
-                    
+
                     el.style.width = size;
                     el.style.height = size;
                     el.style.padding = '0';
@@ -266,17 +266,17 @@
                     el.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
                     el.style.border = '1px solid rgba(255, 255, 255, 0.1)';
                     el.style.color = color;
-                    
+
                     // [v1.46.03] Advanced Color Pulsing
                     el.style.backgroundColor = color + '12'; // ~7% alpha base
                     el.style.boxShadow = `0 2px 10px ${color}1a`;
-                    
+
                     el.innerHTML = `<svg class="icon" style="pointer-events: none; width: 1.1em; height: 1.1em;"><use xlink:href="#icon-${btn.icon}"></use></svg>`;
                     el.onclick = (e) => {
                         console.info(`[Header-Action] ${btn.id} triggered.`);
                         eval(btn.action);
                     };
-                    
+
                     // Interactive Hover States
                     el.onmouseenter = () => {
                         el.style.transform = `scale(${layout.hover_scale || 1.1})`;
@@ -288,7 +288,7 @@
                         el.style.backgroundColor = color + '12';
                         el.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     };
-                    
+
                     secondaryCluster.appendChild(el);
                 });
             }
@@ -312,7 +312,9 @@
             <!-- EXIT / POWER BUTTON (v1.41.162 Restoration: Ganz Oben Links) -->
             <button id="header-btn-power-exit" onclick="exitApplication()" title="EXIT APPLICATION" class="tab-btn"
                 style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); margin-right: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);">
-                <svg class="icon"><use xlink:href="#icon-power"></use></svg>
+                <svg class="icon">
+                    <use xlink:href="#icon-power"></use>
+                </svg>
             </button>
 
             <div class="header-logo-pulsar" onclick="toggleMenuBar()"
@@ -407,15 +409,21 @@
                 <h3 class="nav-title">Media</h3>
                 <div class="nav-list">
                     <button class="nav-item active" onclick="switchMainCategory('media', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-music"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-music"></use>
+                        </svg>
                         <span>Music Player</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('library', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-library"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-library"></use>
+                        </svg>
                         <span>Library Browser</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('video', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-video"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-video"></use>
+                        </svg>
                         <span>Video Cinema</span>
                     </button>
                 </div>
@@ -425,19 +433,27 @@
                 <h3 class="nav-title">Management</h3>
                 <div class="nav-list">
                     <button class="nav-item" onclick="switchMainCategory('edit', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-edit"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-edit"></use>
+                        </svg>
                         <span>Editor</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('reporting', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-report"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-report"></use>
+                        </svg>
                         <span>Report</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('tools', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-tools"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-tools"></use>
+                        </svg>
                         <span>Core Tools</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('logbuch', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-logbuch"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-logbuch"></use>
+                        </svg>
                         <span>System Logs</span>
                     </button>
                 </div>
@@ -447,24 +463,34 @@
                 <h3 class="nav-title">System</h3>
                 <div class="nav-list">
                     <button class="nav-item" onclick="switchMainCategory('system', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-environment"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-environment"></use>
+                        </svg>
                         <span>Environment</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('debug', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-debug"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-debug"></use>
+                        </svg>
                         <span>Debug & DB</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('tests', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-search"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-search"></use>
+                        </svg>
                         <span>Testing Tabs</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('diagnostics', this)">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-diagnostics"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-diagnostics"></use>
+                        </svg>
                         <span>Diagnostics</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('unsort', this)"
                         style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 5px; padding-top: 10px; color: #ff9500;">
-                        <svg class="icon" style="width: 18px; height: 18px;"><use xlink:href="#icon-audit"></use></svg>
+                        <svg class="icon" style="width: 18px; height: 18px;">
+                            <use xlink:href="#icon-audit"></use>
+                        </svg>
                         <span>Unsort (Audit)</span>
                     </button>
                 </div>
@@ -937,7 +963,9 @@
 
             <button id="btn-theme" class="theme-toggle" onclick="toggleTheme()"
                 style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg id="theme-icon-sun" class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-sun"></use></svg>
+                <svg id="theme-icon-sun" class="icon" style="width: 14px; height: 14px;">
+                    <use xlink:href="#icon-sun"></use>
+                </svg>
             </button>
         </div>
     </footer>
@@ -1012,32 +1040,45 @@
             <!-- Theme Toggle -->
             <!-- Theme Toggle -->
             <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-sun"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use xlink:href="#icon-sun"></use>
+                </svg>
             </button>
 
             <!-- More Options (Vertical Dots) -->
             <button class="footer-tool-btn" title="More Options">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-more"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use xlink:href="#icon-more"></use>
+                </svg>
             </button>
 
             <!-- Program Menu Burger (Circled) -->
             <button onclick="toggleMenuBar()" class="footer-tool-btn"
                 style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;"
                 title="Program Menu">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-burger"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use xlink:href="#icon-burger"></use>
+                </svg>
             </button>
 
             <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="toggleSidebar()">
-                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-layout"></use></svg>
+                <svg class="icon" style="width: 16px; height: 16px;">
+                    <use xlink:href="#icon-layout"></use>
+                </svg>
             </button>
             <!-- [v1.46.005] Global Flag Center Toggle -->
-            <button id="footer-btn-flags" class="footer-tool-btn" onclick="if(window.ForensicFlagCenter) window.ForensicFlagCenter.toggle();"
+            <button id="footer-btn-flags" class="footer-tool-btn"
+                onclick="if(window.ForensicFlagCenter) window.ForensicFlagCenter.toggle();"
                 title="Open Global Flag Center (Steering)" style="color: #00f2ff;">
-                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-diagnostics"></use></svg>
+                <svg class="icon" style="width: 16px; height: 16px;">
+                    <use xlink:href="#icon-diagnostics"></use>
+                </svg>
             </button>
             <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()"
                 title="Toggle Diagnostics Overlay" style="color: #ff3366;">
-                <svg class="icon" style="width: 16px; height: 16px;"><use xlink:href="#icon-diagnostics"></use></svg>
+                <svg class="icon" style="width: 16px; height: 16px;">
+                    <use xlink:href="#icon-diagnostics"></use>
+                </svg>
             </button>
         </div>
     </footer>
