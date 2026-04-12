@@ -140,6 +140,11 @@
 
     <!-- [v1.46.019] EMERGENCY ERROR BRIDGE -->
     <script>
+        // [v1.46.019] Safe Tracing Stub (Prevents ReferenceError before modules load)
+        window.mwv_trace = window.mwv_trace || function() {};
+        window.mwv_trace_render = window.mwv_trace_render || function() {};
+        window.traceUiNav = window.traceUiNav || function() {};
+
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("[JS-CRASH]", message, "at", source, ":", lineno);
             if (typeof eel !== 'undefined' && typeof eel.log_js_error === 'function') {
@@ -157,6 +162,7 @@
 
     <!-- Critical Core Scripts -->
     <script type="text/javascript" src="/eel.js?v=1.45.100"></script>
+    <script src="js/trace_helpers.js?v=1.45.100"></script>
     <script src="js/db.js?v=1.45.100"></script>
     <script src="js/bibliothek.js?v=1.45.100"></script>
     <script src="js/translations.js?v=1.45.100"></script>

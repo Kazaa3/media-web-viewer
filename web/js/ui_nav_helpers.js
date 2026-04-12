@@ -790,8 +790,8 @@ function switchMainCategory(category, btn) {
     currentMainCategory = category;
     localStorage.setItem('mwv_active_category', category);
 
-    traceUiNav('NAV-CATEGORY', category);
-    mwv_trace('DOM-UI', 'NAV-CATEGORY', category);
+    if (typeof traceUiNav === 'function') traceUiNav('NAV-CATEGORY', category);
+    if (typeof mwv_trace === 'function') mwv_trace('DOM-UI', 'NAV-CATEGORY', category);
 
     // [v1.41.01] Sync with central UI Orchestration Engine
     if (window.MWV_UI) {
@@ -919,7 +919,7 @@ function updateGlobalSubNav(category) {
     // Recalibrate layout after content changes might have triggered visibility shifts
     refreshViewportLayout();
 
-    mwv_trace('DOM-UI', 'SUB-NAV-SPAWN', { category: normalizedCategory, count: entries.length });
+    if (typeof mwv_trace === 'function') mwv_trace('DOM-UI', 'SUB-NAV-SPAWN', { category: normalizedCategory, count: entries.length });
 
     const mainBar = document.getElementById('program-menu-bar');
     if (menuSystemVisible && mainBar && mainBar.style.display === 'none') {
@@ -1107,7 +1107,7 @@ function switchOptionsView(viewId) {
  * Switches between sub-tabs in the Library panel.
  */
 function switchLibrarySubTab(tabId) {
-    traceUiNav('SUBTAB-LIB', tabId);
+    if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-LIB', tabId);
     let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
     document.querySelectorAll('#coverflow-library-panel button.options-subtab, #lib-nav-views-container .options-subtab').forEach(btn => btn.classList.remove('active'));
@@ -1125,7 +1125,7 @@ function switchLibrarySubTab(tabId) {
  * Switches between views in the Tools panel.
  */
 function switchToolsView(viewId) {
-    traceUiNav('SUBTAB-TOOLS', viewId);
+    if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-TOOLS', viewId);
     document.querySelectorAll('.tools-view').forEach(el => { el.style.display = 'none'; });
     document.querySelectorAll('.tools-nav-tabs .options-subtab').forEach(el => { el.classList.remove('active'); });
 
@@ -1141,7 +1141,7 @@ function switchToolsView(viewId) {
  * Switches between Edit/Metadata sub-tabs.
  */
 function switchEditView(viewId) {
-    traceUiNav('SUBTAB-EDIT', viewId);
+    if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-EDIT', viewId);
     document.querySelectorAll('.edit-view').forEach(el => el.style.display = 'none');
     document.querySelectorAll('#edit-main-content-pane .options-subtab').forEach(el => el.classList.remove('active'));
 
@@ -1178,7 +1178,7 @@ function switchEditView(viewId) {
  * Switches between Test sub-tabs.
  */
 function switchTestView(view) {
-    traceUiNav('SUBTAB-TESTS', view);
+    if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-TESTS', view);
     document.querySelectorAll('#quality-assurance-regression-suite-panel .test-view-content').forEach(el => {
         el.style.display = 'none';
     });
@@ -1201,7 +1201,7 @@ function switchTestView(view) {
  * Switches between sub-tabs in the Tools/Parser panel.
  */
 function switchParserView(viewId) {
-    traceUiNav('SUBTAB-PARSER', viewId);
+    if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-PARSER', viewId);
     document.querySelectorAll('.parser-view').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.options-subtab').forEach(el => {
         if (el.id && el.id.startsWith('parser-subtab-')) {
