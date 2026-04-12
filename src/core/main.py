@@ -571,9 +571,7 @@ def report_playback_state(is_playing, item_name, current_time):
     Reports the current playback state from the frontend.
     Used for automated verification of playability.
     """
-    msg = f"[DOM-TEST] [PLAYBACK] {
-        'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {
-        current_time:.1f}s"
+    msg = f"[DOM-TEST] [PLAYBACK] {'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {current_time:.1f}s"
     log.info(msg)
     return {"status": "playback_logged"}
 

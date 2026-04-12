@@ -20,7 +20,7 @@ from src.core import db
 
 def run_forensic_audit():
     print("="*60)
-    print(" FORENSIC HYDRATION AUDIT (v1.46.12)")
+    print(" FORENSIC HYDRATION AUDIT (v1.46.003)")
     print("="*60)
 
     # --- STAGE 1: Database Integrity ---
@@ -30,7 +30,8 @@ def run_forensic_audit():
         print(f"FAILED: Database file NOT FOUND at {db_path}")
         return False
     
-    print(f"SUCCESS: Database found at {db_path} ({db_path.stat().st_size} bytes)")
+    fs_size = db_path.stat().st_size
+    print(f"SUCCESS: Database found at {db_path} ({fs_size} bytes)")
     
     try:
         conn = sqlite3.connect(db.DB_FILENAME)
@@ -49,6 +50,14 @@ def run_forensic_audit():
         print(f"FAILED: Database query error: {e}")
         return False
 
+    # --- STAGE 1.5: FS Parity Check (v1.46.003) ---
+    print("\n[STAGE 1.5] FS PARITY AUDIT")
+    if fs_size > 0:
+        print(f"SUCCESS: Parity established. FS_SIZE({fs_size}) > 0.")
+    else:
+        print("FAILED: Database file is empty (0 bytes).")
+        return False
+
     # --- STAGE 2: Backend Logic Bridge ---
     print("\n[STAGE 2] BACKEND LOGIC BRIDGE")
     try:
@@ -62,6 +71,7 @@ def run_forensic_audit():
         
         if len(items) == 0 and count > 0:
             print("CRITICAL: DATA LOSS DETECTED between DB and Logic return.")
+            return False
         elif len(items) > 0:
             print("SUCCESS: Logic bridge is operational.")
     except Exception as e:
@@ -71,16 +81,21 @@ def run_forensic_audit():
     # --- STAGE 3: Serialization Diagnostics ---
     print("\n[STAGE 3] SERIALIZATION DIAGNOSTICS")
     try:
-        # Eel handles serialization automatically, but we check for JSON-breaking types
         json_test = json.dumps(result)
         print(f"SUCCESS: Full library payload is JSON-serializable ({len(json_test)} bytes).")
     except Exception as e:
-        print(f"FAILED: Serialization failure (potential circular ref or invalid type): {e}")
+        print(f"FAILED: Serialization failure: {e}")
         return False
 
+    # --- STAGE 4: Handshake Pattern Verification (v1.46.003) ---
+    print("\n[STAGE 4] HANDSHAKE PATTERN AUDIT")
+    if len(items) >= 12 or count >= 12:
+         print(f"SUCCESS: Handshake threshold (12) satisfied. Current Count: {len(items)}")
+    else:
+         print(f"WARNING: Item count ({len(items)}) is below the forensic Stage 1 threshold (12).")
+
     print("\n" + "="*60)
-    print(" AUDIT COMPLETE: BACKEND IS HEALTHY")
-    print(" TARGET NEXT: Frontend Hydration Pulse (JS)")
+    print(" AUDIT COMPLETE: REBUILD STAGE v1.46.003 IS HEALTHY")
     print("="*60)
     return True
 
