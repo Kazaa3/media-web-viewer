@@ -366,6 +366,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # }
         
         "navigation_orchestrator": {
+            "aliases": {
+                "player": "media", "bibliothek": "library", "database": "database", "explorer": "library",
+                "tools": "tools", "debug": "debug", "diagnostics": "status", "optionen": "system",
+                "report": "reporting", "reporting_dashboard": "reporting", "file": "file", "edit": "edit",
+                "parser": "parser", "logbuch": "logbuch", "video": "video", "tests": "tests", "status": "status",
+                "audio": "media", "audio_native": "media", "audio_transcode": "media", "album": "media",
+                "single": "media", "hörbuch": "media", "sampler": "media", "soundtrack": "media",
+                "video_iso": "media", "bilder": "media", "epub": "media"
+            },
             "level_1": [
                 {"id": "audio",      "label": "AUDIO",      "icon": "play",   "action": "audio"},
                 {"id": "multimedia", "label": "MULTIMEDIA", "icon": "grid",   "action": "multimedia"},
