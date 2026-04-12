@@ -1349,9 +1349,7 @@ def get_storage_forensics():
         # Format size for readability
         results["total_size_human"] = f"{results['total_size_bytes'] / (1024**3):.2f} GB"
         for f in results["largest_files"]:
-            f["size_human"] = f"{f['size']
-                                 / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] /
-                                                                                     (1024**3):.2f} GB"
+            f["size_human"] = f"{f['size'] / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] / (1024**3):.2f} GB"
 
         return results
     except Exception as e:
@@ -4348,8 +4346,7 @@ def _apply_library_filters(all_media: List[Dict],
     supported_by_branch = branch_registry.get(active_branch) if active_branch else None
 
     if supported_by_branch:
-        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {
-                 str(active_branch).upper() if active_branch else 'NONE'}")
+        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {str(active_branch).upper() if active_branch else 'NONE'}")
 
     filtered = []
 
@@ -4467,8 +4464,7 @@ def _apply_library_filters(all_media: List[Dict],
 
     # [FORENSIC-ID] Sample Trace (v1.41.00)
     if len(filtered) > 0:
-        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')
-                                                 } | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
+        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')} | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
 
     if audit_meta['dropped_total'] > 0:
         log.debug(f"[BD-AUDIT] Drop Reasons: {dropped_reasons}")
@@ -4660,11 +4656,9 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
 
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.41.00)
-    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)
-                                                      } items (DB: {count_total}, Status: {status})", flush=True)
+    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
     if len(final_media) > 0:
-        print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')
-                                                       } (ID: {final_media[0].get('id')})", flush=True)
+        print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')} (ID: {final_media[0].get('id')})", flush=True)
 
     return {
         "media": final_media,
@@ -6173,8 +6167,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
 
         try:
             control_port = find_free_port()
-            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {
-                     start_time}s: {full_path} -> {index_file} (Control: {control_port})")
+            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
 
             cmd = [
                 str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet",
@@ -7259,8 +7252,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         # Removed --no-mjpeg-demux as it's not supported in all VLC versions or causing issues.
         vlc_cmd = [str(vlc_path), "--demux", "mkv", "fd://0"]
 
-        log.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c)
-                 for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
+        log.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 
         # Start remuxer
         p1 = subprocess.Popen(remux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
