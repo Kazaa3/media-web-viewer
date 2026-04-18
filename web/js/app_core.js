@@ -308,15 +308,23 @@ function playMediaObject(item) {
     const activeTab = document.body.getAttribute('data-mwv-tab') || 'player';
 
     const isVideo = isVideoItem(item);
+    const isAudio = !isVideo && isAudioItem(item);
+    const isImage = !isVideo && !isAudio && isImageItem(item);
+
+    // [v1.46.096] Forensic Routing Pulse (Expanded Logs)
+    console.info(`[Play-Routing] Handshake: ${item.name} | Type: ${isVideo ? 'VIDEO' : (isAudio ? 'AUDIO' : (isImage ? 'IMAGE' : 'UNKNOWN'))} | Cat: ${item.category}`);
 
     if (isVideo) {
-        console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);
+        console.group("[Play-Routing] Video Pipeline");
+        console.info("Path:", item.path);
         
         // [v1.46.088] Adaptive routing: if already on video tab, fire immediately
         if (activeTab === 'video') {
+            console.debug("Already on Video tab. Immediate fire.");
             if (typeof playVideo === 'function') {
                 playVideo(item, item.path);
             }
+            console.groupEnd();
             return;
         }
 
@@ -327,22 +335,25 @@ function playMediaObject(item) {
                 } else {
                     console.warn("[Play-Routing] Video fragment loaded, but playVideo() not found.");
                 }
+                console.groupEnd();
             }, true); // v1.35.65 Force Jump
         }
-    } else {
-        console.info("[Play-Routing] Audio detected, ensuring in queue and switching to Player:", item.path);
+    } else if (isAudio) {
+        console.group("[Play-Routing] Audio Pipeline");
+        console.info("Path:", item.path);
         
         // [v1.46.087] Non-blocking queue injection
         addToQueue(item, true); // silent=true
         
         // [v1.46.088] Adaptive routing: avoid destructive reload if already on player
         if (activeTab === 'player') {
-            console.debug("[Play-Routing] Already on Player tab. Direct fire playback.");
+            console.debug("Already on Player tab. Direct fire playback.");
             if (typeof playAudio === 'function') {
                 playAudio(item);
             } else {
                 console.error("[Play-Routing] Critical: playAudio() not found.");
             }
+            console.groupEnd();
             return;
         }
 
@@ -354,8 +365,18 @@ function playMediaObject(item) {
                 } else {
                     console.error("[Play-Routing] Critical: playAudio() not found in Player context.");
                 }
+                console.groupEnd();
             }, true); // v1.35.65 Force Jump
         }
+    } else if (isImage) {
+        console.info("[Play-Routing] Image detected. Toggling Preview notification.", item.path);
+        if (typeof showToast === 'function') showToast(`Bild-Vorschau: ${item.name}`, "info");
+        // Images don't trigger tab switches usually in forensic mode, just a notification/HUD update
+        if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
+    } else {
+        console.warn("[Play-Routing] Unknown / Mixed media type. Fallback to standard player:", item.path);
+        addToQueue(item, true);
+        if (typeof switchTab === 'function') switchTab('player');
     }
 
     // [v1.46.026] Broadcast State to Backend SSOT
