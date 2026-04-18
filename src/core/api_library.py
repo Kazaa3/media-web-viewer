@@ -210,10 +210,13 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     # [v1.46.085] Payload Readiness Trace
     log.info(f"🚀 [SPAWN-LOG] PAYLOAD-READY -> {len(final_media)} items (Source: {'MOCKS' if all(it.get('is_mock') for it in final_media) else 'REAL_DB'})")
 
+    triggered_auto_scan = (count_total == 0)
+
     return {
         "media": final_media,
         "db_count": count_total if count_total > 0 else len(all_media),
         "status": status,
+        "triggered_auto_scan": triggered_auto_scan,
         "audit": {
             "stage": audit_stage,
             "pid": pid,
