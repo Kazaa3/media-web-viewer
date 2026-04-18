@@ -25,12 +25,12 @@ def get_parser_config():
 
 log = logging.getLogger("api_library")
 
-def _apply_library_filters(all_media: List[Dict],
-                           force_raw: bool = False,
-                           search: str = "",
-                           genre: str = "all",
-                           year: str = "all",
-                           active_branch: str = None) -> Tuple[List[Dict], Dict[str, Any]]:
+def apply_library_filters(all_media: List[Dict],
+                          force_raw: bool = False,
+                          search: str = "",
+                          genre: str = "all",
+                          year: str = "all",
+                          active_branch: str = None) -> Tuple[List[Dict], Dict[str, Any]]:
     """
     @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
     @return Tuple of (filtered_list, audit_metadata)
