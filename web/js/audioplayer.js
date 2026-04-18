@@ -9,9 +9,8 @@ let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
 window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 
-// Local access shorthand (v1.45.110 Sync)
-const currentPlaylist = window.currentPlaylist;
-// Note: playlistIndex is accessed directly via window.playlistIndex to ensure SSOT.
+// window.currentPlaylist is now initialized in app_core.js (SSOT v1.46.026)
+// playlistIndex is accessed directly via window.playlistIndex to ensure SSOT.
 
 // --- GLOBAL UTILITIES (v1.46.12 Fallback) ---
 if (typeof window.isVideoItem !== 'function') {

@@ -469,13 +469,12 @@ def log_gui_event(category, action, details=""):
 
 
 @eel.expose
-def set_hydration_mode(mode: str):
-    """Sets the hydration mode (mock, real, both) in the global config."""
-    if mode in ['mock', 'real', 'both']:
-        GLOBAL_CONFIG['hydration_mode'] = mode
-        log.info(f"[HYDRATION] Mode set to: {mode}")
-        return True
-    return False
+def set_hydration_mode(mode: str) -> bool:
+    """Sets the hydration mode for library retrieval (v1.41.67)."""
+    global HYDRATION_MODE
+    HYDRATION_MODE = mode.lower()
+    log.info(f"[HYDR-TRACE] Hydration mode updated to: {HYDRATION_MODE}")
+    return True
 
 
 @eel.expose

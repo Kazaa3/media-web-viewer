@@ -659,7 +659,10 @@ function setHydrationMode(mode) {
     // 1. Sync Backend
     if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
         console.debug(`[Hydration] Syncing backend...`);
-        eel.set_hydration_mode(mode)();
+        eel.set_hydration_mode(mode)(() => {
+            console.info(`[Hydration] Backend ACK received. Triggering UI refresh...`);
+            if (typeof loadLibrary === 'function') loadLibrary();
+        });
     }
     
     // 2. UI Feedback: Multi-LED Synchronization (v1.46.026)

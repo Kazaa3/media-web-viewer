@@ -86,6 +86,10 @@ let currentVideoItem = null;
 let currentVideoPath = null;
 let vjsPlayer = null; // Defined as a shared global in Orchestrator
 
+// [v1.46.026] SSOT: Shared Playback State
+window.currentPlaylist = window.currentPlaylist || [];
+window.playlistIndex = window.playlistIndex || 0;
+
 /**
  * syncUiGeometry (v1.43)
  * Injects dimensions from GLOBAL_CONFIG into CSS variables.
@@ -330,7 +334,13 @@ function playMediaObject(item) {
  * Adds an item to the global currentPlaylist.
  */
 function addToQueue(item) {
-    if (!currentPlaylist) currentPlaylist = [];
+    if (!item) return;
+    
+    // Ensure initialization (v1.46.026 Fixed 'const' crash)
+    if (!window.currentPlaylist) window.currentPlaylist = [];
+    let currentPlaylist = window.currentPlaylist;
+
+    console.log(`[PLAY-TRACE] Adding to queue: ${item.name}`);
 
     // Avoid duplicates in the active queue if desired
     if (!currentPlaylist.find(i => i.path === item.path)) {
