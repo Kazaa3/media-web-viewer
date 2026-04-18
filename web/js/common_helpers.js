@@ -411,21 +411,35 @@ function isVideoItem(item) {
     const cat = (item.category || '').toLowerCase();
     
     // 1. SSOT: Extension-First Priority (v1.46.026)
-    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv'];
-    const extMatch = path.match(/\.([a-z0-9_]+)$/);
+    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts'];
+    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma'];
+    
+    const extMatch = path.match(/\.([a-z0-9_]+)$/i);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+
+    // 2. [v1.46.031] AUDIO GUARD: If it looks like audio, it is NEVER video.
+    if (ext && audioExtensions.includes(ext)) {
+        if (typeof window.__mwv_audit_count === 'undefined') window.__mwv_audit_count = 0;
+        if (window.__mwv_audit_count < 10) {
+            console.debug(`[FILTER-AUDIT] PASS: ${item.name} matches Audio Extension. Guarding classification.`);
+            window.__mwv_audit_count++;
+        }
+        return false;
+    }
+
+    // 3. Strict Video Extension Match
     if (ext && videoExtensions.includes(ext)) return true;
 
-    // 2. SSOT: Audio Guard (If it looks like audio, it's NOT video)
-    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg'];
-    if (ext && audioExtensions.includes(ext)) return false;
-
-    // 3. Category Fallbacks (Legacy)
+    // 4. Category Fallbacks (Legacy)
     const videoCategories = ['video', 'movie', 'serie', 'sh', 'sz', 'sp', 'sw', 'documentation'];
     if (videoCategories.includes(cat)) return true;
 
-    // 4. Special Case: Multimedia is VIDEO only if no audio ext found
-    if (cat === 'multimedia' && !ext.match(/\.(mp3|m4a|wav|flac|ogg)$/)) return true;
+    // 5. Multimedia Ambiguity Resolution
+    if (cat === 'multimedia') {
+        // Since we already passed the Audio Guard above, if we are still here, it might be video
+        // But for safety, we only return true if it's NOT explicitly an audio extension
+        return true; 
+    }
 
     return false;
 }
@@ -443,11 +457,10 @@ function isAudioItem(item) {
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
     
-    if (ext && audioExtensions.includes(ext)) {
-        // [v1.46.026] Forensic Logging (Limited to first 5 items per session)
+        // [v1.46.026] Forensic Logging
         if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
-        if (window.__mwv_audio_log_count < 5) {
-            console.debug(`[FE-AUDIT] Extension Success: ${item.name} is AUDIO`);
+        if (window.__mwv_audio_log_count < 10) {
+            console.debug(`[FE-AUDIT] Extension Match: ${item.name} | Ext: ${ext} | Result: AUDIO`);
             window.__mwv_audio_log_count++;
         }
         return true;
@@ -455,7 +468,14 @@ function isAudioItem(item) {
     
     // 2. Category Matching
     const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
-    if (audioCategories.includes(cat)) return true;
+    if (audioCategories.includes(cat)) {
+        if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
+        if (window.__mwv_audio_log_count < 10) {
+            console.debug(`[FE-AUDIT] Category Match: ${item.name} | Cat: ${cat} | Result: AUDIO`);
+            window.__mwv_audio_log_count++;
+        }
+        return true;
+    }
     
     // Forensic signature fallbacks
     if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;

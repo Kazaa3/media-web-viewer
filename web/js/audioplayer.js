@@ -583,18 +583,21 @@ function renderAudioQueue() {
             
             // [v1.46.026] Forensic RENDER-STEP Loop
             activeList.forEach((item, index) => {
-                if (index % 100 === 0) console.log(`[RENDER-STEP] Item ${index}/${activeList.length}: Processing ${item.name}`);
+                // [v1.46.031] Forensic Trace Expansion
+                if (index < 10) {
+                    const isVideo = isVideoItem(item);
+                    console.log(`[FILTER-AUDIT] Item ${index}: ${item.name} | isVideo: ${isVideo} | Cat: ${item.category}`);
+                }
+
+                if (isVideoItem(item)) {
+                    // Item is classified as Video, skip it for Audio renderer
+                    return; 
+                }
                 
                 const div = document.createElement('div');
                 div.className = 'legacy-track-item';
                 div.draggable = true;
                 if (index === playlistIndex) div.classList.add('active');
-
-                // [v1.46.026] Type Mismatch Guard (Extension-First)
-                if (isVideoItem(item)) {
-                    // Item is classified as Video, skip it for Audio renderer
-                    return; 
-                }
 
                 const tags = item.tags || {};
                 const nameMock = item.name && item.name.startsWith('[MOCK]');
@@ -618,13 +621,20 @@ function renderAudioQueue() {
 
                 div.onclick = () => {
                     console.log(`[PLAY-PULSE] Item Click: ${item.name} (Index: ${index})`);
+                    // Robust Playback Handshake (v1.46.031 Restore)
                     if (typeof playMediaObject === 'function') {
                         playMediaObject(item, index);
                     } else if (typeof playAudio === 'function') {
                         console.warn("[PLAY-PULSE] playMediaObject missing, falling back to playAudio.");
                         playAudio(item, index);
+                    } else if (typeof window.playAudio === 'function') {
+                        window.playAudio(item, index);
                     } else {
                         console.error("[PLAY-PULSE] CRITICAL: No playback engine found (playMediaObject/playAudio missing).");
+                        // Absolute last resort: try to find the player and force it
+                        if (window.audioPlayer && typeof window.audioPlayer.play === 'function') {
+                            window.audioPlayer.play();
+                        }
                     }
                 };
 

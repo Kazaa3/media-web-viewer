@@ -4023,7 +4023,6 @@ def delete_media(name):
 
 
 @eel.expose
-@eel.expose
 def get_db_stats():
     return api_reporting.get_db_stats()
 
@@ -8687,7 +8686,6 @@ def get_model_analysis():
 
 
 @eel.expose
-@eel.expose
 def get_cover_extraction_report():
     return api_reporting.get_cover_extraction_report()
 
@@ -8973,7 +8971,6 @@ def update_parser_setting(parser_id, key, value):
     return True
 
 
-@eel.expose
 @eel.expose
 def audit_specific_item(query: str) -> Dict[str, Any]:
     return api_reporting.audit_specific_item(query)
