@@ -771,13 +771,14 @@ window.updateForensicHUD = function() {
     if (hudFe) {
         const isFeHealthy = (finalGui > 0);
         const trace = getModuleTrace('FE');
-        const pid = window.__mwv_last_pid || '--';
+        const pid = window.__mwv_last_fe_pid || '--';
         const upTime = window.__mwv_last_uptime || '--';
         
         hudFe.className = `hud-group ${isFeHealthy ? 'active' : 'error'}`;
         hudFe.setAttribute('data-hud-metrics', 
             `[FRONTEND FORENSICS]\n` +
-            `PID: ${pid} | UP: ${upTime}\n` +
+            `PID: ${pid} (Browser)\n` +
+            `UPTIME: ${upTime}\n` +
             `STATUS: ${isFeHealthy ? 'Synchronized' : 'Empty'}\n` +
             `ITEMS: ${finalGui} (GUI)\n` +
             `------------------------\n` +
@@ -790,13 +791,17 @@ window.updateForensicHUD = function() {
         const trace = getModuleTrace('BE');
         const pid = window.__mwv_last_pid || '--';
         const upTime = window.__mwv_last_uptime || '--';
+        const processes = window.__mwv_active_processes || {};
+        const procList = Object.entries(processes).map(([p, name]) => ` > ${name} [PID: ${p}]`).join('\n') || " > Stable (No active tasks)";
 
         hudBe.className = `hud-group ${isBeHealthy ? 'active' : 'error'}`;
         hudBe.setAttribute('data-hud-metrics', 
             `[BACKEND FORENSICS]\n` +
-            `PID: ${pid} | UP: ${upTime}\n` +
+            `PID: ${pid} (Python)\n` +
+            `UPTIME: ${upTime}\n` +
             `STATUS: ${isBeHealthy ? 'Socket Alive' : 'Disconnected'}\n` +
-            `SOCKET: Established (Eel)\n` +
+            `------------------------\n` +
+            `ACTIVE PROCESSES:\n${procList}\n` +
             `------------------------\n` +
             `LAST TRACE EVENTS:\n${trace}`
         );
@@ -835,12 +840,17 @@ window.refreshStartupInfo = function() {
     eel.get_startup_info()((data) => {
         if (!data) return;
         const pidEl = document.getElementById('diag-pid');
+        const pidFeEl = document.getElementById('diag-pid-fe');
         const bootEl = document.getElementById('diag-boot');
         const upEl = document.getElementById('diag-up');
 
         window.__mwv_last_pid = data.pid;
+        window.__mwv_last_fe_pid = data.fe_pid;
+        window.__mwv_active_processes = data.active_processes;
+
         if (pidEl) pidEl.innerText = data.pid || '--';
-        if (bootEl) bootEl.innerText = `${data.boot_duration_sec}s` || '--s';
+        if (pidFeEl) pidFeEl.innerText = data.fe_pid || '--';
+        if (bootEl) bootEl.innerText = `${data.boot_duration_sec.toFixed(1)}s` || '--s';
         
         // Calculate uptime string
         if (upEl) {
