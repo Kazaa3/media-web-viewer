@@ -42,7 +42,7 @@ function startBootWatchdog() {
         } catch (e) {
             console.error("[Watchdog] Diagnostic Crash:", e);
         }
-    }, tickInterval);
+    }, tickMs);
 }
 // --- Heartbeat & Health Monitoring (v1.41.00) ---
 let __mwv_heartbeat_timer = null;
@@ -306,6 +306,8 @@ function playMediaObject(item) {
     if (!item) return;
 
     const activeTab = document.body.getAttribute('data-mwv-tab') || 'player';
+
+    const isVideo = ['video', 'film', 'serie', 'series', 'multimedia', 'dokumentation'].includes((item.category || '').toLowerCase());
 
     if (isVideo) {
         console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);

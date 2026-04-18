@@ -259,7 +259,7 @@ async function renderLibrary() {
     }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.46.012
-    const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+    hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
     
     projectedItems = projectedItems.filter(item => {
         // [v1.46.012] Recovery Exemption: Safety items must always show
@@ -336,11 +336,10 @@ async function renderLibrary() {
         let noMediaHtml = "";
         
         // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
-            if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', isRealEmpty ? 'Real set is empty.' : 'Total Black Hole Detected.');
-        } else {
-            // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
-            const dbCount = allLibraryItems.filter(i => !i.is_mock).length;
-            noMediaHtml = `
+        const dbCount = (window.__mwv_all_library_items || []).filter(i => !i.is_mock).length;
+        if (typeof sentinelPulse === 'function') sentinelPulse('WARNING', `Filtered Black Hole: ${dbCount} hidden items.`);
+
+        noMediaHtml = `
                 <div style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 800px; margin: 40px auto; background: rgba(52, 152, 219, 0.05); border: 1px solid rgba(52, 152, 219, 0.2); border-radius: 16px;">
                     <div style="font-size: 28px; margin-bottom: 20px;">🔍 Filter-Blockade erkannt</div>
                     <div style="font-weight: 800; color: #3498db; font-size: 18px; margin-bottom: 10px;">${dbCount} Medien in der DB, aber 0 in der Anzeige!</div>
@@ -360,7 +359,6 @@ async function renderLibrary() {
                 </div>
             `;
             if (typeof sentinelPulse === 'function') sentinelPulse('WARNING', `Filtered Black Hole: ${dbCount} hidden items.`);
-        }
         
         if (typeof safeHtml === 'function') {
             safeHtml('coverflow-track', noMediaHtml);

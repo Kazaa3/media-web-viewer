@@ -23,6 +23,9 @@ const ForensicFlagCenter = {
         // Close on ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.visible) this.toggle();
+        });
+    },
+
     toggle() {
         if (this.visible) this.hide();
         else this.show();
