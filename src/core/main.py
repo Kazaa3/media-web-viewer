@@ -139,6 +139,7 @@ try:
     from src.core.transcoder import TranscoderManager
     from src.core import handbrake_wrapper as handbrake
     from src.core import api_library
+    from src.core import api_reporting
     from src.core import mkv_tool_wrapper as mkv_tool
     from src.core.subtitle_processor import SubtitleProcessor
     import requests
@@ -241,10 +242,7 @@ def get_startup_info():
 
 @eel.expose
 def get_startup_report():
-    """Returns the high-resolution StartupProfiler report (v1.41.00)."""
-    if profiler:
-        return profiler.get_report()
-    return {"status": "error", "message": "Profiler not initialized"}
+    return api_reporting.get_startup_report()
 
 
 @eel.expose
@@ -4357,32 +4355,7 @@ from src.core import api_library
 
 @eel.expose
 def get_library_forensics():
-    @brief Unified Forensic Bridge (v1.41.00).
-    @details Fixes 'Audit Bridge Fault' by ensuring full object integrity.
-    """
-    from src.core import db
-    db_items = db.get_library() or []
-    db_path = str(Path(db.DB_FILENAME).resolve())
-
-    cat_stats = {}
-    ext_stats = {}
-    for item in db_items:
-        cat = item.get('category', 'unknown').lower()
-        path = str(item.get('path', ''))
-        ext = os.path.splitext(path)[1].lower() or '.dat'
-
-        cat_stats[cat] = cat_stats.get(cat, 0) + 1
-        ext_stats[ext] = ext_stats.get(ext, 0) + 1
-
-    return {
-        "status": "success",
-        "total": len(db_items),
-        "db_path": db_path,
-        "categories": cat_stats,
-        "formats": ext_stats,  # Added for Extension Audit
-        "duplicates": 0,      # TODO: Implement duplicate detection
-        "pid": os.getpid()
-    }
+    return api_reporting.get_library_forensics()
 
 
 @eel.expose
@@ -4566,18 +4539,9 @@ def delete_media(name):
 
 
 @eel.expose
+@eel.expose
 def get_db_stats():
-    """
-    @brief Returns statistical information about the database content.
-    @details Gibt Statistiken ber den Inhalt der Datenbank zurck.
-    @return Stats dictionary / Statistik-Dictionary.
-    """
-    stats = db.get_db_stats()
-    # Deep Path Diagnostics (v1.35.96 Recovery)
-    stats["active_db"] = str(db.get_active_db_path())
-    stats["db_exists"] = os.path.exists(db.DB_FILENAME)
-    stats["project_root"] = str(PROJECT_ROOT)
-    return stats
+    return api_reporting.get_db_stats()
 
 
 @eel.expose
@@ -9239,188 +9203,21 @@ def get_model_analysis():
 
 
 @eel.expose
+@eel.expose
 def get_cover_extraction_report():
-    """Analyzes artwork efficiency and sources."""
-    try:
-        items = db.get_all_media()
-        report: dict[str, Any] = {
-            'total': len(items),
-            'has_artwork': 0,
-            'missing_artwork': 0,
-            'sources': {
-                'embedded_or_cache': 0,
-                'local_folder': 0
-            },
-            'formats': {}
-        }
-
-        for item in items:
-            art = item.get('art_path') or item.get('artwork')
-            if art:
-                report['has_artwork'] = report.get('has_artwork', 0) + 1
-                art_path = Path(art)
-                # Check if it is in cache
-                if '.cache' in str(art_path):
-                    report['sources']['embedded_or_cache'] = report['sources'].get('embedded_or_cache', 0) + 1
-                else:
-                    report['sources']['local_folder'] = report['sources'].get('local_folder', 0) + 1
-                # Format stats
-                p = Path(art_path)
-                ext = p.suffix.lower().lstrip('.')
-                if ext:
-                    report['formats'][ext] = report['formats'].get(ext, 0) + 1
-            else:
-                report['missing_artwork'] += 1
-
-        return report
-    except Exception as e:
-        log.error(f"Failed to get cover extraction report: {e}")
-        return {'error': str(e)}
-
+    return api_reporting.get_cover_extraction_report()
 
 @eel.expose
 def get_routing_suite_report():
-    """
-    @brief Aggregates routing statistics and quality scores for the entire library.
-    """
-    try:
-        from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
-        items = db.get_all_media()
-
-        # Local distribution counters to satisfy static analysis
-        dist = {'0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0}
-        modes = {'direct': 0, 'vlc': 0, 'hls': 0, 'transcode': 0, 'error': 0}
-
-        total_score = 0
-        video_count = 0
-        top_quality_items = []
-        complex_items = []
-        incompatible_count: int = 0
-        codec_dist = {}
-
-        for item in items:
-            if item.get('type') != 'video':
-                continue
-
-            video_count += 1
-            path = item.get('path', '')
-            tags = item.get('tags', {})
-
-            score = ffprobe_quality_score(tags)
-            total_score += score
-
-            # Update distribution
-            if score <= 20:
-                dist['0-20'] += 1
-            elif score <= 40:
-                dist['21-40'] += 1
-            elif score <= 60:
-                dist['41-60'] += 1
-            elif score <= 80:
-                dist['61-80'] += 1
-            else:
-                dist['81-100'] += 1
-
-            # Determine Recommended Mode
-            from src.core.config_master import DISK_IMAGE_EXTENSIONS
-            is_direct = is_direct_play_capable(path, 'browser')
-
-            import os as python_os
-            ext = python_os.path.splitext(path)[1].lower()
-            if is_direct:
-                mode = 'direct'
-            elif ext in DISK_IMAGE_EXTENSIONS or item.get('is_disc'):
-                mode = 'transcode'
-            elif 'mpeg' in str(tags.get('codec', '')).lower() or 'vc1' in str(tags.get('codec', '')).lower():
-                mode = 'transcode'
-            elif tags.get('hdr'):
-                mode = 'vlc'
-            else:
-                mode = 'hls'
-
-            modes[mode] = modes.get(mode, 0) + 1
-
-            codec = str(tags.get('codec', 'unknown')).lower()
-            codec_dist[codec] = codec_dist.get(codec, 0) + 1
-
-            if not is_direct:
-                incompatible_count = int(incompatible_count) + 1
-            list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
-            if score >= 80:
-                top_quality_items.append(list_item)
-            elif score < 40 or mode in ['vlc', 'transcode']:
-                complex_items.append(list_item)
-
-        avg_score = total_score / video_count if video_count > 0 else 0
-
-        report = {
-            'total_items': len(items),
-            'video_items': video_count,
-            'avg_quality_score': float(f"{avg_score:.1f}"),
-            'modes': modes,
-            'score_distribution': dist,
-            'top_quality_items': sorted(top_quality_items, key=lambda x: x['score'], reverse=True)[:10],
-            'complex_items': sorted(complex_items, key=lambda x: x['score'])[:10],
-            'incompatible_count': incompatible_count,
-            'codec_distribution': codec_dist
-        }
-
-        return report
-    except Exception as e:
-        log.error(f"Failed to get routing suite report: {e}")
-        return {'error': str(e)}
-
+    return api_reporting.get_routing_suite_report()
 
 @eel.expose
 def get_streaming_capability_matrix():
-    """Returns the centralized streaming capability matrix (v1.41.00)."""
-    return GLOBAL_CONFIG.get("streaming_capabilities", {})
-
+    return api_reporting.get_streaming_capability_matrix()
 
 @eel.expose
 def get_media_compatibility_report():
-    """Generates a detailed compatibility matrix for all media items in the library."""
-    from src.core import db
-    from src.parsers.format_utils import is_chrome_native
-
-    try:
-        items = db.get_all_media()
-        report = []
-
-        for item in items:
-            tags = item.get('tags', {})
-            codec = tags.get('video_codec', tags.get('codec', ''))
-            ext = item.get('extension', '').lower()
-
-            is_chrome = is_chrome_native(ext, codec)
-
-            player_cfg = GLOBAL_CONFIG.get("player_settings", {})
-            v_exts = player_cfg.get("video_extensions", [".mp4", ".mkv", ".avi", ".mov", ".ts"])
-            is_mtx = ext in v_exts  # FFmpeg can remux these
-            is_vlc = True  # VLC plays everything
-            is_ffplay = True  # FFmpeg plays everything
-
-            # Specialized check for disc images
-            from src.core.config_master import DISK_IMAGE_EXTENSIONS
-            is_disc = ext in DISK_IMAGE_EXTENSIONS or item.get('category') == 'disk_images'
-            if is_disc:
-                is_chrome = False
-                is_mtx = False  # MTX doesn't native stream ISOs usually without complex piping
-
-            report.append({
-                'name': item.get('name'),
-                'type': item.get('type'),
-                'category': item.get('category'),
-                'chrome_native': is_chrome,
-                'mediamtx': is_mtx,
-                'vlc': is_vlc,
-                'ffplay': is_ffplay,
-                'notes': "ISO/Image requiring VLC" if is_disc else ""
-            })
-        return report
-    except Exception as e:
-        log.error(f"Failed to generate compatibility report: {e}")
-        return []
+    return api_reporting.get_media_compatibility_report()
 
 
 # --- Media Routing Test Suite & Cache Logic ---
@@ -9693,55 +9490,9 @@ def update_parser_setting(parser_id, key, value):
 
 
 @eel.expose
+@eel.expose
 def audit_specific_item(query: str) -> Dict[str, Any]:
-    """
-    @brief Deep audit of a specific item's journey from DB to GUI (v1.37.08).
-    @param query Name or Part of Path to search for.
-    """
-    from src.core import db
-    from src.core.models import audit_category_chain
-
-    all_media = db.get_all_media()
-    match = None
-
-    # 1. DB Stage: Finding the item
-    for item in all_media:
-        if query.lower() in item.get('name', '').lower() or query.lower() in item.get('path', '').lower():
-            match = item
-            break
-
-    if not match:
-        return {"status": "not_found", "query": query}
-
-    # 2. Models Stage: Category Detection
-    category_audit = audit_category_chain(match)
-
-    # 3. Backend Filter Stage:
-    # We run a mock filter pass just for this one item
-    filtered, logic_audit = _apply_library_filters([match], force_raw=False)
-    passed_backend = len(filtered) > 0
-    rejection_reason = "passed" if passed_backend else "dropped"
-    if not passed_backend:
-        # Find why it dropped
-        reasons = logic_audit.get("dropped_reasons", {} or {})
-        for r, count in reasons.items():
-            if count > 0:
-                rejection_reason = r
-                break
-
-    return {
-        "status": "found",
-        "item": match,
-        "stages": {
-            "db": {"status": "ok", "count": 1},
-            "models": {"status": "ok" if "OK" in category_audit else "error", "log": category_audit},
-            "backend_filter": {
-                "status": "ok" if passed_backend else "dropped",
-                "reason": rejection_reason,
-                "allowed_cats": logic_audit.get("allowed_cats", [])
-            }
-        }
-    }
+    return api_reporting.audit_specific_item(query)
 
 
 if __name__ == "__main__":
