@@ -771,6 +771,9 @@ window.updateForensicHUD = function() {
     if (hudFe) {
         const isFeHealthy = (finalGui > 0);
         const trace = getModuleTrace('FE');
+        const pid = window.__mwv_last_pid || '--';
+        const upTime = window.__mwv_last_uptime || '--';
+        
         hudFe.className = `hud-group ${isFeHealthy ? 'active' : 'error'}`;
         hudFe.setAttribute('data-hud-metrics', 
             `[FRONTEND FORENSICS]\n` +
@@ -785,6 +788,9 @@ window.updateForensicHUD = function() {
     if (hudBe) {
         const isBeHealthy = (typeof eel !== 'undefined');
         const trace = getModuleTrace('BE');
+        const pid = window.__mwv_last_pid || '--';
+        const upTime = window.__mwv_last_uptime || '--';
+
         hudBe.className = `hud-group ${isBeHealthy ? 'active' : 'error'}`;
         hudBe.setAttribute('data-hud-metrics', 
             `[BACKEND FORENSICS]\n` +
@@ -800,6 +806,8 @@ window.updateForensicHUD = function() {
         const isDbHealthy = (finalDb > 0);
         const dbCache = (window.__sentinel_module_cache && window.__sentinel_module_cache.DB) || [];
         const isScanning = dbCache.some(l => l.includes('SCAN') || l.includes('SYNC') || l.includes('RECOVER'));
+        const pid = window.__mwv_last_pid || '--';
+        const upTime = window.__mwv_last_uptime || '--';
         
         const trace = getModuleTrace('DB');
         let stateClass = isDbHealthy ? 'active' : 'warning';
@@ -849,6 +857,8 @@ window.refreshStartupInfo = function() {
 // Auto-start polling
 setInterval(window.refreshStartupInfo, 10000);
 setTimeout(window.refreshStartupInfo, 1000);
+setInterval(window.updateForensicHUD, 5000);
+setTimeout(window.updateForensicHUD, 2000);
 
 // Expose to window
 window.updateSyncAnchor = updateSyncAnchor;
