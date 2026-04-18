@@ -379,8 +379,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     "2160p": "auto"       # Ultra HD / 4K
                 },
 
-                # Legacy/Transition Flags (Internal Mapping)
-                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] 
+                # --- [v1.46.047] Forensic Media Granularity (RE-INTEGRATED) ---
+                "dvd_ntsc_routing": "menu",      # OPTIONS: "menu", "transcode"
+                "dvd_pal_routing": "menu",       # OPTIONS: "menu", "transcode"
+                "bd_standard_routing": "menu",   # OPTIONS: "menu", "transcode"
+                "bd_3d_routing": "menu",         # OPTIONS: "menu", "transcode"
+                "bd_4k_routing": "menu",         # OPTIONS: "menu", "transcode"
+                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] Resolution-aware steering
                 
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
