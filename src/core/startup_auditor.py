@@ -105,6 +105,12 @@ def audit_database() -> Tuple[bool, List[str]]:
 
 if __name__ == "__main__":
     # Internal CLI test
+    import os
+    _current = os.path.dirname(os.path.abspath(__file__))
+    _proot = os.path.dirname(os.path.dirname(_current))
+    if _proot not in sys.path:
+        sys.path.insert(0, _proot)
+
     logging.basicConfig(level=logging.INFO)
     if run_preflight_audit():
         print("Pre-flight SUCCESS")
