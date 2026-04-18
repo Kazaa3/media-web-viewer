@@ -579,7 +579,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             },
             "hydration": {
                 "mock_count": 12,
-                "auto_hydrate_enabled": True
+                "auto_hydrate_enabled": True,
+                "emergency_mock_template": {
+                    "prefix": "EX-PULSE-",
+                    "suffix": "_DATA_STREAM.wav",
+                    "path_root": "media/test_files/",
+                    "artist": "System Sentinel",
+                    "album": "Hydration Guard v1.46.094",
+                    "category": "audio"
+                }
             },
             "watchdog": {
                 "tick_ms": 500,

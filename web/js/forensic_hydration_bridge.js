@@ -62,32 +62,47 @@ const ForensicHydrationBridge = {
         }
 
         this.stage = 1;
-        const mockCount = window.CONFIG?.technical_orchestrator?.hydration?.mock_count || 12;
-        console.warn(`[HYDRATION-BRIDGE] STAGE 1: Injecting ${mockCount} Emergency Mocks...`);
+
+        // [v1.46.094] Centralized Template Engine
+        const config = window.CONFIG?.technical_orchestrator?.hydration || {};
+        const mockCount = config.mock_count || 12;
+        const template = config.emergency_mock_template || {
+            prefix: "EX-PULSE-",
+            suffix: "_DATA_STREAM.wav",
+            path_root: "media/test_files/",
+            artist: "System Sentinel",
+            album: "Hydration Guard (Legacy Fallback)",
+            category: "audio"
+        };
+
+        console.warn(`[HYDRATION-BRIDGE] STAGE 1: Injecting ${mockCount} Mocks using Centralized Template...`);
 
         const emergencyMocks = [];
         for (let i = 1; i <= mockCount; i++) {
-            const forensicID = `EX-PULSE-${i.toString().padStart(3, '0')}`;
+            const idxStr = i.toString().padStart(3, '0');
+            const forensicID = `${template.prefix}${idxStr}`;
+            const fileName = `${forensicID}${template.suffix}`;
+            
             emergencyMocks.push({
                 id: `emergency-${i}`,
-                name: `${forensicID}_DATA_STREAM.wav`,
-                filename: `${forensicID}_DATA_STREAM.wav`,
-                path: `media/test_files/${forensicID}_DATA_STREAM.wav`,
+                name: fileName,
+                filename: fileName,
+                path: `${template.path_root}${fileName}`,
                 title: `${forensicID} [Proof-of-Life]`,
-                artist: "System Sentinel",
-                album: "Hydration Guard v1.46.003",
-                category: "audio",
+                artist: template.artist,
+                album: template.album,
+                category: template.category,
                 is_mock: true,
                 available: true,
                 tags: {
                     title: `${forensicID} [Proof-of-Life]`,
-                    artist: "System Sentinel",
-                    album: "Hydration Guard v1.46.003"
+                    artist: template.artist,
+                    album: template.album
                 }
             });
         }
 
-        // Hydrate both states to prove rendering path (v1.46.017 Fix: Dual-Variable Sync)
+        // Hydrate both states to prove rendering path
         window.allLibraryItems = emergencyMocks;
         window.__mwv_all_library_items = emergencyMocks; 
         window.currentPlaylist = [...emergencyMocks];
@@ -96,9 +111,9 @@ const ForensicHydrationBridge = {
         if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
 
-        // Sync Footer (v1.46.014/015: Handshake with real DB count)
+        // Sync Footer
         if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(realDbCount, this.mockCount);
+            updateSyncAnchor(realDbCount, emergencyMocks.length);
         }
     },
 
