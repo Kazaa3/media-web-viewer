@@ -35,16 +35,13 @@ def apply_library_filters(all_media: List[Dict],
     @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
     @return Tuple of (filtered_list, audit_metadata)
     """
-    PARSER_CONFIG = get_parser_config()
-
+    # Avoid circular import from main.py which causes threading deadlocks in Eel (v1.46.038)
     if force_raw and not search and genre == "all" and year == "all":
         log.info("[BD-AUDIT] STAGE 0 (RAW): Bypassing all filters.")
         return all_media, {"status": "raw_bypass", "dropped_total": 0, "stage": 0}
 
-    displayed_cats = PARSER_CONFIG.get("displayed_categories")
-    if not displayed_cats:
-        displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
-
+    # Internal fallback to avoid circular lock during concurrent requests
+    displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
     branch_registry = GLOBAL_CONFIG.get("branch_architecture_registry", {})
