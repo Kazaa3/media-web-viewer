@@ -1124,7 +1124,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "scan_settings": {
         "max_depth": 12,
         "max_files": 50000,
-        "exclude_patterns": ["node_modules", ".git", "__pycache__", ".venv"]
+        "exclude_patterns": ["node_modules", ".git", "__pycache__", ".venv"],
+        "rescan_on_boot": get_env_bool("MWV_RESCAN_ON_BOOT", False)
     },
     
     # Diagnostic Toggles (v1.41.00 Centered)

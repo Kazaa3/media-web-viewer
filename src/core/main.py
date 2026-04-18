@@ -746,6 +746,17 @@ def start_app():
                 eel.run_frontend_probe()()
             threading.Thread(target=probe_trigger, daemon=True).start()
 
+        # --- [v1.46.053] Automated Boot Scan ---
+        if GLOBAL_CONFIG.get("scan_settings", {}).get("rescan_on_boot"):
+            def boot_scan_trigger():
+                log.info("[Boot-Scan] Waiting for UI synchronization...")
+                spawn_event.wait()
+                # Wait a bit more to ensure the UI is actually rendering
+                time.sleep(2) 
+                log.info("[Boot-Scan] Initiating automated library rescan...")
+                scan_media()
+            threading.Thread(target=boot_scan_trigger, daemon=True).start()
+
         # --- Debug Audit Trigger (v1.34) ---
         if "--debug" in sys.argv:
             run_app_audit_detached(port)
