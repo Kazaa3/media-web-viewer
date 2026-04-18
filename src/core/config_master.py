@@ -23,6 +23,7 @@ BACKEND_VERSION = APP_VERSION_BACKEND
 FRONTEND_VERSION = APP_VERSION_FRONTEND
 
 import os
+import random
 import sys
 import shutil
 import re
@@ -598,6 +599,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                             "album": f"Hydration Guard {APP_VERSION}"
                         }
                     } for i in range(1, 13)
+                ],
+                "stress_mocks": [
+                    {
+                        "id": f"stress-{i}",
+                        "name": f"[STRESS] forensic_media_file_{i}_hd.mp4",
+                        "path": f"/stress/test/forensic_media_file_{i}_hd.mp4",
+                        "title": f"Stress Probe #{i}",
+                        "artist": "Chaos Monkey Engine",
+                        "album": "Hydration Stress v1.46.019",
+                        "category": ["audio", "video", "album", "podcast", "series", "bilder"][i % 6],
+                        "is_mock": True,
+                        "available": random.random() > 0.1
+                    } for i in range(1, 101)
                 ]
             },
             "watchdog": {
