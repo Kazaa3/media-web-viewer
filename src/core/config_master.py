@@ -1715,9 +1715,9 @@ def get_config_summary():
 # --- AUTO-TRIGGER BACKGROUND DISCOVERY ---
 background_version_discovery(GLOBAL_CONFIG)
 
-def log_dropped_reasons(reasons: dict, stage_name: str = "Library Sync"):
+def log_dropped_reasons(reasons: dict, stage_name: str = "Library Sync", sample_paths: list = None):
     """
-    @brief Centralized logging for forensic filtration audits.
+    @brief Centralized logging for forensic filtration audits with path-level tracing.
     """
     from src.core.logger import get_logger
     audit_log = get_logger("audit")
@@ -1728,5 +1728,10 @@ def log_dropped_reasons(reasons: dict, stage_name: str = "Library Sync"):
         for reason, count in reasons.items():
             if count > 0:
                 audit_log.debug(f"  └─ {reason.replace('_', ' ').title()}: {count}")
+        
+        if sample_paths:
+            audit_log.warning(f"[FORENSIC-AUDIT] {stage_name} Sample Dropped Paths (First 5):")
+            for p in sample_paths[:5]:
+                audit_log.warning(f"  [GHOST-TRACE] -> {p}")
     else:
         audit_log.debug(f"[FORENSIC-AUDIT] {stage_name} Summary: 0 items dropped.")
