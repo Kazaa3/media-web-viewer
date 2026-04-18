@@ -693,7 +693,12 @@ function refreshForensicLeds() {
 
                 if (health === 'ok') {
                     healthColor = '#2ecc71'; // Green
-                    healthShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
+                    if ((window.__mwv_last_db_count || 0) === 0) {
+                        healthColor = '#e74c3c'; // Red Alert: DB is OK but empty!
+                        healthShadow = '0 0 15px rgba(231, 76, 60, 0.4)';
+                    } else {
+                        healthShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
+                    }
                 } else if (health.includes('error') || health.includes('corrupt') || health === 'red') {
                     healthColor = '#e74c3c'; // Red
                     healthShadow = '0 0 15px rgba(231, 76, 60, 0.6)';
@@ -702,7 +707,7 @@ function refreshForensicLeds() {
                 btn.style.color = healthColor;
                 btn.style.boxShadow = healthShadow;
                 btn.style.opacity = '1';
-                btn.title = `Database Status: ${health.toUpperCase()} | Size: ${window.__mwv_last_db_size || 0} bytes`;
+                btn.title = `Database Status: ${health.toUpperCase()} | Size: ${window.__mwv_last_db_size || 0} bytes | Items: ${window.__mwv_last_db_count || 0}`;
             } else {
                 btn.style.opacity = isActive ? '1' : '0.3';
                 btn.style.color = isActive ? 'var(--accent-color)' : 'var(--text-dim)';
