@@ -38,9 +38,9 @@ function syncQueueWithLibrary() {
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
         console.warn("[Sync] Library empty. Initiating Forensic Auto-Rescan...");
         
-        // [v1.46.07] FORCE FRESH SCAN if 0 items detected
+        // [v1.46.056] Non-destructive Auto-Sync
         if (typeof eel !== 'undefined' && typeof eel.scan_media === 'function') {
-            eel.scan_media(null, true)();
+            eel.scan_media(null, false)();
         }
         
         return;
