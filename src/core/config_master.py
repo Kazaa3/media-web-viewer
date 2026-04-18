@@ -318,6 +318,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "deduplicate": True             # Prevent dual entries
     },
 
+    # --- [v1.46.041] FORENSIC FEATURE REGISTRY (Script Steering) ---
+    "forensic_feature_registry": {
+        "enable_hydration_bridge": True,
+        "enable_recovery_engine": True,
+        "enable_nuclear_pulse": True,
+        "enable_diagnostics_helpers": True
+    },
+
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
     "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
