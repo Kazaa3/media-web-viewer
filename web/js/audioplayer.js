@@ -427,6 +427,12 @@ function changeQueueFilter(filter) {
  * Renders the audio-only portion of the unified global queue.
  */
 function renderAudioQueue() {
+    // [v1.46.022] Technical Pulse Governance
+    if (window.CONFIG && window.CONFIG.render_audio_queue_enabled === false) {
+        console.warn("[Pulse] renderAudioQueue blocked by GLOBAL_CONFIG.");
+        return;
+    }
+
     if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'RENDER-START', { count: window.currentPlaylist.length });
     
     const containers = [
@@ -481,7 +487,7 @@ function renderAudioQueue() {
 
     // 5. Build Item DOM
     containers.forEach(list => {
-        list.innerHTML = '';
+        // [v1.46.024] Atomic Clear is centrally managed by syncQueueWithLibrary().
         list.ondragover = (e) => e.preventDefault();
         list.ondrop = (e) => {
             e.preventDefault();
@@ -491,11 +497,14 @@ function renderAudioQueue() {
                     const item = JSON.parse(data);
                     window.currentPlaylist.push(item);
                     renderAudioQueue();
-            } catch (err) { console.error("[Playlist] Drop error", err); }
-        }
-    };
+                } catch (err) { console.error("[Playlist] Drop error", err); }
+            }
+        };
 
         const activeList = filteredItems;
+        // [v1.46.024] Audit Trace: Initializing forensic item loop
+        console.debug(`[Queue-UI] Rendering ${activeList.length} items to ${list.id}. Source: SSOT`);
+
         if (activeList.length === 0) {
             let noMediaHtml = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
@@ -542,6 +551,10 @@ function renderAudioQueue() {
 
                 const isAvailable = item.available !== false;
                 if (!isAvailable) div.classList.add('offline');
+
+                // [v1.46.021] Forensic Hydration Detectors
+                const nameMock = item.name && item.name.startsWith('[MOCK]');
+                const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
 
                 const tags = item.tags || {};
                 const stagePrefix = item.stage ? `[${item.stage}] ` : '';
@@ -610,15 +623,115 @@ function renderAudioQueue() {
                     } catch(err) {}
                 };
                 
+                // [v1.46.024] Forensic Categorization Log
+                if (index < 5 || index % 50 === 0) {
+                    console.debug(`[Queue-UI] Item ${index}: ${item.name} | Cat: ${item.category || 'unknown'}`);
+                }
+                
+                // [v1.46.026] Type Mismatch Guard
+                if (isVideoItem(item)) {
+                    console.warn(`[Queue-UI] Mismatch Skip: Item '${item.name}' is VIDEO but in AUDIO renderer.`);
+                    return;
+                }
+                
                 fragment.appendChild(div);
             });
             
             // Atomic Injection
-            list.innerHTML = ''; // Final clear just before append
+            // [v1.46.024] Atomic Clear is now centrally managed by syncQueueWithLibrary().
+            const beforeCount = list.childElementCount;
             list.appendChild(fragment);
+            const afterCount = list.childElementCount;
+            
+            console.info(`[Audit-Pulse] Audio Renderer: ${beforeCount} -> ${afterCount} items (Target: ${list.id})`);
             console.debug(`[Queue-UI] Successfully injected ${activeList.length} items to ${list.id}`);
         }
-    }); // v1.41.00 Final closing block
+    });
+
+    const renderTime = performance.now() - renderStart;
+    console.log(`[Queue-UI] renderAudioQueue completed in ${renderTime.toFixed(2)}ms`); // v1.41.00 Final closing block
+}
+
+/**
+ * [v1.46.023] Technical Pulse: Photo Queue Rendering
+ * Handles the display of images in the multi-module Mediengalerie.
+ */
+function renderPhotoQueue() {
+    // [v1.46.023] Technical Pulse Governance
+    if (window.CONFIG && window.CONFIG.render_photo_queue_enabled === false) {
+        console.warn("[Pulse] renderPhotoQueue blocked by GLOBAL_CONFIG.");
+        return;
+    }
+
+    const containers = [
+        document.getElementById('active-queue-list-render-target-warteschlange'),
+        document.getElementById('player-active-queue-list')
+    ].filter(el => el !== null);
+
+    if (containers.length === 0) return;
+
+    // 1. Unified State Access (v1.45.110 SSOT)
+    const baseItems = window.currentPlaylist || [];
+    
+    // 2. Filter for Photos (v1.46.023)
+    const filteredItems = baseItems.filter(item => isPhotoItem(item));
+
+    // 3. Early Exit if not current filter
+    if (window.activeQueueFilter !== 'all' && window.activeQueueFilter !== 'pictures' && window.activeQueueFilter !== 'images') {
+        return; 
+    }
+
+    console.debug(`[Photo-Queue] Rendering ${filteredItems.length} items.`);
+
+    // 4. Update UI Counts (if photos are active)
+    if (window.activeQueueFilter === 'pictures' || window.activeQueueFilter === 'images') {
+        const countEls = document.querySelectorAll('.synced-count');
+        countEls.forEach(el => {
+            el.innerText = `${filteredItems.length} Bilder`;
+        });
+    }
+
+    // 5. Build Item DOM
+    containers.forEach(list => {
+        // If we have photos and the filter matches, we override the list
+        if (filteredItems.length > 0 && (window.activeQueueFilter === 'pictures' || window.activeQueueFilter === 'all')) {
+            const fragment = document.createDocumentFragment();
+
+            filteredItems.forEach((item, index) => {
+                // [v1.46.024] Audit Trace
+                console.debug(`[Photo-Queue] Item ${index}: ${item.name} | Cat: ${item.category || 'pictures'}`);
+                
+                const div = document.createElement('div');
+                div.className = 'legacy-track-item photo-item';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.padding = '10px';
+                
+                const artwork = `/cover/${encodeURIComponent(item.name)}`;
+                
+                div.innerHTML = `
+                    <div style="width: 45px; height: 45px; border-radius: 6px; background-size: cover; background-position: center; background-image: url('${artwork}'), url('data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');"></div>
+                    <div style="flex: 1; margin-left:15px; overflow: hidden;">
+                        <div style="font-weight: 700; font-size: 13px; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7;">Bilddatei • ${item.category || 'Forensik'}</div>
+                    </div>
+                `;
+                
+                div.onclick = () => {
+                    if (typeof showPhotoOverlay === 'function') showPhotoOverlay(item);
+                    else if (typeof openInParser === 'function') openInParser(item);
+                };
+
+                fragment.appendChild(div);
+            });
+
+            const beforeCount = list.childElementCount;
+            list.appendChild(fragment);
+            const afterCount = list.childElementCount;
+            
+            console.info(`[Audit-Pulse] Photo Renderer: ${beforeCount} -> ${afterCount} items (Target: ${list.id})`);
+        }
+    });
 }
 
 // [v1.45.120] resetAllFilters relocated to playlists.js

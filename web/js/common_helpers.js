@@ -408,7 +408,7 @@ function showToast(message, duration = 3000) {
 function isVideoItem(item) {
     if (!item) return false;
     // 1. Check Category (v1.41.00 Standardized)
-    const videoCategories = ['video', 'disk_images']; 
+    const videoCategories = ['video', 'multimedia', 'film', 'movie', 'serie', 'series', 'documentation', 'doku', 'spiel', 'beigabe', 'supplements', 'disk_images']; 
     const internalCat = (item.category || '').toLowerCase();
     if (videoCategories.includes(internalCat)) return true;
 
@@ -428,9 +428,67 @@ function isVideoItem(item) {
         return false; 
     }
     
-    if (ext && videoExtensions.includes(ext)) return true;
+    // 3. Technical Signature Detection (v1.46.025)
+    // For Real items without explicit category metadata
+    // [v1.46.026] Added extension guard to prevent false positives on unknown files
+    if (ext && videoExtensions.includes(ext)) {
+        if (item.bitrate > 5000 || item.resolution || item.fps) return true;
+        return true; 
+    }
 
     return false;
+}
+
+/**
+ * [v1.46.025] Forensic Media Detector: Audio
+ */
+function isAudioItem(item) {
+    if (!item) return false;
+    const cat = (item.category || '').toLowerCase();
+    const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
+    if (audioCategories.includes(cat)) return true;
+    
+    const path = item.path || item.relpath || "";
+    const audioExtensions = ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
+    const extMatch = path.match(/\.([a-z0-9_]+)$/);
+    const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+    
+    // [v1.46.026] Extension-First Priority for Real media
+    if (ext && audioExtensions.includes(ext)) return true;
+    
+    // Forensic signature fallbacks
+    if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
+    if (item.duration && !item.fps && !isPhotoItem(item) && !isVideoItem(item)) return true;
+    
+    // [v1.46.026] Unknown items defaulting to Audio for visibility
+    const isVid = isVideoItem(item);
+    const isPic = isPhotoItem(item);
+    if (!isVid && !isPic && path) return true; 
+
+    return false;
+}
+
+/**
+ * [v1.46.023] Forensic Photo Detection
+ */
+function isPhotoItem(item) {
+    if (!item) return false;
+    const photoCategories = ['bilder', 'images', 'pictures', 'multimedia'];
+    const internalCat = (item.category || '').toLowerCase();
+    
+    // [v1.46.023] Branch-Aware multimedia check (only if non-audio/video)
+    if (photoCategories.includes(internalCat)) {
+        if (!isVideoItem(item) && !(item.path || "").match(/\.(mp3|wav|flac|m4a|ogg|mp4|mkv|avi|mov)$/i)) {
+            return true;
+        }
+    }
+
+    const path = item.path || item.relpath || item.name || "";
+    const photoExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.svg'];
+    const extMatch = path.match(/\.([a-z0-9_]+)$/);
+    const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+    
+    return ext && photoExtensions.includes(ext);
 }
 
 /**
@@ -591,43 +649,69 @@ function setAppModeUI(mode) {
  * Centralized in common_helpers.js as the SSOT for hydration state.
  */
 function setHydrationMode(mode) {
-    console.info(`>>> [Hydration] Switching to mode: ${mode.toUpperCase()}`);
+    if (!mode) return;
+    console.info(`>>> [Forensic-Hydration] Pulse Change: ${mode.toUpperCase()}`);
+    console.debug(`[Forensic-Hydration] Origin Trace:`, new Error().stack.split('\n')[2].trim());
+    
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
     
-    // 1. Sync Backend if available
+    // 1. Sync Backend
     if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
+        console.debug(`[Hydration] Syncing backend...`);
         eel.set_hydration_mode(mode)();
     }
     
-    // 2. UI Feedback: Update LED indicators in both HUD and Footer
-    ['M', 'R', 'B'].forEach(id => {
+    // 2. UI Feedback: Multi-LED Synchronization (v1.46.026)
+    // We check for both footer (hydr-btn) and HUD (hud-btn) identifiers.
+    ['M', 'R', 'B', 'DB'].forEach(id => {
         const btnId = `hydr-btn-${id}`;
         const hudId = `hud-btn-${id}`;
-        [btnId, hudId].forEach(elId => {
+        const targetIds = [btnId, hudId];
+        
+        targetIds.forEach(elId => {
             const btn = document.getElementById(elId);
             if (btn) {
-                const isActive = (mode === 'mock' && id === 'M') || (mode === 'real' && id === 'R') || (mode === 'both' && id === 'B');
-                btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
-                btn.style.background = isActive ? 'rgba(46, 204, 113, 0.1)' : 'transparent';
+                const isActive = (mode === 'mock' && id === 'M') || 
+                                 (mode === 'real' && id === 'R') || 
+                                 (mode === 'both' && id === 'B') ||
+                                 (id === 'DB'); // DB led always shows status
+                                 
+                if (id === 'DB') {
+                    btn.style.color = '#f1c40f'; // Yellow for DB
+                    btn.style.opacity = '1';
+                } else {
+                    btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
+                    btn.style.background = isActive ? 'rgba(46, 204, 113, 0.15)' : 'transparent';
+                    btn.style.boxShadow = isActive ? '0 0 10px rgba(46, 204, 113, 0.2)' : 'none';
+                }
+                
                 if (isActive) btn.classList.add('active'); else btn.classList.remove('active');
             }
         });
     });
 
-    if (typeof showToast === 'function') showToast(`Hydration: ${mode.toUpperCase()}`, 1000);
+    if (typeof showToast === 'function') showToast(`HYDRATION: ${mode.toUpperCase()}`, 1000);
     
     // 3. TRIGGER ATOMIC RE-HYDRATION PULSE (v1.45.105)
-    // We use the bridge to ensure both Player and Library are updated.
-    if (typeof triggerModuleHydration === 'function') {
-        const activeWin = (window.WindowManager && window.WindowManager.activeWindow) || 'media';
-        triggerModuleHydration(activeWin);
-        // Force secondary update for library if we aren't there
-        if (activeWin !== 'library') triggerModuleHydration('library');
-    } else {
-        // Fallback for standalone modules
-        if (typeof loadLibrary === 'function') loadLibrary();
+    // [v1.46.025] Refactored to eliminate hydration race condition.
+    const runPulse = () => {
+        console.info(`>>> [Forensic-Hydration] Pulse Complete. Triggering UI Sync...`);
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof renderLibrary === 'function') renderLibrary();
+    };
+
+    if (typeof loadLibrary === 'function') {
+        console.debug(`[Hydration] Loading Library (M/R/B Sync)...`);
+        const result = loadLibrary();
+        if (result instanceof Promise) {
+            result.then(runPulse);
+        } else {
+            // Fallback for non-async implementation
+            setTimeout(runPulse, 300); 
+        }
+    } else {
+        runPulse();
     }
 }
 

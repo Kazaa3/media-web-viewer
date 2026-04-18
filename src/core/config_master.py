@@ -789,6 +789,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- FUNKTIONALE MODULE (Engine Toggles) ---
         "audio_engine_enabled": True,       # GLOBAL: Audio-Wiedergabe & Player-Engine.
         "video_engine_enabled": True,       # GLOBAL: Video-Wiedergabe & Cinema-Engine.
+        "render_audio_queue_enabled": True, # [v1.46.022] Technical Pulse Governance
+        "render_video_queue_enabled": True, # [v1.46.022] Technical Pulse Governance
+        "render_library_enabled": True,     # [v1.46.023] Technical Pulse Governance
+        "render_photo_queue_enabled": True, # [v1.46.023] Technical Pulse Governance
+        "render_file_browser_enabled": True,# [v1.46.023] Technical Pulse Governance
+        "force_queue_audio_branch": False,  # [v1.46.024] Branch Governance
+        "force_queue_multimedia_branch": False,# [v1.46.024] Branch Governance
+        "force_queue_extended_branch": False, # [v1.46.024] Branch Governance
         "queue_panel_enabled": True,        # GLOBAL: Media-Queue (Abspielliste).
         "lyrics_panel_enabled": True,       # GLOBAL: Metadaten/Lyrics-Panel.
         "mini_player_allowed": True, 
@@ -826,6 +834,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "engines": {
                 "audio_engine_enabled": "Audio Engine (Core)",
                 "video_engine_enabled": "Video Engine (Core)",
+                "render_audio_queue_enabled": "Render Pulse: Audio Queue",
+                "render_video_queue_enabled": "Render Pulse: Video Queue",
+                "render_photo_queue_enabled": "Render Pulse: Photo Queue",
+                "render_library_enabled": "Render Pulse: Media Library",
+                "render_file_browser_enabled": "Render Pulse: File Browser",
+                "force_queue_audio_branch": "Branch Lock: Audio Only",
+                "force_queue_multimedia_branch": "Branch Lock: Multimedia",
+                "force_queue_extended_branch": "Branch Lock: Extended",
                 "queue_panel_enabled": "Media Queue Panel",
                 "lyrics_panel_enabled": "Lyrics/Metadata Panel"
             }
@@ -859,7 +875,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
         "sub_nav_persistence": True,
         "force_sub_nav_visible": True,
-        "hydration_mode": "B",
+        "hydration_mode": "both",
         "professional_layout_lock": True,
         "kill_on_startup": False,
         "pip_installer_timeout": 300,
@@ -1176,6 +1192,23 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "mock_dvd": str(PROJECT_ROOT / "scripts" / "create_mock_dvd.py")
         }
     },
+    
+    # --- AUDIT & FORENSIC REGISTRY (v1.46.026 Centralized) ---
+    "audit_registry": {
+        "dropped_reasons_template": {
+            "category_mismatch": 0,
+            "search_mismatch": 0,
+            "genre_mismatch": 0,
+            "year_mismatch": 0,
+            "extension_unknown": 0,
+            "branch_lock": 0,
+            "mock_filtered": 0,
+            "real_filtered": 0
+        },
+        "log_level_branch": "INFO",
+        "log_level_security": "WARNING"
+    },
+    
     "legacy_db_candidates": [
         "~/media_library.db",
         "./media_library.db",
@@ -1681,3 +1714,19 @@ def get_config_summary():
     return GLOBAL_CONFIG
 # --- AUTO-TRIGGER BACKGROUND DISCOVERY ---
 background_version_discovery(GLOBAL_CONFIG)
+
+def log_dropped_reasons(reasons: dict, stage_name: str = "Library Sync"):
+    """
+    @brief Centralized logging for forensic filtration audits.
+    """
+    from src.core.logger import get_logger
+    audit_log = get_logger("audit")
+    
+    total_dropped = sum(reasons.values())
+    if total_dropped > 0:
+        audit_log.info(f"[FORENSIC-AUDIT] {stage_name} Summary: Dropped {total_dropped} items.")
+        for reason, count in reasons.items():
+            if count > 0:
+                audit_log.debug(f"  └─ {reason.replace('_', ' ').title()}: {count}")
+    else:
+        audit_log.debug(f"[FORENSIC-AUDIT] {stage_name} Summary: 0 items dropped.")

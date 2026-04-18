@@ -267,12 +267,18 @@ function showPlaybackError(title, message, technicalInfo = {}) {
  * Renders the video queue in the Video player tab.
  */
 function renderVideoQueue() {
+    // [v1.46.022] Technical Pulse Governance
+    if (window.CONFIG && window.CONFIG.render_video_queue_enabled === false) {
+        console.warn("[Pulse] renderVideoQueue blocked by GLOBAL_CONFIG.");
+        return;
+    }
+
     const list = document.getElementById('player-playlist-container');
     const emptyDiv = document.getElementById('player-playlist-empty');
     if (!list) return;
 
     console.log("[Video] Rendering video queue...");
-    list.innerHTML = '';
+    // [v1.46.024] Atomic Clear is centrally managed by syncQueueWithLibrary().
 
     // 1. Target Global SSOT (v1.45.110)
     const playlist = window.currentPlaylist || [];
@@ -291,6 +297,11 @@ function renderVideoQueue() {
 
     // 3. Build UI
     videoItems.forEach((item, index) => {
+        // [v1.46.024] Audit Trace
+        if (index < 5 || index % 10 === 0) {
+            console.debug(`[Video-Queue] Item ${index}: ${item.name} | Cat: ${item.category || 'video'}`);
+        }
+        
         let div = document.createElement('div');
         div.className = 'implementation-encapsulated-state-buffer-node';
         

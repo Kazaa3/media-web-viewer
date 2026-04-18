@@ -57,7 +57,14 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         const audit = library.audit || {};
         const fsSize = (audit.fs || {}).size || 0;
         
-        console.warn(`[BD-AUDIT] Handshake Received. Stage: ${audit.stage || 'N/A'}. Count: ${incomingCount}/${totalDbCount}. PID: ${audit.pid || '?'}`);
+        // [v1.46.026] Forensic Handshake Audit (JS)
+        const incomingStats = (library.media || []).reduce((acc, item) => {
+            const cat = (item.category || item.type || 'unknown').toLowerCase();
+            acc[cat] = (acc[cat] || 0) + 1;
+            return acc;
+        }, {});
+        console.warn(`>>> [FE-AUDIT] Handshake Received. Stage: ${audit.stage || 'N/A'}. Stats:`, incomingStats);
+        console.info(`[BD-AUDIT] Raw Payload: ${incomingCount} items (DB: ${totalDbCount}). PID: ${audit.pid || '?'}`);
         if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path} | FS Size: ${fsSize}`);
         
         window.__mwv_last_db_count = totalDbCount;
@@ -124,10 +131,17 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
 }
 
 /**
- * Triggers a full library refresh.
+ * Triggers a full library refresh (v1.46.020 Aggressive Recovery).
+ * Forces a "Nuclear Reset" of filters and hydration mode to fix visibility black holes.
  */
 async function refreshLibrary() {
     if (typeof showToast === 'function') showToast("Bibliothek wird aktualisiert...", "info");
+    
+    // Recovery Pulse (v1.46.020)
+    console.warn(">>> [Recovery] refreshLibrary: Forcing Filter & Hydration Reset...");
+    if (typeof setHydrationMode === 'function') setHydrationMode('both');
+    if (typeof resetAllFilters === 'function') resetAllFilters();
+    
     await loadLibrary();
 }
 
@@ -135,6 +149,12 @@ async function refreshLibrary() {
  * The main UI update entry point for the Library tab.
  */
 async function renderLibrary() {
+    // [v1.46.023] Technical Pulse Governance
+    if (window.CONFIG && window.CONFIG.render_library_enabled === false) {
+        console.warn("[Pulse] renderLibrary blocked by GLOBAL_CONFIG.");
+        return;
+    }
+
     const renderStart = performance.now();
 
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });

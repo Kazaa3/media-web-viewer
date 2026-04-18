@@ -446,11 +446,11 @@ def insert_media(item_dict):
         conn.close()
         return last_id
     except sqlite3.IntegrityError as e:
-        log.warning(f"[DB] [INSERT-SKIP] IntegrityError: {item_dict['name']} might already exist. ({e})")
+        log.warning(f"[DB-VERIFY] [INSERT-SKIP] IntegrityError: '{item_dict['name']}' might already exist. ({e})")
         conn.close()
         return None
     except Exception as e:
-        log.error(f"[DB] [INSERT-ERROR] {item_dict['name']}: {e}")
+        log.error(f"[DB-VERIFY] [INSERT-CRITICAL] Failed to index '{item_dict['name']}': {e}")
         conn.close()
         raise
 

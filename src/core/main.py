@@ -4369,15 +4369,9 @@ def _apply_library_filters(all_media: List[Dict],
 
     filtered = []
 
-    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.99)
-    # Track why items are dropped specifically
-    dropped_reasons = {
-        "category_mismatch": 0,
-        "search_mismatch": 0,
-        "genre_mismatch": 0,
-        "year_mismatch": 0,
-        "extension_unknown": 0
-    }
+    # [v1.46.026] Centralized Audit Template
+    from src.core.config_master import log_dropped_reasons
+    dropped_reasons = GLOBAL_CONFIG["audit_registry"]["dropped_reasons_template"].copy()
 
     for item in all_media:
         # [MOCK-FILTER] v1.41.00 Unified Hydration Logic
@@ -4396,8 +4390,15 @@ def _apply_library_filters(all_media: List[Dict],
             filtered.append(item)
             continue
 
-        # 1. Category check (Bypass logic v1.37.07)
+        # 1.0 Branch / Category check (Bypass logic v1.37.07)
         if not force_raw:
+            item_cat = str(item.get('category', 'unknown')).lower()
+            
+            # [Branch Integrity Audit]
+            if supported_by_branch and item_cat not in supported_by_branch:
+                if item_cat != 'all': # All is a meta-cat
+                    dropped_reasons["branch_lock"] += 1
+                    continue
             cat = str(item.get('category', 'Unbekannt')).lower()
 
             # [v1.46.004] LEGACY CATEGORY RECOVERY
@@ -4477,14 +4478,8 @@ def _apply_library_filters(all_media: List[Dict],
         "allowed_cats": allowed_internal_cats
     }
 
-    log.info(f"[BD-AUDIT] Filter Pass complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
-
-    # [FORENSIC-ID] Sample Trace (v1.41.00)
-    if len(filtered) > 0:
-        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')} | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
-
-    if audit_meta['dropped_total'] > 0:
-        log.debug(f"[BD-AUDIT] Drop Reasons: {dropped_reasons}")
+    # [v1.46.026] Centralized Forensic Logging
+    log_dropped_reasons(dropped_reasons, f"Library Filter ({active_branch or 'ALL'})")
 
     if not filtered and all_media:
         log.critical(
@@ -4620,14 +4615,20 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
 
-    # [v1.46.012/014] Forensic Category Alignment
-    # The database items use legacy types - we must map them to technical shells.
+    # [v1.46.026] Expanded Forensic Category Alignment
+    # Mapping legacy database categories to modern technical shells.
     for item in all_media:
         cat = str(item.get('category', '')).lower()
-        if cat in ['klassik', 'audiobook', 'hörbuch', 'musik']:
+        if cat in ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik']:
             item['category'] = 'audio'
-        elif cat in ['documentation', 'doku', 'film', 'serie', 'movie', 'spiel', 'beigabe', 'supplements']:
+        elif cat in ['video', 'multimedia', 'film', 'movie', 'serie', 'series', 'documentation', 'doku', 'spiel', 'beigabe', 'supplements']:
             item['category'] = 'video'
+        elif cat in ['bilder', 'images', 'pictures', 'photos']:
+            item['category'] = 'pictures'
+        elif cat in ['docs', 'nfo', 'documents', 'text', 'pdf']:
+            item['category'] = 'documents'
+        elif cat in ['archives', 'zip', 'rar']:
+            item['category'] = 'archives'
 
     # --- FILTERING & BYPASS (The Motor) ---
     # Apply production filters unless force_raw is requested
@@ -4687,8 +4688,17 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         # Only add the hardcoded mocks if they aren't already in final_media
         final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
 
+    # [v1.46.026] Category Distribution Audit (Backend)
+    cat_distribution = {}
+    for item in final_media:
+        cat = item.get('category', 'unknown') or 'unknown'
+        cat_distribution[cat] = cat_distribution.get(cat, 0) + 1
+    
+    log.info(f"[BD-AUDIT] STAGE 4: Handshake payload prepared. Count: {len(final_media)} | Stats: {cat_distribution}")
+    log.info(f"[BD-AUDIT] Active Flags: Branch={active_branch}, Mode={h_mode}, Raw={force_raw}")
+
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.41.00)
-    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
+    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Stats: {cat_distribution})", flush=True)
     if len(final_media) > 0:
         print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')} (ID: {final_media[0].get('id')})", flush=True)
 

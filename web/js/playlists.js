@@ -9,6 +9,26 @@ window.playlistIndex = -1;
 window.activeQueueFilter = 'all'; // [v1.46.019] Initialized for Forensic Workstation Parity
 
 /**
+ * [v1.46.024] Atomic Clear Strategy
+ * Centrally clears all shared queue list containers to prevent multi-pulse overwriting.
+ */
+function clearQueueContainers() {
+    const targets = [
+        'playlist-content-render-target',
+        'active-queue-list-render-target',
+        'active-queue-list-render-target-legacy',
+        'active-queue-list-render-target-warteschlange',
+        'player-active-queue-list',
+        'player-playlist-container'
+    ];
+    targets.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
+    console.debug("[Pulse] Shared queue containers cleared for sync pulse.");
+}
+
+/**
  * syncQueueWithLibrary (v1.45.120 Centralized)
  * Hydrates the global currentPlaylist from the localized library cache.
  * Branch-aware filtering is primarily handled by the backend, this stage
@@ -34,10 +54,21 @@ function syncQueueWithLibrary() {
         return;
     }
 
-    // Stage 1: Local Filter Pulse (Mock/Real/Both + Category)
-    // Branch-level filtering happened in the backend library fetch.
+    // --- Stage 0: Atomic Pulse Initialization (v1.46.024) ---
+    // Clear containers once at the start of the pulse to prevent overwriting bugs.
+    clearQueueContainers();
+
+    // Stage 1: Local Filter Pulse (Mock/Real/Both + Category + Branch)
     const activeFilter = window.activeQueueFilter || 'all';
     
+    // [v1.46.024] Branch Governance
+    const config = window.CONFIG || {};
+    const lockAudio = config.force_queue_audio_branch === true;
+    const lockMulti = config.force_queue_multimedia_branch === true;
+    const lockExt   = config.force_queue_extended_branch === true;
+
+    console.info(`[Sync-Pulse] Starting sync for ${allLibraryItems.length} raw library items. Filter: ${activeFilter} | Mode: ${hmode}`);
+
     let filtered = allLibraryItems.filter(item => {
         // 1.1 Hydration Mode Filter
         const nameMock = item.name && item.name.startsWith('[MOCK]');
@@ -49,24 +80,48 @@ function syncQueueWithLibrary() {
 
         if (!passMode) return false;
 
-        // 1.2 Category/Type Filter (v1.46.019)
-        if (activeFilter === 'all') return true;
-        
-        const itemCat = (item.category || item.type || 'unknown').toLowerCase();
-        
-        // Exact match or contains (e.g., 'audio' matches 'audio_native')
-        return itemCat === activeFilter.toLowerCase() || itemCat.startsWith(activeFilter.toLowerCase());
+        // 1.2 Category/Type Filter (v1.46.025 Inclusive)
+        let passFilter = true;
+        if (activeFilter !== 'all') {
+            const itemCat = (item.category || item.type || 'unknown').toLowerCase();
+            const isAudio = isAudioItem(item);
+            const isVideo = isVideoItem(item);
+            const isPhoto = isPhotoItem(item);
+            
+            if (activeFilter === 'audio') passFilter = isAudio;
+            else if (activeFilter === 'video') passFilter = isVideo;
+            else if (activeFilter === 'pictures' || activeFilter === 'images') passFilter = isPhoto;
+            else {
+                passFilter = (itemCat === activeFilter.toLowerCase() || itemCat.startsWith(activeFilter.toLowerCase()));
+            }
+        }
+        if (!passFilter) return false;
+
+        // 1.3 Branch Governance (v1.46.024)
+        if (lockAudio && !isAudioItem(item)) return false;
+        if (lockMulti && (!isAudioItem(item) && !isVideoItem(item) && !isPhotoItem(item))) return false;
+
+        return true;
     });
+
+    console.debug(`[Sync-Pulse] Filtration Complete: ${filtered.length} items remain. (Syncing SSOT)`);
 
     // Stage 2: Shared State Injection
     window.currentPlaylist = filtered;
     
-    console.info(`[Sync] Global Queue ready: ${window.currentPlaylist.length} items.`);
+    // [v1.46.024] Category Audit Trace
+    const catStats = filtered.reduce((acc, item) => {
+        const cat = item.category || 'unknown';
+        acc[cat] = (acc[cat] || 0) + 1;
+        return acc;
+    }, {});
+    console.info(`[Sync] Global Queue ready: ${filtered.length} items. Distribution:`, catStats);
 
     // Stage 3: Multi-Module UI Refresh Pulse
     try {
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof renderVideoQueue === 'function') renderVideoQueue();
+        if (typeof renderPhotoQueue === 'function') renderPhotoQueue();
     } catch (err) {
         console.error("[Sync] UI Refresh Pulse failed:", err);
     }

@@ -50,6 +50,12 @@ async function fbNavigate(dirPath, retryCount = 0) {
  * Renders the file list inside the file browser.
  */
 function renderFileList(items) {
+    // [v1.46.023] Technical Pulse Governance
+    if (window.CONFIG && window.CONFIG.render_file_browser_enabled === false) {
+        console.warn("[Pulse] renderFileList blocked by GLOBAL_CONFIG.");
+        return;
+    }
+
     const list = document.getElementById('fb-list');
     if (!list) return;
 
