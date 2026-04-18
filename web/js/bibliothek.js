@@ -79,6 +79,9 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount, fsSize);
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Stage ${audit.stage || 0} complete. Received ${incomingCount} items.`, "SUCCESS");
         
+        // [v1.46.026] Forensic HUD Pulse
+        if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
+        
         window.__mwv_all_library_items = library.media || [];
         console.warn(`[FE-AUDIT] STAGE 4 (HYDRATION): Memory filled with ${window.__mwv_all_library_items.length} items.`);
         if (window.__mwv_all_library_items.length > 0) {

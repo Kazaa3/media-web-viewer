@@ -662,42 +662,58 @@ function setHydrationMode(mode) {
         eel.set_hydration_mode(mode)(() => {
             console.info(`[Hydration] Backend ACK received. Triggering UI refresh...`);
             if (typeof loadLibrary === 'function') loadLibrary();
+            if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
         });
     }
     
-    // 2. UI Feedback: Multi-LED Synchronization (v1.46.026)
-    // We check for both footer (hydr-btn) and HUD (hud-btn) identifiers.
+    const mode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+    
     ['M', 'R', 'B', 'DB'].forEach(id => {
-        const btnId = `hydr-btn-${id}`;
-        const hudId = `hud-btn-${id}`;
-        const targetIds = [btnId, hudId];
+        const targetIds = [`hydr-btn-${id}`, `hud-btn-${id}`];
         
         targetIds.forEach(elId => {
             const btn = document.getElementById(elId);
-            if (btn) {
-                const isActive = (mode === 'mock' && id === 'M') || 
-                                 (mode === 'real' && id === 'R') || 
-                                 (mode === 'both' && id === 'B') ||
-                                 (id === 'DB'); // DB led always shows status
+            if (!btn) return;
+
+            // Health/Mode Determination
+            const isActive = (mode === 'mock' && id === 'M') || 
+                             (mode === 'real' && id === 'R') || 
+                             (mode === 'both' && id === 'B') ||
+                             (id === 'DB');
                                  
-                if (id === 'DB') {
-                    const health = window.__mwv_last_db_health || 'unknown';
-                    let healthColor = '#f1c40f'; // Yellow (Checking/Unknown)
-                    let healthShadow = 'none';
+            if (id === 'DB') {
+                const health = window.__mwv_last_db_health || 'unknown';
+                let healthColor = '#f1c40f'; // Default: Yellow
+                let healthShadow = 'none';
 
-                    if (health === 'ok') {
-                        healthColor = '#2ecc71'; // Green (Healthy)
-                        healthShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
-                    } else if (health.includes('error') || health.includes('corrupt')) {
-                        healthColor = '#e74c3c'; // Red (Critical)
-                        healthShadow = '0 0 15px rgba(231, 76, 60, 0.6)';
-                    }
+                if (health === 'ok') {
+                    healthColor = '#2ecc71'; // Green
+                    healthShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
+                } else if (health.includes('error') || health.includes('corrupt') || health === 'red') {
+                    healthColor = '#e74c3c'; // Red
+                    healthShadow = '0 0 15px rgba(231, 76, 60, 0.6)';
+                }
 
-                    btn.style.color = healthColor;
-                    btn.style.boxShadow = healthShadow;
-                    btn.style.opacity = '1';
-                    
-                    // Forensic Title expansion (v1.46.026)
+                btn.style.color = healthColor;
+                btn.style.boxShadow = healthShadow;
+                btn.style.opacity = '1';
+                btn.title = `Database Status: ${health.toUpperCase()} | Size: ${window.__mwv_last_db_size || 0} bytes`;
+            } else {
+                btn.style.opacity = isActive ? '1' : '0.3';
+                btn.style.color = isActive ? 'var(--accent-color)' : 'var(--text-dim)';
+            }
+        });
+    });
+}
+
+/**
+ * Legacy wrapper for backward compatibility.
+ */
+function setHydrationMode(mode) {
+    if (!mode) return;
+    window.__mwv_hydration_mode = mode;
+    localStorage.setItem('mwv_hydration_mode', mode);
+    refreshForensicLeds();
                     const sizeMB = ((window.__mwv_last_db_size || 0) / (1024 * 1024)).toFixed(2);
                     btn.title = `DB Forensic: ${health.toUpperCase()} | Size: ${sizeMB} MB`;
                 } else {
