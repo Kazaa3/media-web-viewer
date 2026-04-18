@@ -27,6 +27,20 @@ if (typeof window.isVideoItem !== 'function') {
     };
 }
 
+if (typeof window.isAudioItem !== 'function') {
+    window.isAudioItem = function(item) {
+        if (!item) return false;
+        const path = item.path || item.relpath || "";
+        const cat = (item.category || "").toLowerCase();
+        
+        // [v1.46.026] Extension-First Priority
+        const isAudioExt = path.match(/\.(mp3|m4a|wav|flac|ogg|aac)$/i);
+        if (isAudioExt) return true;
+        
+        return (cat === 'audio' || cat === 'music' || cat === 'podcast');
+    };
+}
+
 /**
  * Empties the current player queue (v1.41.00).
  */

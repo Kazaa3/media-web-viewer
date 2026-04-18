@@ -444,7 +444,12 @@ function isAudioItem(item) {
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
     
     if (ext && audioExtensions.includes(ext)) {
-        if (index < 5) console.debug(`[FE-AUDIT] Extension Success: ${item.name} is AUDIO`);
+        // [v1.46.026] Forensic Logging (Limited to first 5 items per session)
+        if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
+        if (window.__mwv_audio_log_count < 5) {
+            console.debug(`[FE-AUDIT] Extension Success: ${item.name} is AUDIO`);
+            window.__mwv_audio_log_count++;
+        }
         return true;
     }
     
