@@ -4763,27 +4763,6 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
 
 @eel.expose
-def sync_playback_state(payload: Dict[str, Any]) -> bool:
-    """
-    @brief Synchronizes the technical playback state from the GUI to the backend.
-    @details Forensic v1.46.026: Populates SHARED_PLAYBACK_STATE for logging and persistence.
-    """
-    from src.core import config_master
-    try:
-        config_master.SHARED_PLAYBACK_STATE.update({
-            "queue_count": payload.get("queueCount", 0),
-            "active_index": payload.get("index", -1),
-            "active_path": payload.get("path"),
-            "last_update": time.time()
-        })
-        log.info(f"[STATE-TRACE] Playback Context Updated: Items={payload.get('queueCount')} | Active={payload.get('path')}")
-        return True
-    except Exception as e:
-        log.error(f"[STATE-TRACE] Synchronization Error: {e}")
-        return False
-
-
-@eel.expose
 def get_library_audit_summary() -> Dict[str, Any]:
     """Provides a breakdown of item counts at each stage of hydration (541 -> 527 -> X)."""
     from src.core import db

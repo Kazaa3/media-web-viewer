@@ -328,6 +328,15 @@ function playMediaObject(item) {
             }, true); // v1.35.65 Force Jump
         }
     }
+
+    // [v1.46.026] Broadcast State to Backend SSOT
+    if (typeof eel !== 'undefined' && typeof eel.sync_playback_state === 'function') {
+        eel.sync_playback_state({
+            queueCount: window.currentPlaylist ? window.currentPlaylist.length : 0,
+            index: window.playlistIndex || 0,
+            path: item.path
+        })();
+    }
 }
 
 /**
@@ -347,6 +356,15 @@ function addToQueue(item) {
         currentPlaylist.push(item);
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
         if (typeof showToast === 'function') showToast(t('pl_added_to_queue') || "Added to queue");
+        
+        // [v1.46.026] Broadcast State to Backend SSOT
+        if (typeof eel !== 'undefined' && typeof eel.sync_playback_state === 'function') {
+            eel.sync_playback_state({
+                queueCount: currentPlaylist.length,
+                index: window.playlistIndex || 0,
+                path: item.path
+            })();
+        }
     } else {
         if (typeof showToast === 'function') showToast(t('pl_already_in_queue') || "Already in queue", "info");
     }
