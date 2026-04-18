@@ -678,8 +678,25 @@ function setHydrationMode(mode) {
                                  (id === 'DB'); // DB led always shows status
                                  
                 if (id === 'DB') {
-                    btn.style.color = '#f1c40f'; // Yellow for DB
+                    const health = window.__mwv_last_db_health || 'unknown';
+                    let healthColor = '#f1c40f'; // Yellow (Checking/Unknown)
+                    let healthShadow = 'none';
+
+                    if (health === 'ok') {
+                        healthColor = '#2ecc71'; // Green (Healthy)
+                        healthShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
+                    } else if (health.includes('error') || health.includes('corrupt')) {
+                        healthColor = '#e74c3c'; // Red (Critical)
+                        healthShadow = '0 0 15px rgba(231, 76, 60, 0.6)';
+                    }
+
+                    btn.style.color = healthColor;
+                    btn.style.boxShadow = healthShadow;
                     btn.style.opacity = '1';
+                    
+                    // Forensic Title expansion (v1.46.026)
+                    const sizeMB = ((window.__mwv_last_db_size || 0) / (1024 * 1024)).toFixed(2);
+                    btn.title = `DB Forensic: ${health.toUpperCase()} | Size: ${sizeMB} MB`;
                 } else {
                     btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
                     btn.style.background = isActive ? 'rgba(46, 204, 113, 0.15)' : 'transparent';
