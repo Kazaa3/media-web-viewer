@@ -1150,7 +1150,7 @@ def set_log_level(level):
         "CRITICAL": logging.CRITICAL
     }
 
-    if level in valid_levels:
+    if level in valid_levels:Y
         new_lvl = valid_levels[level]
         logging.getLogger().setLevel(new_lvl)
 

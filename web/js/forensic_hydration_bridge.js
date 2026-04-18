@@ -22,18 +22,22 @@ const ForensicHydrationBridge = {
      */
     auditLoop() {
         const auditMs = window.CONFIG?.technical_orchestrator?.intervals?.hydration_audit_ms || 2000;
-        setInterval(() => {
-            const hasLib = (typeof allLibraryItems !== 'undefined' && Array.isArray(allLibraryItems) && allLibraryItems.length > 0);
-            const queueLen = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
+        let auditTicks = 0;
 
+        setInterval(() => {
+            auditTicks++;
+            const hasLib = (typeof allLibraryItems !== 'undefined' && Array.isArray(allLibraryItems) && allLibraryItems.length > 0);
+            
             if (this.stage === 0) {
                 // Stage 0 -> 1: Immediate Proof-of-Life Injection
                 this.forceEmergencyHydration();
-            } else if (this.stage === 1 && hasLib && !this.isLocked) {
-                const firstItem = allLibraryItems[0];
-                const isReal = firstItem && !firstItem.id?.startsWith('emergency-');
-                if (isReal) {
-                    // Stage 1 -> 2: Transition to Real Data
+            } else if (this.stage === 1 && !this.isLocked) {
+                const firstItem = (window.allLibraryItems && window.allLibraryItems.length > 0) ? window.allLibraryItems[0] : null;
+                const isReal = firstItem && !firstItem.id?.toString().startsWith('emergency-');
+                
+                // [v1.46.079] Auto-Promotion: If real items detected OR if we've been in mock-state for 5+ seconds
+                if (isReal || auditTicks > 3) {
+                    console.log(`[HYDRATION-BRIDGE] Promoting to Stage 2. Reason: ${isReal ? "Real Data Detected" : "Audit Timeout (Synthetic Promotion)"}`);
                     this.transitionToRealData();
                 }
             }
