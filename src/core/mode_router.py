@@ -29,6 +29,10 @@ def smart_route(file_path):
     resolution = info.get('resolution', 'SD')
     bitrate = info.get('bitrate_kbps', 0)
     
+    # [v1.46.049] Granular Steering Matrix
+    steering_c = flags.get("codec_steering", {})
+    steering_r = flags.get("resolution_steering", {})
+    
     # Defaults
     mode = 'hls_fmp4'
     reason = "Fallback (HLS/fMP4)"
@@ -41,8 +45,20 @@ def smart_route(file_path):
     is_easy_container = container in ['mp4', 'mkv', 'webm', 'mov', 'ts']
     is_complex_media = subtype.startswith(("DVD", "BD")) or info.get('is_3d')
     
+    # 0. Priority 0: Codec/Resolution Manual Steering (v1.46.049 Override)
+    c_policy = steering_c.get(codec.replace("h265", "hevc"), "auto")
+    r_key = resolution.lower() if resolution in ["720p", "1080p", "2160p"] else "pal" if info.get('is_pal') else "ntsc" if info.get('is_ntsc') else "auto"
+    r_policy = steering_r.get(r_key, "auto")
+
+    if c_policy != "auto":
+        mode = 'direct_play' if c_policy == "direct" else 'mse' if c_policy == "mse" else 'hls_fmp4'
+        reason = f"Manual Codec Steering ({codec} -> {c_policy})"
+    elif r_policy != "auto":
+        mode = 'direct_play' if r_policy == "direct" else 'mse' if r_policy == "mse" else 'mpv_native' if r_policy == "native" else 'hls_fmp4'
+        reason = f"Manual Resolution Steering ({resolution} -> {r_policy})"
+
     # 1. 4K HEVC Mandatory Hardware Check (Forensic Policy)
-    if resolution == "4K" and info.get('is_hevc'):
+    elif resolution == "4K" and info.get('is_hevc'):
         if not hevc_hw:
             # 4K HEVC is too heavy for software transcode. Warn and steer to native if possible or error.
             log.warning(f"[PLAY-PULSE] 4K HEVC Detect: Hardware decoder missing! Forensic error triggered.")
@@ -98,7 +114,7 @@ def smart_route(file_path):
             mode = 'mpv_wasm'
             reason = "MPV WASM (Interactive/WebM)"
 
-    log.info(f"[PLAY-PULSE] smart_route decision: {mode} | Subtype: {subtype} | HW-HEVC: {hevc_hw} | Reason: {reason} (v1.46.048)")
+    log.info(f"[PLAY-PULSE] smart_route decision: {mode} | Subtype: {subtype} | HW-HEVC: {hevc_hw} | Reason: {reason} (v1.46.049)")
  
     return {
         "mode": mode,

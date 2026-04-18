@@ -364,13 +364,23 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "prefer_vlc_for_menus": True,   # [v1.46.045] ISO Hardening
                 "enable_3d_detection": True,    # [v1.46.045] 3D Routing
                 
-                # --- [v1.46.047] Forensic Media Granularity ---
-                "dvd_ntsc_routing": "menu",      # OPTIONS: "menu", "transcode"
-                "dvd_pal_routing": "menu",       # OPTIONS: "menu", "transcode"
-                "bd_standard_routing": "menu",   # OPTIONS: "menu", "transcode"
-                "bd_3d_routing": "menu",         # OPTIONS: "menu", "transcode"
-                "bd_4k_routing": "menu",         # OPTIONS: "menu", "transcode"
-                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] Resolution-aware steering
+                # --- [v1.46.049] Granular Steering Matrix ---
+                "codec_steering": {
+                    "h264": "auto",       # OPTIONS: "auto", "direct", "mse", "hls"
+                    "hevc": "auto",       # H.265 mandatory HEVC guard still applies
+                    "vp9": "auto",        # VP9 (usually WebM)
+                    "av1": "auto"         # AV1 (Modern high-comp)
+                },
+                "resolution_steering": {
+                    "pal": "auto",        # Standard PAL (50Hz)
+                    "ntsc": "auto",       # Standard NTSC (60Hz)
+                    "720p": "auto",       # HD Ready
+                    "1080p": "auto",      # Full HD
+                    "2160p": "auto"       # Ultra HD / 4K
+                },
+
+                # Legacy/Transition Flags (Internal Mapping)
+                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] 
                 
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
