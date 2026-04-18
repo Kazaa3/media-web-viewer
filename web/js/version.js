@@ -32,6 +32,20 @@ async function syncVersion(retries = 5) {
             }
 
             console.log(`[SYSTEM] Tiered Version Sync Succeeded: ${window.MWV_VERSION}`);
+
+            // [v1.46.081] FE Forensics (PID & Browser Identity)
+            if (typeof eel.get_frontend_forensics === 'function') {
+                try {
+                    const feInfo = await eel.get_frontend_forensics()();
+                    const hudFe = document.getElementById('hud-fe');
+                    if (hudFe) {
+                        const browserStr = feInfo.browser_type !== "Discovery..." ? feInfo.browser_type : "N/A";
+                        hudFe.setAttribute('data-hud-metrics', `[FRONTEND FORENSICS] PID: ${feInfo.fe_pid} | Browser: ${browserStr}`);
+                    }
+                } catch (feErr) {
+                    console.warn('[Forensics] FE Probe failed:', feErr);
+                }
+            }
         } catch (e) {
             console.warn(`[Version] Sync failed (Retries left: ${retries}):`, e);
             if (retries > 0) {

@@ -246,6 +246,41 @@ def get_startup_report():
 
 
 @eel.expose
+def get_frontend_forensics():
+    """
+    Forensic probing of the frontend process environment (v1.46.081).
+    Attempts to locate the specific browser process serving the UI.
+    """
+    import psutil
+    import os
+
+    be_pid = os.getpid()
+    browser_info = {
+        "be_pid": be_pid,
+        "fe_pid": "N/A",
+        "browser_type": "Discovery..."
+    }
+
+    try:
+        parent = psutil.Process(be_pid)
+        # Scan children recursively for browser signatures
+        for child in parent.children(recursive=True):
+            try:
+                name = child.name().lower()
+                # Common browser binary patterns
+                if any(b in name for b in ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]):
+                    browser_info["fe_pid"] = child.pid
+                    browser_info["browser_type"] = child.name()
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        log.error(f"[Forensics] Browser probe failed: {e}")
+        
+    return browser_info
+
+
+@eel.expose
 def heartbeat():
     """Explicit heartbeat for window health monitoring (v1.41.00)."""
     GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
