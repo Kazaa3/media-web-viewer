@@ -37,7 +37,7 @@ window.mwv_init_actions = {
     'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
     'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
     'tests': () => { toggleDiagnosticsSidebar(true); switchDiagnosticsSidebarTab('sentinel'); },
-    'diagnostics': () => { toggleDiagnosticsSidebar(true); }
+    'diagnostics': () => { switchTab('diagnostics', document.getElementById('nav-btn-diagnostics'), () => { if(typeof loadDiagnosticsSuite === 'function') loadDiagnosticsSuite(); }); }
 };
 
 // Global state variables
@@ -214,7 +214,7 @@ window.toggleSyncAnchor = toggleSyncAnchor;
  * Toggles the Swiss HUD Cluster (v1.41.153)
  */
 function toggleFooterHUD(forceState = null) {
-    const clusters = document.querySelectorAll('#footer-hud-cluster, .footer-hud-cluster');
+    const clusters = document.querySelectorAll('#footer-hud-cluster');
     const btn = document.getElementById('header-btn-r-footer_hud');
     if (clusters.length === 0) return;
 

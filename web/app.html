@@ -939,7 +939,7 @@
 
             <!-- SWISS HUD CLUSTERS (Restored & Integrated) -->
             <div id="footer-hud-cluster"
-                style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-right: 15px;">
+                style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-right: 15px;">
                 <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..."
                     title="Frontend layer (DOM / Library)">
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">FE</span>
@@ -955,6 +955,12 @@
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">DB</span>
                     <div class="hud-led"></div>
                 </div>
+                <!-- Action Buttons (v1.46.062) -->
+                <div style="height: 12px; width: 1px; background: rgba(255,255,255,0.05); margin: 0 5px;"></div>
+                <button id="footer-btn-logs" class="hud-btn-tiny" onclick="if(typeof showConsolePopup === 'function') showConsolePopup();" 
+                    style="background: transparent; border: none; color: #f1c40f; font-size: 9px; font-weight: 900; cursor: pointer; padding: 2px 4px;">LOGS</button>
+                <button id="footer-btn-flags" class="hud-btn-tiny" onclick="if(typeof showFlagsModal === 'function') showFlagsModal()"
+                    style="background: transparent; border: none; color: #e91e63; font-size: 9px; font-weight: 900; cursor: pointer; padding: 2px 4px;">FLAGS</button>
             </div>
 
             <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 140px;"></audio>
@@ -970,118 +976,7 @@
         </div>
     </footer>
 
-    <!-- [GUI] AUDIO PLAYER FOOTER: Real-time Diagnostics, Pipe-Stats & Tool Clusters -->
-    <footer class="layout-footer" style="padding: 0 15px; border-top: 1px solid #222;">
-        <!-- Slot 1: Far-Left Diagnostic Pill -->
-        <div class="footer-diag-pill">
-            <span>PID: <span id="diag-pid" class="footer-diag-val">--</span></span>
-            <span style="opacity: 0.2;">|</span>
-            <span>BOOT: <span id="diag-boot" class="footer-diag-val">--s</span></span>
-            <span style="opacity: 0.2;">|</span>
-            <span>UP: <span id="diag-up" class="footer-diag-val">--</span></span>
-        </div>
-
-        <!-- Slot 2: DB Status Label -->
-        <div class="footer-db-status">
-            db: <span id="footer-db-count">--</span>
-        </div>
-
-        <!-- Slot 3: Swiss HUD recovery Clusters (FE, BE, DB) -->
-        <div class="footer-hud-cluster">
-            <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
-                <span class="hud-label">FE</span>
-                <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny" title="Full GUI Refresh (F5)"
-                    onclick="if(confirm('Refresh GUI?')) { window.location.reload(); }">↻</button>
-            </div>
-            <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
-                <span class="hud-label">BE</span>
-                <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
-            </div>
-            <!-- Swiss Army Cluster (v1.45.105 Integration) -->
-            <div id="hud-fe" class="hud-group" title="Frontend: DOM-Sync & Registry">
-                <span class="hud-label">FE</span>
-                <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-            </div>
-            <div id="hud-be" class="hud-group" title="Backend: Eel & Process">
-                <span class="hud-label">BE</span>
-                <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
-            </div>
-            <div id="hud-db" class="hud-group" title="Database: SQLite & Con">
-                <span class="hud-label">DB</span>
-                <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
-            </div>
-            <div id="hud-hydr" class="hud-group" title="Hydration: M(ock) R(eal) B(oth)">
-                <span class="hud-label">HYDR</span>
-                <div class="hud-led"></div>
-                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')">M</button>
-                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')">R</button>
-                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')">B</button>
-            </div>
-            <button class="footer-classic-btn yellow"
-                onclick="if(window.MWV_Diagnostics) window.MWV_Diagnostics.toggle();"
-                title="Toggle Live Forensic Trace Log">LOGS</button>
-        </div>
-
-        <!-- Slot 4: Right Tool Cluster (Primary Navigation Restoration) -->
-        <div class="footer-icon-cluster">
-            <!-- Theme Toggle -->
-            <!-- Theme Toggle -->
-            <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use xlink:href="#icon-sun"></use>
-                </svg>
-            </button>
-
-            <!-- More Options (Vertical Dots) -->
-            <button class="footer-tool-btn" title="More Options">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use xlink:href="#icon-more"></use>
-                </svg>
-            </button>
-
-            <!-- Program Menu Burger (Circled) -->
-            <button onclick="toggleMenuBar()" class="footer-tool-btn"
-                style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;"
-                title="Program Menu">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use xlink:href="#icon-burger"></use>
-                </svg>
-            </button>
-
-            <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="toggleSidebar()">
-                <svg class="icon" style="width: 16px; height: 16px;">
-                    <use xlink:href="#icon-layout"></use>
-                </svg>
-            </button>
-            <!-- [v1.46.005] Global Flag Center Toggle -->
-            <button id="footer-btn-flags" class="footer-tool-btn"
-                onclick="if(window.ForensicFlagCenter) window.ForensicFlagCenter.toggle();"
-                title="Open Global Flag Center (Steering)" style="color: #00f2ff;">
-                <svg class="icon" style="width: 16px; height: 16px;">
-                    <use xlink:href="#icon-diagnostics"></use>
-                </svg>
-            </button>
-            <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()"
-                title="Toggle Diagnostics Overlay" style="color: #ff3366;">
-                <svg class="icon" style="width: 16px; height: 16px;">
-                    <use xlink:href="#icon-diagnostics"></use>
-                </svg>
-            </button>
-        </div>
-    </footer>
+    <!-- Redundant layout-footer removed (v1.46.062) -->
 
     <!-- Cleaned up redundant layout-footer -->
 
