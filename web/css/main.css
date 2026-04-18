@@ -1148,7 +1148,7 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     margin-bottom: 6px;
-    cursor: default;
+    cursor: pointer;
     transition: all 0.2s var(--transition-snappy);
     position: relative;
     user-select: none;
@@ -2245,7 +2245,7 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     letter-spacing: 0.3px;
     text-transform: uppercase;
     transition: all var(--transition-snappy);
-    cursor: default;
+    cursor: pointer;
     user-select: none;
     border: 1px solid var(--border-color);
 }
