@@ -186,127 +186,147 @@ def init_db(depth: int = 0):
             # Always ensure the directory exists
             DB_DIR.mkdir(parents=True, exist_ok=True)
 
-    if depth == 0:
-        log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
-    retry_count = 0
-    while retry_count < MAX_INIT_RETRIES:
-        try:
-            conn = sqlite3.connect(DB_FILENAME, timeout=5)
-            cursor = conn.cursor()
-            break
-        except Exception as e:
-            retry_count += 1
-            if retry_count >= MAX_INIT_RETRIES:
-                log.error(f"[DB-CRITICAL] Failed to connect to DB after {retry_count} attempts: {e}.")
+            if depth == 0:
+                log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
+            
+            retry_count = 0
+            conn = None
+            while retry_count < MAX_INIT_RETRIES:
+                try:
+                    conn = sqlite3.connect(DB_FILENAME, timeout=5)
+                    cursor = conn.cursor()
+                    break
+                except Exception as e:
+                    retry_count += 1
+                    if retry_count >= MAX_INIT_RETRIES:
+                        log.error(f"[DB-CRITICAL] Failed to connect to DB after {retry_count} attempts: {e}.")
+                        return False
+                    log.warning(f"[DB-RETRY] DB connect failed (attempt {retry_count}): {e}")
+                    time.sleep(0.2)
+
+            if not conn:
                 return False
-            log.warning(f"[DB-RETRY] DB connect failed (attempt {retry_count}): {e}")
-            time.sleep(0.2)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS media (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE,
-            path TEXT,
-            type TEXT,
-            duration TEXT,
-            category TEXT,
-            is_transcoded BOOLEAN,
-            transcoded_format TEXT,
-            tags TEXT,
-            extension TEXT,
-            container TEXT,
-            tag_type TEXT,
-            codec TEXT,
-            has_artwork BOOLEAN DEFAULT 0,
-            art_path TEXT,
-            full_tags TEXT,
-            media_type TEXT,
-            subtype TEXT,
-            file_type TEXT,
-            isbn TEXT,
-            imdb TEXT,
-            tmdb TEXT,
-            discogs TEXT,
-            amazon_cover TEXT,
-            parent_id INTEGER,
-            playback_position REAL DEFAULT 0,
-            last_played TEXT,
-            duration_sec REAL,
-            is_mock BOOLEAN DEFAULT 0,
-            mock_stage INTEGER DEFAULT 0,
-            available BOOLEAN DEFAULT 1,
-            FOREIGN KEY(parent_id) REFERENCES media(id)
-        )
-    """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS media (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE,
+                    path TEXT,
+                    type TEXT,
+                    duration TEXT,
+                    category TEXT,
+                    is_transcoded BOOLEAN,
+                    transcoded_format TEXT,
+                    tags TEXT,
+                    extension TEXT,
+                    container TEXT,
+                    tag_type TEXT,
+                    codec TEXT,
+                    has_artwork BOOLEAN DEFAULT 0,
+                    art_path TEXT,
+                    full_tags TEXT,
+                    media_type TEXT,
+                    subtype TEXT,
+                    file_type TEXT,
+                    isbn TEXT,
+                    imdb TEXT,
+                    tmdb TEXT,
+                    discogs TEXT,
+                    amazon_cover TEXT,
+                    parent_id INTEGER,
+                    playback_position REAL DEFAULT 0,
+                    last_played TEXT,
+                    duration_sec REAL,
+                    is_mock BOOLEAN DEFAULT 0,
+                    mock_stage INTEGER DEFAULT 0,
+                    available BOOLEAN DEFAULT 1,
+                    FOREIGN KEY(parent_id) REFERENCES media(id)
+                )
+            """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS playlists (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE
-        )
-    """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS playlists (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE
+                )
+            """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS playlist_media (
-            playlist_id INTEGER,
-            media_id INTEGER,
-            position INTEGER,
-            FOREIGN KEY(playlist_id) REFERENCES playlists(id),
-            FOREIGN KEY(media_id) REFERENCES media(id)
-        )
-    """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS playlist_media (
+                    playlist_id INTEGER,
+                    media_id INTEGER,
+                    position INTEGER,
+                    FOREIGN KEY(playlist_id) REFERENCES playlists(id),
+                    FOREIGN KEY(media_id) REFERENCES media(id)
+                )
+            """)
 
-    # Migration: Add columns if missing (for existing databases)
-    new_columns = [
-        ("category", "TEXT"),
-        ("extension", "TEXT"),
-        ("container", "TEXT"),
-        ("tag_type", "TEXT"),
-        ("codec", "TEXT"),
-        ("art_path", "TEXT"),
-        ("full_tags", "TEXT"),
-        ("media_type", "TEXT"),
-        ("subtype", "TEXT"),
-        ("file_type", "TEXT"),
-        ("isbn", "TEXT"),
-        ("imdb", "TEXT"),
-        ("tmdb", "TEXT"),
-        ("discogs", "TEXT"),
-        ("amazon_cover", "TEXT"),
-        ("parent_id", "INTEGER"),
-        ("playback_position", "REAL DEFAULT 0"),
-        ("last_played", "TEXT"),
-        ("duration_sec", "REAL DEFAULT 0"),
-        ("is_mock", "BOOLEAN DEFAULT 0"),
-        ("mock_stage", "INTEGER DEFAULT 0"),
-        ("available", "BOOLEAN DEFAULT 1")
-    ]
-    
-    # Get existing columns
-    cursor.execute("PRAGMA table_info(media)")
-    existing_cols = {row[1] for row in cursor.fetchall()}
-    
-    for col_name, col_type in new_columns:
-        if col_name not in existing_cols:
+            # Migration: Add columns if missing (for existing databases)
+            new_columns = [
+                ("category", "TEXT"),
+                ("extension", "TEXT"),
+                ("container", "TEXT"),
+                ("tag_type", "TEXT"),
+                ("codec", "TEXT"),
+                ("art_path", "TEXT"),
+                ("full_tags", "TEXT"),
+                ("media_type", "TEXT"),
+                ("subtype", "TEXT"),
+                ("file_type", "TEXT"),
+                ("isbn", "TEXT"),
+                ("imdb", "TEXT"),
+                ("tmdb", "TEXT"),
+                ("discogs", "TEXT"),
+                ("amazon_cover", "TEXT"),
+                ("parent_id", "INTEGER"),
+                ("playback_position", "REAL DEFAULT 0"),
+                ("last_played", "TEXT"),
+                ("duration_sec", "REAL DEFAULT 0"),
+                ("is_mock", "BOOLEAN DEFAULT 0"),
+                ("mock_stage", "INTEGER DEFAULT 0"),
+                ("available", "BOOLEAN DEFAULT 1")
+            ]
+            
+            # Get existing columns
+            cursor.execute("PRAGMA table_info(media)")
+            existing_cols = {row[1] for row in cursor.fetchall()}
+            
+            for col_name, col_type in new_columns:
+                if col_name not in existing_cols:
+                    try:
+                        log.warning(f"[DB-MIGRATION] Adding missing column: {col_name} ({col_type})")
+                        cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
+                        conn.commit()
+                    except Exception as e:
+                        log.error(f"Migration error for column {col_name}: {e}")
+
+            # Migration: Rename categories to new SSOT standards (v1.35.75)
             try:
-                log.warning(f"[DB-MIGRATION] Adding missing column: {col_name} ({col_type})")
-                cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
+                cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
+                cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
+                cursor.execute("UPDATE media SET category = 'video' WHERE category = 'multimedia'")
+                cursor.execute("UPDATE media SET category = 'unknown' WHERE category = 'unbekannt' OR category IS NULL OR category = ''")
+                # New v1.35.96: Lowercase all categories to ensure SSOT compatibility
+                cursor.execute("UPDATE media SET category = LOWER(category)")
                 conn.commit()
+                log.info("[DB] [MIGRATION-v1.35.96] Successfully synchronized category casing (LOWER).")
             except Exception as e:
-                log.error(f"Migration error for column {col_name}: {e}")
+                log.warning(f"[DB] [MIGRATION-v1.35.96] Renaming migration skipped or failed: {e}")
 
-    # Migration: Rename categories to new SSOT standards (v1.35.75)
-    try:
-        cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
-        cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
-        cursor.execute("UPDATE media SET category = 'video' WHERE category = 'multimedia'")
-        cursor.execute("UPDATE media SET category = 'unknown' WHERE category = 'unbekannt' OR category IS NULL OR category = ''")
-        # New v1.35.96: Lowercase all categories to ensure SSOT compatibility
-        cursor.execute("UPDATE media SET category = LOWER(category)")
-        conn.commit()
-        log.info("[DB] [MIGRATION-v1.35.96] Successfully synchronized category casing (LOWER).")
-    except Exception as e:
-        log.warning(f"[DB] [MIGRATION-v1.35.96] Renaming migration skipped or failed: {e}")
+            _DB_INITIALIZED = True
+            log.debug("Database initialization/migration complete.")
+
+            conn.commit()
+            conn.close()
+            log.info("[DB] Database initialization/migration successful.")
+            return True
+        except Exception as e:
+            log.critical(f"[DB-FATAL] Initialization failed: {e}")
+            if 'conn' in locals() and conn:
+                conn.close()
+            return False
+        finally:
+            _INIT_IN_PROGRESS = False
 
     _DB_INITIALIZED = True
     log.debug("Database initialization/migration complete.")
