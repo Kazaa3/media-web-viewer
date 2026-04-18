@@ -3,7 +3,8 @@
  * High-frequency DOM brute-force engine to eliminate black-screen failures.
  */
 
-const NuclearPulsar = {
+if (typeof window.NuclearPulsar === 'undefined') {
+    window.NuclearPulsar = {
     interval: null,
     iterations: 0,
     isActive: true,
@@ -201,11 +202,12 @@ const NuclearPulsar = {
             if (dashboard.children.length > 30) dashboard.lastElementChild.remove();
         }
     }
-};
+    };
+}
 
 // Start the Pulsar on Load
 window.addEventListener('DOMContentLoaded', () => {
-    NuclearPulsar.start();
+    if (window.NuclearPulsar && typeof window.NuclearPulsar.start === 'function') {
+        window.NuclearPulsar.start();
+    }
 });
-
-window.NuclearPulsar = NuclearPulsar;
