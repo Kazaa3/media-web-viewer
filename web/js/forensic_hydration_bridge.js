@@ -110,7 +110,17 @@ const ForensicHydrationBridge = {
         this.isLocked = true;
         this.stage = 2;
         
-        const mode = window.__mwv_hydration_mode || 'both';
+        let mode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+        
+        // [v1.46.085] Aggressive Hydration Hardening: If DB has items, force REAL mode
+        const realDbCount = window.__mwv_last_db_count || 0;
+        if (realDbCount > 0 && mode !== 'real') {
+            console.warn(`[HYDRATION-BRIDGE] Real database content detected (${realDbCount} items). Forcing REAL mode to purge mocks.`);
+            mode = 'real';
+            window.__mwv_hydration_mode = 'real';
+            localStorage.setItem('mwv_hydration_mode', 'real');
+        }
+
         console.log(`%c[HYDRATION-BRIDGE] STAGE 2: Applying ${mode.toUpperCase()} Hydration Logic...`, "color: #2ecc71; font-weight: 900;");
 
         // Split current registry

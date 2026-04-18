@@ -228,6 +228,11 @@ async function renderLibrary() {
 
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });
     
+    // [v1.46.085] Global Render Spawn Trace
+    if (typeof eel.log_spawn_event === 'function') {
+        eel.log_spawn_event('Library View', `GLOBAL_RENDER_PULSE_${allLibraryItems.length}`);
+    }
+    
     const track = document.getElementById('coverflow-track');
     if (!track) {
         if (typeof log_js_error === 'function') log_js_error(new Error("#coverflow-track missing"), 'LIBRARY-RENDER');
@@ -407,6 +412,11 @@ function renderGridView() {
             seriesInfo = `<span style="color: #e74c3c; font-weight: bold; margin-left: 5px;">S${s}E${e}</span>`;
         }
 
+        // [v1.46.085] Forensic Spawn Trace
+        if (typeof eel.log_spawn_event === 'function') {
+            eel.log_spawn_event(item.name || 'Unknown', `GRID_SPAWN_${idx}`);
+        }
+
         return `
             <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])" oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
                 <div class="grid-cover" style="background-image: url('${artwork}')">
@@ -437,6 +447,11 @@ function renderDatabaseView() {
 
     const html = coverflowItems.map((item, idx) => {
         const artist = item.tags && item.tags.artist ? item.tags.artist : '-';
+        // [v1.46.085] Forensic Spawn Trace
+        if (typeof eel.log_spawn_event === 'function') {
+            eel.log_spawn_event(item.name || 'Unknown', `DB_TABLE_SPAWN_${idx}`);
+        }
+
         return `
             <tr>
                 <td style="color: #999;">${idx + 1}</td>

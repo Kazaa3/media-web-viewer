@@ -8,7 +8,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "1.46.084"
+    VERSION = "1.46.085"
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
