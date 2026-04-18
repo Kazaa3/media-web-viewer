@@ -646,9 +646,16 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     if (footerDbDisp) footerDbDisp.innerText = finalDb;
     if (libCountLabel) libCountLabel.innerText = finalGui;
 
-    // 5. TRACE: Periodic parity audit log
+    // 5. TRACE: Periodic parity audit log (v1.46.061: Expanded DOM Auditor)
     if (window.iterations % 20 === 0) {
+        const domCount = document.querySelectorAll('.media-item').length;
+        const playerVisible = document.getElementById('audio-player-container')?.style.display !== 'none';
+        const renderStatus = `[DOM-AUDIT] Iter:${window.iterations} | GUI-Rendered: ${domCount} | Player-Active: ${playerVisible} | Parity: ${isParity}`;
+        
         console.debug(`[SYNC-AUDIT] Parity check: DB(${finalDb}) vs GUI(${finalGui})`);
+        if (typeof eel !== 'undefined' && typeof eel.ui_trace === 'function') {
+            eel.ui_trace(renderStatus)();
+        }
     }
 }
 
