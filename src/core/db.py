@@ -328,9 +328,6 @@ def init_db(depth: int = 0):
         finally:
             _INIT_IN_PROGRESS = False
 
-    _DB_INITIALIZED = True
-    log.debug("Database initialization/migration complete.")
-
     conn.commit()
     conn.close()
     log.info("[DB] Database initialization/migration successful.")
