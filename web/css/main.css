@@ -2204,6 +2204,13 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     border-color: rgba(46, 204, 113, 0.3);
 }
 
+.provenance-badge.video {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+    border-color: rgba(255, 59, 48, 0.3);
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.2);
+}
+
 /* End of Layout Rules */
 
 /* End of Multi-View Rules */
