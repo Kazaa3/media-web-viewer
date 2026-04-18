@@ -169,10 +169,6 @@ def init_db(depth: int = 0):
         if _DB_INITIALIZED:
             return True
             
-        if _INIT_IN_PROGRESS:
-            log.warning("[DB-WAIT] Database initialization already in progress. Waiting...")
-            return False
-        
         _INIT_IN_PROGRESS = True
         try:
             # 2. Path Forensic Check
