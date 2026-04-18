@@ -267,42 +267,52 @@ async function renderLibrary() {
         });
     }
 
-    if (coverflowItems.length === 0) {
+    // [v1.46.053] HIGH-VISIBILITY FORENSIC SCANNER DASHBOARD
+    const realDbCount = window.__mwv_last_db_count || 0;
+    const isMockOnly = coverflowItems.every(i => i.is_mock);
+
+    if (realDbCount === 0 || (coverflowItems.length === 0)) {
         let noMediaHtml = "";
         
-        if (allLibraryItems.length === 0 || (hmode === 'real' && projectedItems.length === 0)) {
-            // --- TIER A: TOTAL BLACK HOLE OR EMPTY REAL SET (v1.46.050 Hardened) ---
-            const isRealEmpty = (hmode === 'real' && projectedItems.length === 0 && allLibraryItems.length > 0);
-            
-            noMediaHtml = `
-                <div style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 800px; margin: 40px auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-                    <div style="font-size: 32px; margin-bottom: 20px;">${isRealEmpty ? '🔍 Keine echten Medien gefunden' : '🛡️ Hydration Guard'}</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #ff3366; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">
-                        ${isRealEmpty ? 'DB-STATUS: 0 REAL ITEMS' : 'Forensic Error: empty_index_detected'}
-                    </div>
-                    <p style="color: var(--text-secondary); opacity: 0.8; margin-bottom: 30px; line-height: 1.6;">
-                        ${isRealEmpty ? 
-                            'Deine Datenbank enthält aktuell keine echten Medien. Hast du bereits einen Scan durchgeführt?' : 
-                            'Deine Medien-Datenbank ist aktuell vollständig leer.'}
-                    </p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                        <button onclick="if(window.scan) window.scan()" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                            <span style="font-size: 18px;">📂</span>
-                            <span style="font-size: 11px;">SCAN NOW</span>
-                        </button>
-                        <button onclick="if(window.setHydrationMode) window.setHydrationMode('mock')" style="padding: 15px; background: #9b59b6; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                            <span style="font-size: 18px;">🧪</span>
-                            <span style="font-size: 11px;">SHOW MOCKUPS</span>
-                        </button>
-                    </div>
-
-                    <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: 'JetBrains Mono', monospace; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; display: flex; justify-content: space-between;">
-                        <span>MODE: ${hmode.toUpperCase()}</span>
-                        <span>DB_TOTAL: ${window.__mwv_last_db_count || 0}</span>
-                    </div>
+        // --- TIER A: TOTAL BLACK HOLE OR EMPTY REAL SET ---
+        noMediaHtml = `
+            <div class="forensic-scanner-dashboard" style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 900px; margin: 40px auto; background: rgba(0,0,0,0.6); border: 2px solid #3498db; border-radius: 20px; box-shadow: 0 0 50px rgba(52, 152, 219, 0.3); backdrop-filter: blur(20px);">
+                <div style="font-size: 48px; margin-bottom: 20px;">🕵️ Forensic Media Workstation</div>
+                <div style="font-size: 14px; font-weight: 900; color: #3498db; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 25px; background: rgba(52, 152, 219, 0.1); padding: 8px 16px; display: inline-block; border-radius: 4px;">
+                    STATUS: EMPTY_INDEX_DETECTED
                 </div>
-            `;
+                
+                <p style="color: var(--text-secondary); font-size: 16px; line-height: 1.8; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Die Medien-Datenbank enthält aktuell keine Indizierung für reale Assets. 
+                    Ein vollständiger System-Scan ist erforderlich, um die <span style="color: #3498db; font-weight: 700;">media/</span> Verzeichnisse zu erfassen.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <button onclick="if(window.scan) window.scan()" style="padding: 30px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px; box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4); transiton: transform 0.2s;">
+                        <span style="font-size: 32px;">🔍</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 20px; letter-spacing: 1px;">START SYSTEM SCAN</span>
+                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">SCANS DIRECTORY: media/</span>
+                        </div>
+                    </button>
+                    
+                    <button onclick="if(window.setHydrationMode) window.setHydrationMode('mock')" style="padding: 30px; background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 2px dashed #9b59b6; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <span style="font-size: 32px;">🧪</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 20px; letter-spacing: 1px;">VIEW MOCKUPS</span>
+                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">PROVE RENDERING CAPABILITY</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Forensic Diagnostic Footer -->
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3498db; opacity: 0.6; display: flex; justify-content: center; gap: 30px; border-top: 1px solid rgba(52, 152, 219, 0.2); padding-top: 20px;">
+                    <span>FS_NODE: ONLINE</span>
+                    <span>DB_ITEMS: 0</span>
+                    <span>ACTIVE_BRANCH: ${window.GLOBAL_CONFIG?.active_branch || 'MULTIMEDIA'}</span>
+                </div>
+            </div>
+        `;
             if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', isRealEmpty ? 'Real set is empty.' : 'Total Black Hole Detected.');
         } else {
             // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
@@ -634,8 +644,8 @@ function renderDetailedView() {
  * Initiates Library Scan.
  */
 async function scan(targetDir = null, clearDb = true) {
-    if (typeof scanMedia === 'function') {
-        const res = await scanMedia(targetDir, clearDb);
+    if (typeof eel !== 'undefined' && typeof eel.scan_media === 'function') {
+        const res = await eel.scan_media(targetDir, clearDb)();
         if (res && res.status === 'ok') {
             await refreshLibrary();
         }
