@@ -1709,9 +1709,20 @@ def set_config_value(key: str, value: Any):
         return True
     return False
 
+# --- SSOT: SHARED PLAYBACK STATE (v1.46.026) ---
+# Tracks the forensic workstation's active session state.
+SHARED_PLAYBACK_STATE = {
+    "queue_count": 0,
+    "active_index": -1,
+    "active_path": None,
+    "last_update": 0
+}
+
 def get_config_summary():
     """Returns a summary of the current configuration for display."""
-    return GLOBAL_CONFIG
+    summary = GLOBAL_CONFIG.copy()
+    summary["playback_state"] = SHARED_PLAYBACK_STATE
+    return summary
 # --- AUTO-TRIGGER BACKGROUND DISCOVERY ---
 background_version_discovery(GLOBAL_CONFIG)
 
