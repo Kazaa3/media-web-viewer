@@ -520,8 +520,11 @@ function renderAudioQueue() {
     // 1. Unified State Access (v1.45.110 SSOT)
     let baseItems = [...(isShuffle ? shuffledPlaylist : window.currentPlaylist)];
     
-    // 2. Branch-Aware Rendering Pruning (Audio Player only shows Audio)
-    let filteredItems = baseItems.filter(item => !isVideoItem(item));
+    // 2. Branch-Aware Rendering Pruning (Audio Player only shows Audio by default)
+    let filteredItems = baseItems;
+    if (window.activeQueueFilter !== 'all') {
+        filteredItems = baseItems.filter(item => !isVideoItem(item));
+    }
 
     // 3. Apply active sub-filters (v1.35.61)
     let isRaw = window.__mwv_raw_mode === true;
@@ -617,10 +620,13 @@ function renderAudioQueue() {
                     console.log(`[FILTER-AUDIT] Item ${index}: ${item.name} | isVideo: ${isVideo} | Cat: ${item.category}`);
                 }
 
-                if (isVideoItem(item)) {
-                    // Item is classified as Video, skip it for Audio renderer
+                // [v1.46.086] Forensic Hybrid Visibility: If filter is 'all', show everything.
+                if (window.activeQueueFilter !== 'all' && isVideoItem(item)) {
+                    // Item is classified as Video, skip it for Audio-specific renderer
                     return; 
                 }
+                
+                const isVideo = isVideoItem(item);
                 
                 const div = document.createElement('div');
                 div.className = 'legacy-track-item';
@@ -638,6 +644,7 @@ function renderAudioQueue() {
                         <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
                             <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center;">
                                 <span class="provenance-badge ${mockFlag ? 'mock' : 'real'}">${mockFlag ? '[M]' : '[R]'}</span>
+                                ${isVideo ? '<span class="provenance-badge real" style="background: #ff3b30; color: #fff;">[V]</span>' : ''}
                                 <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${item.name || 'Untitled'}</span>
                             </div>
                             <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary);">
