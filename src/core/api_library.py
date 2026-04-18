@@ -168,8 +168,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
             db_health = "error"
 
     fs_audit = {"exists": db_exists, "size": db_size, "health": db_health, "pid": pid, "path": db_path}
-
-    # [v1.46.057] Trap Eliminated: Real items prioritized over stage metadata.
+    all_media = []
+    count_total = 0
 
     try:
         all_media = db.get_all_media()
@@ -178,6 +178,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
         # [v1.46.058] Still try to get the count even if it fails partially
         count_total = 0
+        status = "db_busy"
 
     for item in all_media:
         path = str(item.get('path', '')).lower()
@@ -208,7 +209,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
     return {
         "media": final_media,
-        "db_count": count_total or len(all_media),
+        "db_count": count_total if count_total > 0 else len(all_media),
         "status": status,
         "audit": {
             "stage": audit_stage,
