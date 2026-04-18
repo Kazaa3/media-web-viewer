@@ -759,8 +759,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         "branch_architecture_registry": {
             "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "pictures", "ebooks", "spiel", "beigabe"],
-            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "nfo", "unknown", "pictures", "ebooks", "documents", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "archives", "supplements", "nfo", "spiel", "beigabe"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
             "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"], 

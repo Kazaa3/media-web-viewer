@@ -298,7 +298,7 @@
 </head>
 
 
-<body class="media-orchestrator-shell-environment" data-mwv-category="media" data-mwv-tab="player" data-mwv-version="1.46.064">
+<body class="media-orchestrator-shell-environment" data-mwv-category="media" data-mwv-tab="player" data-mwv-version="1.46.065">
     <!-- [v1.46.064] Master SVG Glyph Registry (Single Source) -->
     <div id="svg-icons-placeholder" style="display: none;"></div>
     data-ai-monitoring="active">
@@ -380,25 +380,25 @@
         <div class="nav-cluster secondary-cluster"
             style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
             <button id="header-btn-r-status" class="nav-item-tiny" title="Technical HUD Toggle" onclick="toggleTechnicalHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-status"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-status"></use></svg>
             </button>
             <button id="header-btn-r-auditor" class="nav-item-tiny" title="DOM Auditor Toggle" onclick="toggleDomAuditor()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-auditor"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-auditor"></use></svg>
             </button>
             <button id="header-btn-r-sync" class="nav-item-tiny" title="Sync Anchor Toggle" onclick="toggleSyncAnchor()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-sync"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-sync"></use></svg>
             </button>
             <button id="header-btn-r-footer_hud" class="nav-item-tiny" title="Footer HUD Toggle" onclick="toggleFooterHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-footer_hud"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-footer_hud"></use></svg>
             </button>
             <button id="header-btn-r-diag" class="nav-item-tiny" title="Diagnostics Overlay Toggle" onclick="toggleDiagnosticsSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-diagnostics"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-diagnostics"></use></svg>
             </button>
             <button id="header-btn-r-db_status" class="nav-item-tiny" title="DB Status Toggle" onclick="toggleFooterDBStatus()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-db_status"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-db_status"></use></svg>
             </button>
             <button id="header-btn-r-sidebar" class="nav-item-tiny" title="Global Sidebar Toggle" onclick="toggleSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use xlink:href="#icon-layout"></use></svg>
+                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-layout"></use></svg>
             </button>
         </div>
     </header>
@@ -1041,6 +1041,8 @@
     <script src="js/ui_test_suite.js?v=1.46.019"></script>
 
     <!-- [v1.45.200] Atomic Stabilization Buffers -->
+    <div id="diagnostics-overlay-container" style="display: none;"></div>
+    <div id="modals-placeholder" style="display: none;"></div>
     <div id="shadow-stage-buffer" style="display: none !important;"></div>
 </body>
 
