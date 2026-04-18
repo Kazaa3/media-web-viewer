@@ -124,18 +124,8 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             runAtomicBootstrap();
-            // 1. Initial Icon Hydration (v1.46.01)
-            fetch('icons.svg')
-                .then(r => r.text())
-                .then(data => {
-                    const div = document.createElement('div');
-                    div.style.display = 'none';
-                    div.innerHTML = data;
-                    document.body.insertBefore(div, document.body.firstChild);
-                    console.info("[SVG-SYNC] Icon Sprite Library Hydrated.");
-                })
-                .catch(err => console.error("[SVG-SYNC] Failed to load icons.svg:", err));
-
+            // 1. Initial Icon Hydration (v1.46.01) - MOVED TO ATOMIC ORCHESTRATOR
+            
             // 2. Header Orchestration Pulse
             setTimeout(() => {
                 if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
