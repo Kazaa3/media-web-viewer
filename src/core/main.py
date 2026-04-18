@@ -5632,16 +5632,36 @@ def get_best_hw_encoder():
 
 
 @eel.btl.route('/stream/via/direct/<file_path:path>')
-    mimetype = 'auto'
-    if resolved_path.lower().endswith('.mkv'):
-        mimetype = 'video/x-matroska'
-    elif resolved_path.lower().endswith('.webm'):
-        mimetype = 'video/webm'
-
+def server_file_direct(file_path):
+    """
+    @brief Serves local media files directly via the Eel/Bottle bridge.
+    @details Hardened v1.46.026: Supports absolute paths and explicit MIME overrides.
+    """
     import bottle as btl
+    log.info(f"[PLAY-TRACE] Requesting direct stream for: {file_path}")
+    
+    # 1. Path Forensic Resolution
+    if not os.path.isabs(file_path):
+        file_path = os.path.abspath(file_path)
+    
+    if not os.path.exists(file_path):
+        log.error(f"[PLAY-TRACE] CRITICAL: File not found: {file_path}")
+        return btl.HTTPResponse(status=404, body=f"File not found: {file_path}")
+
+    # 2. MIME Type Intelligence (v1.46.026)
+    mimetype = 'auto'
+    if file_path.lower().endswith('.mkv'):
+        mimetype = 'video/x-matroska'
+    elif file_path.lower().endswith('.webm'):
+        mimetype = 'video/webm'
+    elif file_path.lower().endswith('.opus'):
+        mimetype = 'audio/ogg'
+    
+    log.debug(f"[PLAY-TRACE] Serving file with MIME: {mimetype} | Path: {file_path}")
+        
     return btl.static_file(
-        os.path.basename(resolved_path),
-        root=os.path.dirname(resolved_path),
+        os.path.basename(file_path),
+        root=os.path.dirname(file_path),
         mimetype=mimetype,
         download=False
     )
