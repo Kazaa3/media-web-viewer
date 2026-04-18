@@ -70,7 +70,8 @@ body.mwv-hide-footer .master-footer {
     flex-direction: column;
     height: 100%;
     transition: width var(--transition-fluid), transform var(--transition-fluid), opacity var(--transition-snappy);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 body.mwv-sidebar-collapsed .sidebar {
@@ -486,7 +487,8 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
 
 .workstation-lane {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
