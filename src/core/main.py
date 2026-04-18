@@ -4801,8 +4801,12 @@ def server_file_direct(file_path):
     """
     import bottle as btl
     
+    # [v1.46.087] Forensic Pulse Trace
+    log.info(f"[PLAY-PULSE] Direct Stream Request Received: {file_path}")
+    
     # 1. Path Forensic Resolution (v1.46.046)
     file_path = resolve_media_path(file_path)
+    log.debug(f"[PLAY-PULSE] Resolved Path: {file_path}")
     
     if not os.path.exists(file_path):
         log.error(f"[PLAY-PULSE] CRITICAL: File not found: {file_path}")
