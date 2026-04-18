@@ -179,3 +179,117 @@ def get_security_forensics():
             "platform": platform.platform()
         }
     }
+
+def prune_ghost_items(item_ids: List[str]) -> Dict[str, Any]:
+    """Safely prunes ghost items from the database."""
+    if not item_ids or not isinstance(item_ids, list):
+        return {"status": "error", "message": "Invalid ID list provided."}
+    pruned_count = 0
+    try:
+        for itm_id in item_ids:
+            if db.delete_media_by_id(itm_id):
+                pruned_count += 1
+        return {"status": "success", "count": pruned_count}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def kill_stalled_ffmpeg_streams() -> Dict[str, Any]:
+    """Purges all FFmpeg/mkvmerge processes associated with the project."""
+    project_fragment = "gui_media_web_viewer"
+    killed_count = 0
+    try:
+        current_proc = psutil.Process()
+        ancestor_pids = {p.pid for p in current_proc.parents()}
+        ancestor_pids.add(os.getpid())
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                pid = proc.info['pid']
+                if pid in ancestor_pids: continue
+                name = (proc.info.get('name') or "").lower()
+                cmd_str = " ".join(proc.info.get('cmdline') or []).lower()
+                if ("ffmpeg" in name or "mkvmerge" in name) and project_fragment in cmd_str:
+                    proc.kill()
+                    killed_count += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied): continue
+        return {"status": "success", "count": killed_count}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def get_hardware_forensics():
+    """Forensic Hardware Acceleration & Driver Audit."""
+    hw_info = hardware_detector.get_capabilities()
+    return {"status": "ok", "hardware": hw_info}
+
+def check_database_resilience():
+    """Performs forensic library resilience audit."""
+    results = {"status": "ok", "sqlite_health": "unknown", "fs_parity": {"total_items": 0, "ghost_count": 0, "ghost_items": []}}
+    try:
+        conn = sqlite3.connect(db.DB_FILENAME)
+        results["sqlite_health"] = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        conn.close()
+        items = db.get_all_media()
+        results["fs_parity"]["total_items"] = len(items)
+        for item in items:
+            if item.get('path') and not os.path.exists(item.get('path')):
+                results["fs_parity"]["ghost_items"].append({"id": item.get('id'), "name": item.get('name')})
+        results["fs_parity"]["ghost_count"] = len(results["fs_parity"]["ghost_items"])
+    except Exception as e:
+        results["status"] = "error"
+    return results
+
+def get_library_forensics():
+    """Unified Forensic Bridge for library statistics."""
+    db_items = db.get_library() or []
+    cat_stats, ext_stats = {}, {}
+    for item in db_items:
+        cat = item.get('category', 'unknown').lower()
+        ext = os.path.splitext(str(item.get('path', '')))[1].lower() or '.dat'
+        cat_stats[cat] = cat_stats.get(cat, 0) + 1
+        ext_stats[ext] = ext_stats.get(ext, 0) + 1
+    return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
+
+def get_playlist_forensics():
+    """Playlist Forensic Audit: Integrity & Repair."""
+    playlists = db.get_all_playlists()
+    results = {"status": "ok", "playlists": []}
+    for pl in playlists:
+        items = db.get_playlist_items(pl['id'])
+        orphans = db.get_playlist_orphans(pl['id'])
+        missing = sum(1 for i in items if i.get('path') and not os.path.exists(i['path']))
+        results["playlists"].append({
+            "id": pl['id'], "name": pl['name'], "item_count": len(items),
+            "relational_orphans": len(orphans), "physical_missing": missing
+        })
+    return results
+
+def prune_playlist_orphans(playlist_id):
+    """Surgical Pruning for Playlist Relational Orphans."""
+    try:
+        count = db.prune_playlist_orphans(playlist_id)
+        return {"status": "success", "count": count}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def get_state_forensics():
+    """Forensic State Persistence Audit."""
+    return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
+
+def get_net_ping():
+    """Sub-millisecond bridge ping."""
+    return {"status": "ok", "timestamp": time.time()}
+
+def terminate_worker_process(pid):
+    """Surgical Termination for Background Workers."""
+    try:
+        proc = psutil.Process(int(pid))
+        parent = psutil.Process(os.getpid())
+        if int(pid) in [c.pid for c in parent.children(recursive=True)]:
+            proc.terminate()
+            return {"status": "success"}
+        return {"status": "error", "message": "Access Denied"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def get_environment_forensics():
+    """Forensic Software Stack & Environment Audit."""
+    return {"status": "ok", "python": sys.version, "platform": platform.platform()}

@@ -1307,143 +1307,15 @@ def get_system_environment():
 
 @eel.expose
 def get_storage_forensics():
-    """
-    Storage Forensic Audit: Volume Discovery (v1.37.30).
-    Performs a recursive scan of the media volume for asset distribution and heuristics.
-    """
-    import os
-    from pathlib import Path
-
-    media_path = PROJECT_ROOT / "media"
-    if not media_path.exists():
-        return {"status": "error", "message": f"Media path not found: {media_path}"}
-
-    results = {
-        "status": "ok",
-        "total_files": 0,
-        "total_folders": 0,
-        "total_size_bytes": 0,
-        "largest_files": [],  # List of {name, size, path}
-        "deepest_level": 0,
-        "deepest_path": "",
-        "broken_paths": []
-    }
-
-    all_files = []
-
-    try:
-        for root, dirs, files in os.walk(str(media_path)):
-            results["total_folders"] += 1
-
-            # Calculate depth relative to media root
-            rel_root = os.path.relpath(root, str(media_path))
-            depth = 0 if rel_root == "." else len(Path(rel_root).parts)
-            if depth > results["deepest_level"]:
-                results["deepest_level"] = depth
-                results["deepest_path"] = rel_root
-
-            for f in files:
-                results["total_files"] += 1
-                f_path = Path(root) / f
-                try:
-                    f_size = f_path.stat().st_size
-                    results["total_size_bytes"] += f_size
-                    all_files.append({
-                        "name": f,
-                        "size": f_size,
-                        "path": str(f_path.relative_to(PROJECT_ROOT))
-                    })
-                except Exception:
-                    results["broken_paths"].append(str(f_path))
-
-        # Heuristic: Extract Top 10 Largest Assets
-        all_files.sort(key=lambda x: x["size"], reverse=True)
-        results["largest_files"] = all_files[:10]
-
-        # Format size for readability
-        results["total_size_human"] = f"{results['total_size_bytes'] / (1024**3):.2f} GB"
-        for f in results["largest_files"]:
-            f["size_human"] = f"{f['size'] / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] / (1024**3):.2f} GB"
-
-        return results
-    except Exception as e:
-        log.error(f"[Forensic-STR] Storage Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.get_storage_forensics()
 
 @eel.expose
 def check_database_resilience():
-    """
-    Performs forensic library resilience audit:
-    1. SQLite Integrity check
-    2. File-System Parity Scan (Ghost Item Detection)
-    """
-    from src.core import db
-    import os
-    import sqlite3
-
-    results = {
-        "status": "ok",
-        "timestamp": time.time(),
-        "sqlite_health": "unknown",
-        "fs_parity": {
-            "total_items": 0,
-            "ghost_items": [],
-            "ghost_count": 0
-        }
-    }
-
-    # 1. SQLite Pragma
-    try:
-        conn = sqlite3.connect(db.DB_FILENAME)
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA integrity_check")
-        health = cursor.fetchone()[0]
-        results["sqlite_health"] = health
-        conn.close()
-    except Exception as e:
-        results["sqlite_health"] = f"Error: {str(e)}"
-
-    # 2. FS Parity
-    try:
-        items = db.get_library()
-        results["fs_parity"]["total_items"] = len(items)
-        for item in items:
-            p = item.get('path')
-            if p and not os.path.exists(p):
-                results["fs_parity"]["ghost_items"].append({
-                    "id": item.get('id'),
-                    "name": item.get('name'),
-                    "path": p
-                })
-        results["fs_parity"]["ghost_count"] = len(results["fs_parity"]["ghost_items"])
-    except Exception as e:
-        results["status"] = "error"
-        results["error"] = str(e)
-
-    log.info(f"[Forensic] DB Resilience Audit complete. Ghosts: {results['fs_parity']['ghost_count']}")
-    return results
-
+    return api_reporting.check_database_resilience()
 
 @eel.expose
 def prune_ghost_items(item_ids):
-    """
-    Safely prunes ghost items from the database after a resilience audit (v1.37.17).
-    """
-    from src.core import db
-    if not item_ids or not isinstance(item_ids, list):
-        return {"status": "error", "message": "Invalid ID list provided."}
-
-    log.info(f"[Forensic] Beginning Atomic Pruning of {len(item_ids)} ghost items...")
-    pruned_count = 0
-    try:
-        for itm_id in item_ids:
-            if db.delete_media_by_id(itm_id):
-                pruned_count += 1
-        return {"status": "success", "count": pruned_count}
-    except Exception as e:
-        log.error(f"[Forensic] Pruning Bridge Error: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.prune_ghost_items(item_ids)
 
 
 @eel.expose
