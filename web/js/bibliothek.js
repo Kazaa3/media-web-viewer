@@ -168,6 +168,62 @@ async function renderLibrary() {
     }
 
     const renderStart = performance.now();
+    const realDbCount = window.__mwv_last_db_count || 0;
+    const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+
+    console.log(`%c[FE-AUDIT] renderLibrary pulsed. DB_COUNT: ${realDbCount} | MODE: ${hmode.toUpperCase()}`, "color: #3498db; font-weight: 800;");
+
+    // [v1.46.054] EMERGENCY SCANNER DASHBOARD (Harden: Move to TOP)
+    if (realDbCount === 0 && (hmode === 'real' || hmode === 'both')) {
+        console.warn("[FE-AUDIT] Dashboard Triggered: realDbCount is 0. Prioritizing Ingestion interface.");
+        if (typeof appendUiTrace === 'function') appendUiTrace("[Library] DB is empty. Displaying Scanner Dashboard.", "WARNING");
+        
+        let noMediaHtml = `
+            <div class="forensic-scanner-dashboard" style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 900px; margin: 40px auto; background: rgba(0,0,0,0.6); border: 2px solid #3498db; border-radius: 20px; box-shadow: 0 0 50px rgba(52, 152, 219, 0.3); backdrop-filter: blur(20px); position: relative; z-index: 1000;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🕵️ Forensic Media Workstation</div>
+                <div style="font-size: 14px; font-weight: 900; color: #3498db; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 25px; background: rgba(52, 152, 219, 0.1); padding: 8px 16px; display: inline-block; border-radius: 4px;">
+                    STATUS: EMPTY_INDEX_DETECTED
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 16px; line-height: 1.8; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Die Medien-Datenbank enthält aktuell keine Indizierung für reale Assets. 
+                    Ein vollständiger System-Scan ist erforderlich, um die <span style="color: #3498db; font-weight: 700;">media/</span> Verzeichnisse zu erfassen.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <button onclick="if(window.scan) window.scan()" style="padding: 30px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px; box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4); transform: scale(1); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <span style="font-size: 32px;">🔍</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 20px; letter-spacing: 1px;">START SYSTEM SCAN</span>
+                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">SCANS DIRECTORY: media/</span>
+                        </div>
+                    </button>
+                    
+                    <button onclick="if(window.setHydrationMode) window.setHydrationMode('mock')" style="padding: 30px; background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 2px dashed #9b59b6; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px; transform: scale(1); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <span style="font-size: 32px;">🧪</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 20px; letter-spacing: 1px;">VIEW MOCKUPS</span>
+                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">PROVE RENDERING CAPABILITY</span>
+                        </div>
+                    </button>
+                </div>
+
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3498db; opacity: 0.6; display: flex; justify-content: center; gap: 30px; border-top: 1px solid rgba(52, 152, 219, 0.2); padding-top: 20px;">
+                    <span>FS_NODE: ONLINE</span>
+                    <span>DB_ITEMS: 0</span>
+                    <span>ACTIVE_BRANCH: ${window.GLOBAL_CONFIG?.active_branch || 'MULTIMEDIA'}</span>
+                </div>
+            </div>
+        `;
+
+        const t1 = document.getElementById('coverflow-track');
+        const t2 = document.getElementById('grid-container');
+        if (t1) t1.innerHTML = noMediaHtml;
+        if (t2) t2.innerHTML = noMediaHtml;
+
+        window.__mwv_last_render_ms = performance.now() - renderStart;
+        return; // ABSOLUTE TERMINAL EXIT FOR EMPTY DB
+    }
 
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });
     
@@ -268,51 +324,12 @@ async function renderLibrary() {
     }
 
     // [v1.46.053] HIGH-VISIBILITY FORENSIC SCANNER DASHBOARD
-    const realDbCount = window.__mwv_last_db_count || 0;
     const isMockOnly = coverflowItems.every(i => i.is_mock);
 
-    if (realDbCount === 0 || (coverflowItems.length === 0)) {
+    if (coverflowItems.length === 0) {
         let noMediaHtml = "";
         
-        // --- TIER A: TOTAL BLACK HOLE OR EMPTY REAL SET ---
-        noMediaHtml = `
-            <div class="forensic-scanner-dashboard" style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 900px; margin: 40px auto; background: rgba(0,0,0,0.6); border: 2px solid #3498db; border-radius: 20px; box-shadow: 0 0 50px rgba(52, 152, 219, 0.3); backdrop-filter: blur(20px);">
-                <div style="font-size: 48px; margin-bottom: 20px;">🕵️ Forensic Media Workstation</div>
-                <div style="font-size: 14px; font-weight: 900; color: #3498db; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 25px; background: rgba(52, 152, 219, 0.1); padding: 8px 16px; display: inline-block; border-radius: 4px;">
-                    STATUS: EMPTY_INDEX_DETECTED
-                </div>
-                
-                <p style="color: var(--text-secondary); font-size: 16px; line-height: 1.8; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                    Die Medien-Datenbank enthält aktuell keine Indizierung für reale Assets. 
-                    Ein vollständiger System-Scan ist erforderlich, um die <span style="color: #3498db; font-weight: 700;">media/</span> Verzeichnisse zu erfassen.
-                </p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px;">
-                    <button onclick="if(window.scan) window.scan()" style="padding: 30px; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px; box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4); transiton: transform 0.2s;">
-                        <span style="font-size: 32px;">🔍</span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 20px; letter-spacing: 1px;">START SYSTEM SCAN</span>
-                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">SCANS DIRECTORY: media/</span>
-                        </div>
-                    </button>
-                    
-                    <button onclick="if(window.setHydrationMode) window.setHydrationMode('mock')" style="padding: 30px; background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 2px dashed #9b59b6; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                        <span style="font-size: 32px;">🧪</span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 20px; letter-spacing: 1px;">VIEW MOCKUPS</span>
-                            <span style="font-size: 10px; opacity: 0.7; font-weight: 400;">PROVE RENDERING CAPABILITY</span>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Forensic Diagnostic Footer -->
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3498db; opacity: 0.6; display: flex; justify-content: center; gap: 30px; border-top: 1px solid rgba(52, 152, 219, 0.2); padding-top: 20px;">
-                    <span>FS_NODE: ONLINE</span>
-                    <span>DB_ITEMS: 0</span>
-                    <span>ACTIVE_BRANCH: ${window.GLOBAL_CONFIG?.active_branch || 'MULTIMEDIA'}</span>
-                </div>
-            </div>
-        `;
+        // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
             if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', isRealEmpty ? 'Real set is empty.' : 'Total Black Hole Detected.');
         } else {
             // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---

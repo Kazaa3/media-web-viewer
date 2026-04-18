@@ -755,6 +755,9 @@ def start_app():
                 time.sleep(2) 
                 log.info("[Boot-Scan] Initiating automated library rescan...")
                 scan_media()
+                log.info("[Boot-Scan] Scan complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
             threading.Thread(target=boot_scan_trigger, daemon=True).start()
 
         # --- Debug Audit Trigger (v1.34) ---
