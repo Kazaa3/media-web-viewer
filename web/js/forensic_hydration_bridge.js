@@ -44,10 +44,12 @@ const ForensicHydrationBridge = {
      * Stage 1: Explicitly injects 12 hardcoded recovery items into Library & Queue.
      */
     forceEmergencyHydration() {
-        // [v1.46.015] COLLISION GUARD: Do not inject mocks if we already have real items loaded
+        // [v1.46.056] Hardened Forensic Skip Logic
         const realDbCount = window.__mwv_last_db_count || 0;
-        if (realDbCount > 0) {
-            console.log("[HYDRATION-BRIDGE] Skip Stage 1: Real Items detected in registry.");
+        const hasRealItems = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0 && !window.__mwv_all_library_items[0].id?.startsWith('emergency-'));
+
+        if (realDbCount > 0 || hasRealItems) {
+            console.log(`[HYDRATION-BRIDGE] Skip Stage 1: Real Items verified. DB: ${realDbCount} | FE-Cache: ${hasRealItems}`);
             this.transitionToRealData();
             return;
         }
