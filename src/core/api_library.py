@@ -206,6 +206,9 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
             status = "recovery-emergency"
     else:
         status = "synchronized"
+    
+    # [v1.46.085] Payload Readiness Trace
+    log.info(f"🚀 [SPAWN-LOG] PAYLOAD-READY -> {len(final_media)} items (Source: {'MOCKS' if all(it.get('is_mock') for it in final_media) else 'REAL_DB'})")
 
     return {
         "media": final_media,
