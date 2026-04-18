@@ -293,9 +293,16 @@ async function renderLibrary() {
         });
     }
 
-    // 3. Sub-Category Filter
+    // 3. Sub-Category Filter (v1.46.092: Robust Alias Matching)
     if (typeof librarySubFilter !== 'undefined' && librarySubFilter !== 'all') {
-        projectedItems = projectedItems.filter(i => i.is_mock || (i.category || '').toLowerCase() === librarySubFilter.toLowerCase());
+        const subCatInfo = (typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP[librarySubFilter] : null);
+        const subAllowed = subCatInfo ? (subCatInfo.aliases || []) : [librarySubFilter];
+        
+        projectedItems = projectedItems.filter(i => {
+            if (i.is_mock) return true;
+            const cat = (i.category || '').toLowerCase();
+            return subAllowed.some(a => a.toLowerCase() === cat) || cat === librarySubFilter.toLowerCase();
+        });
     }
 
     // 4. Genre & Year
