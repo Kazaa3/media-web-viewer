@@ -4741,7 +4741,9 @@ def server_file_direct(file_path):
         mimetype = video_map[ext]
     
     log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | Subtype: {subtype} | MIME: {mimetype} (Config-Driven)")
-    log.debug(f"[PLAY-PULSE-DEBUG] Resolved Path: {file_path}")
+    range_header = btl.request.get_header('Range')
+    if range_header:
+        log.debug(f"[PLAY-PULSE-DEBUG] Range Request Detected: {range_header}")
         
     return btl.static_file(
         os.path.basename(file_path),

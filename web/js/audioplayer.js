@@ -126,6 +126,18 @@ function initAudioPipeline() {
     pipeline.onwaiting = () => console.warn("[PLAYBACK-DIAG] Pipeline is WAITING for data...");
     pipeline.onstalled = () => console.error("[PLAYBACK-DIAG] Pipeline STALLED (Network/Buffer Issue).");
     
+    // [v1.46.055] Forensic Range Support Diagnostics
+    pipeline.onprogress = () => {
+        if (pipeline.buffered.length > 0) {
+            const bufferedEnd = pipeline.buffered.end(pipeline.buffered.length - 1);
+            const duration = pipeline.duration;
+            if (duration > 0) {
+                const percent = (bufferedEnd / duration) * 100;
+                console.debug(`[PLAY-PULSE] Buffer Progress: ${percent.toFixed(2)}%`);
+            }
+        }
+    };
+    
     pipeline.onerror = () => {
         const err = pipeline.error;
         const errMsg = err ? `Code ${err.code}: ${err.message}` : "Unknown Stream Error";
@@ -138,8 +150,8 @@ function initAudioPipeline() {
             case 4: detailedReason = "MEDIA_ERR_SRC_NOT_SUPPORTED (Codec/Format Mismatch)"; break;
         }
         
-        console.error(`>>> [PLAY-TRACE] CRITICAL FAILURE: ${errMsg} | ${detailedReason}`);
-        mwv_trace('PLAYER-EVENT', 'PLAYBACK-CRITICAL', { code: err?.code, reason: detailedReason });
+        console.error(`%c>>> [PLAY-TRACE] CRITICAL FAILURE: ${errMsg} | ${detailedReason}`, "color: #e74c3c; font-weight: 800;");
+        if (typeof mwv_trace === 'function') mwv_trace('PLAYER-EVENT', 'PLAYBACK-CRITICAL', { code: err?.code, reason: detailedReason });
         if (typeof showToast === 'function') showToast(`Playback Failed: ${detailedReason}`, "error");
     };
 
@@ -212,7 +224,14 @@ function playAudio(item, startTime = 0) {
     
     if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     
+    // [v1.46.055] Forced Pipeline Reset
+    pipeline.pause();
+    pipeline.removeAttribute('src'); // Clear existing source
+    pipeline.load(); // Force reset of player state
+    
     pipeline.src = proxyUrl;
+    pipeline.type = "audio/mpeg"; // Default hinting for better browser load
+    pipeline.crossOrigin = "anonymous"; // Needed for Visualizer Web Audio API
     
     // Logic: Resume for audiobooks, else start at 0
     const shouldResume = item.category === 'Audiobook' || item.category === 'Hörbruch';

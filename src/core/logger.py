@@ -102,8 +102,13 @@ class UIHandler(logging.Handler):
             
             # [Echo Guard] v1.41.00: Do not send logs back that originated from the UI!
             # [Blind-Mute] v1.41.00: Silence heavy render-traces to prevent UI freezing
-            if "[UI-Trace]" in msg or "[BD-AUDIT]" in msg or "[JS-NAV]" in msg or "[UI-INPUT]" in msg \
-               or "[UI-RENDER]" in msg or "[DOM-UI]" in msg:
+            # [Log-Tuning] v1.46.055: Added Analyzer and DB-Batch to silent list
+            silent_prefixes = [
+                "[UI-Trace]", "[BD-AUDIT]", "[JS-NAV]", "[UI-INPUT]", 
+                "[UI-RENDER]", "[DOM-UI]", "[Analyzer-Pulse]", "[DB-BATCH]",
+                "[BATCH-SUCCESS]", "[PROGRESS]"
+            ]
+            if any(p in msg for p in silent_prefixes):
                 return
 
             msg = self.format(record)

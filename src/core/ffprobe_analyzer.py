@@ -124,7 +124,7 @@ def ffprobe_analyze(file_path: Union[str, Path]) -> Dict[str, Any]:
         stereo_mode = v_stream.get("side_data_list", [{}])[0].get("stereo_mode", "") if v_stream.get("side_data_list") else ""
         is_3d = stereo_mode != "" or "multiview" in str(v_stream.get("tags", {})).lower()
 
-        log.info(f"[Analyzer-Pulse] Forensic Subtype Detected: {media_subtype} | Codec: {v_codec} | Interlaced: {is_interlaced} | FPS: {fps:.2f}")
+        log.debug(f"[Analyzer-Pulse] Forensic Subtype Detected: {media_subtype} | Codec: {v_codec} | Interlaced: {is_interlaced} | FPS: {fps:.2f}")
 
         return {
             "path": path_str,
