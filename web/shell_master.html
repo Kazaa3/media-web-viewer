@@ -180,13 +180,37 @@
     <script src="js/mwv_hotkeys.js?v=1.45.100"></script>
     <script src="js/debug_helpers.js?v=1.45.100"></script>
     
-    <!-- Forensic & Diagnostic Suite (v1.46.039 Restoration) -->
-    <script src="js/diagnostics_helpers.js?v=1.46.039"></script>
-    <script src="js/forensic_hydration_bridge.js?v=1.46.039"></script>
-    <script src="js/forensic_recovery_engine.js?v=1.46.039"></script>
-    <script src="js/nuclear_recovery_pulse.js?v=1.46.039"></script>
-    <script src="js/gui_diagnostics.js?v=1.46.039"></script>
-    <script src="js/version.js?v=1.46.039"></script>
+    <!-- [v1.46.041] Modular Forensic & Diagnostic Suite Loader -->
+    <script>
+        (function() {
+            const v = "1.46.041";
+            const config = window.CONFIG || window.GLOBAL_CONFIG || {};
+            const forensic = config.forensic_feature_registry || {
+                enable_hydration_bridge: true,
+                enable_recovery_engine: true,
+                enable_nuclear_pulse: true,
+                enable_diagnostics_helpers: true
+            };
+
+            const scripts = [];
+            if (forensic.enable_diagnostics_helpers) scripts.push(`js/diagnostics_helpers.js?v=${v}`);
+            if (forensic.enable_hydration_bridge)    scripts.push(`js/forensic_hydration_bridge.js?v=${v}`);
+            if (forensic.enable_recovery_engine)    scripts.push(`js/forensic_recovery_engine.js?v=${v}`);
+            if (forensic.enable_nuclear_pulse)      scripts.push(`js/nuclear_recovery_pulse.js?v=${v}`);
+            
+            // Core Diagnostics (Always Loaded unless specifically overridden)
+            scripts.push(`js/gui_diagnostics.js?v=${v}`);
+            scripts.push(`js/version.js?v=${v}`);
+
+            scripts.forEach(src => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.async = false; // Maintain execution order
+                document.head.appendChild(s);
+            });
+            console.log(`[BOOT] Forensic Suite Loader: ${scripts.length} modules queued.`);
+        })();
+    </script>
 
     <!-- [BOOTSTRAP] ATOMIC BRIDGE TRIGGER (v1.45.200 Robust) -->
     <script>

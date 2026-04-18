@@ -81,7 +81,8 @@ function syncQueueWithLibrary() {
         if (hmode === 'mock') passMode = (mockFlag || !!item.stage);
         else if (hmode === 'real') passMode = (!mockFlag && !item.stage);
 
-        // [v1.46.040] HYBRID SYNC: Override Pass if enabled
+        // IMPORTANT
+        // Hybrid Sync: When hybrid_sync_enabled is True, the queue will prioritize real media while keeping forensic mock items visible, regardless of the active hydration mode (M/R).
         if (qConfig.hybrid_sync_enabled && !mockFlag && !item.stage) {
             passMode = true; // Real items ALWAYS pass in Hybrid mode
         }
@@ -118,6 +119,8 @@ function syncQueueWithLibrary() {
     });
 
     // --- [v1.46.040] EMERGENCY BYPASS PULSE ---
+    // IMPORTANT
+    // Emergency Bypass: If filtering results in 0 items but the library has data, the system will automatically bypass all filters (Category/Branch/Mode) to prevent a "Black Screen" state.
     const qConfig = (window.CONFIG || window.GLOBAL_CONFIG || {}).queue_orchestration || {};
     if (filtered.length === 0 && allLibraryItems.length > 0 && qConfig.emergency_bypass_enabled) {
         console.warn("%c[Sync-Bypass] 0 items after filter. Forcing Emergency Bypass...", "background: #c0392b; color: white; padding: 2px 5px;");
