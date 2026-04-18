@@ -720,7 +720,6 @@ function setHydrationMode(mode) {
     // [v1.46.026] UI Performance Guard (Debouncing)
     if (window.__mwv_hydration_in_progress) {
         console.warn("[Hydration] Sync already in progress. Blocking redundant request.");
-        if (typeof showToast === 'function') showToast("Synchronisierung läuft...", 500);
         return;
     }
     window.__mwv_hydration_in_progress = true;
@@ -746,12 +745,8 @@ function setHydrationMode(mode) {
     const triggerLoad = () => {
         if (typeof loadLibrary === 'function') {
             console.debug(`[Hydration] Loading Library (M/R/B Sync)...`);
-            const result = loadLibrary();
-            if (result instanceof Promise) {
-                result.then(runPulse);
-            } else {
-                setTimeout(runPulse, 300);
-            }
+            // Force a reload by calling loadLibrary without cache
+            loadLibrary().then(runPulse).catch(runPulse);
         } else {
             runPulse();
         }
