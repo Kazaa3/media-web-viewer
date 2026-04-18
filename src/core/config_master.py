@@ -310,6 +310,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     # --- [v1.46.039] QUEUE ORCHESTRATION REGISTRY ---
     "queue_orchestration": {
         "auto_hydration_enabled": True, # Automatically populate queue from library
+        "hybrid_sync_enabled": True,    # [v1.46.040] Keep real items even in mock mode
+        "emergency_bypass_enabled": True, # [v1.46.040] Bypass filters if result is empty
+        "block_real_in_diagnostic": False, # [v1.46.040] Prevent diagnostic mode from shielding real media
+        "diagnostic_highlighting": True, # Visual cues for mock items in queue
         "max_queue_items": 5000,        # Performance cap
         "deduplicate": True             # Prevent dual entries
     },

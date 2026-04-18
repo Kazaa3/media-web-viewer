@@ -70,6 +70,9 @@ function syncQueueWithLibrary() {
     console.info(`[Sync-Pulse] Starting sync for ${allLibraryItems.length} raw library items. Filter: ${activeFilter} | Mode: ${hmode}`);
 
     let filtered = allLibraryItems.filter(item => {
+        const config = window.CONFIG || window.GLOBAL_CONFIG || {};
+        const qConfig = config.queue_orchestration || {};
+
         // 1.1 Hydration Mode Filter
         const nameMock = item.name && item.name.startsWith('[MOCK]');
         const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
@@ -77,6 +80,16 @@ function syncQueueWithLibrary() {
         let passMode = true;
         if (hmode === 'mock') passMode = (mockFlag || !!item.stage);
         else if (hmode === 'real') passMode = (!mockFlag && !item.stage);
+
+        // [v1.46.040] HYBRID SYNC: Override Pass if enabled
+        if (qConfig.hybrid_sync_enabled && !mockFlag && !item.stage) {
+            passMode = true; // Real items ALWAYS pass in Hybrid mode
+        }
+        
+        // [v1.46.040] BLOCK PROTECTION
+        if (qConfig.block_real_in_diagnostic === false && !mockFlag) {
+            passMode = true; // explicitly forbidden to block real items
+        }
 
         if (!passMode) return false;
 
@@ -103,6 +116,21 @@ function syncQueueWithLibrary() {
 
         return true;
     });
+
+    // --- [v1.46.040] EMERGENCY BYPASS PULSE ---
+    const qConfig = (window.CONFIG || window.GLOBAL_CONFIG || {}).queue_orchestration || {};
+    if (filtered.length === 0 && allLibraryItems.length > 0 && qConfig.emergency_bypass_enabled) {
+        console.warn("%c[Sync-Bypass] 0 items after filter. Forcing Emergency Bypass...", "background: #c0392b; color: white; padding: 2px 5px;");
+        filtered = allLibraryItems.filter(item => {
+            const nameMock = item.name && item.name.startsWith('[MOCK]');
+            const isMock = (item.is_mock === true || item.is_mock === 1 || nameMock);
+            return hmode === 'mock' ? isMock : !isMock;
+        });
+        
+        if (typeof showToast === 'function') {
+            showToast("⚠️ Filter-Notaus: Alle Filter umgangen (0 Treffer)", "warning", 3000);
+        }
+    }
 
     console.debug(`[Sync-Pulse] Filtration Complete: ${filtered.length} items remain. (Syncing SSOT)`);
 
