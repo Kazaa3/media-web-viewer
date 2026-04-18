@@ -236,9 +236,10 @@ function showContextMenu(e, item) {
         return;
     }
 
-    // [v1.41.149] Clean Visibility Reveal
+    // [v1.46.093] Clean Visibility Reveal & Content Reset
+    menu.innerHTML = ''; 
     menu.style.display = 'block';
-    menu.style.zIndex = '100005'; // Ensure it survives above HUD and other fragments
+    menu.style.zIndex = '100005'; 
 
     // Boundary check for window (v1.35 Hardened)
     const menuWidth = 240;
@@ -725,11 +726,17 @@ function refreshForensicLeds() {
                 btn.style.opacity = '1';
                 btn.title = `Database Status: ${health.toUpperCase()} | Size: ${window.__mwv_last_db_size || 0} bytes | Items: ${window.__mwv_last_db_count || 0}`;
             } else {
-                btn.style.opacity = isActive ? '1' : '0.3';
                 btn.style.color = isActive ? 'var(--accent-color)' : 'var(--text-dim)';
             }
         });
     });
+
+    // [v1.46.093] HUD Stage Indicator Sync
+    const stageInfo = document.getElementById('hydr-stage-indicator');
+    if (stageInfo && window.ForensicHydrationBridge) {
+        stageInfo.innerText = window.ForensicHydrationBridge.stage || '0';
+        stageInfo.style.color = (window.ForensicHydrationBridge.stage === 2) ? '#2ecc71' : '#ff9500';
+    }
 }
 
 /**
