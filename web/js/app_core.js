@@ -508,7 +508,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         const bootStartTime = Date.now();
         if (typeof FragmentLoader?.load === 'function') {
             FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
-            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
+            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html?v=' + Date.now(), () => onFragmentDone('icons'));
             FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
             FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('diags'));
         } else {
