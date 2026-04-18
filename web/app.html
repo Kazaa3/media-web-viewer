@@ -573,7 +573,7 @@
 
             <!-- TAB: Filesystem START -->
             <div id="browser-panel-container" class="tab-content tab-split-layout" data-tab-domain="file"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <!-- Browser Internal Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Browser-Optionen</h3>
@@ -604,7 +604,7 @@
 
             <!-- TAB: Item (Inventory) START -->
             <div id="inventory-panel-container" class="tab-content" data-tab-domain="inventory"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <div class="loading-fragment">Lade Inventory...</div>
             </div>
             <!-- TAB: Item (Inventory) END -->
@@ -612,7 +612,7 @@
 
 
             <!-- TAB: Playlist START -->
-            <div id="json-serialized-sequence-buffer-panel" class="tab-content" style="height: 100%; width: 100%;">
+            <div id="json-serialized-sequence-buffer-panel" class="tab-content" style="height: 100%; width: 100%; display: none;">
                 <div class="loading-fragment">Lade Playlist...</div>
             </div>
             <!-- TAB: Playlist END -->
@@ -621,7 +621,7 @@
 
             <!-- TAB: Edit START -->
             <div id="edit-panel-container" class="tab-content" data-tab-domain="edit"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <!-- Editor Viewport (FRAGMENT TARGET) -->
                 <div id="edit-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Editor...</div>
@@ -632,7 +632,7 @@
 
             <!-- TAB: Options START -->
             <div id="system-panel-container" class="tab-content tab-split-layout" data-tab-domain="system"
-                style="height: 100%; flex-direction: row;">
+                style="height: 100%; flex-direction: row; display: none;">
                 <!-- Options Internal Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Leistungsmodus</h3>
@@ -730,7 +730,7 @@
 
             <!-- TAB: Tools START -->
             <div id="tools-panel-container" class="tab-content"
-                style="height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
+                style="height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary); display: none;">
                 <div id="tools-view-transcoding" class="tools-sub-view" style="display: block;">
                     <h3 class="diagnostic-section-title">Transcoding Pipeline</h3>
                     <div class="glass-card">
@@ -753,7 +753,7 @@
 
             <!-- TAB: Debug START -->
             <div id="debug-panel-container" class="tab-content tab-split-layout" data-tab-domain="debug"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <!-- Debug Internal Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Datenbank-Aktionen</h3>
@@ -772,7 +772,7 @@
 
             <!-- TAB: Tests START -->
             <div id="tests-panel-container" class="tab-content"
-                style="height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
+                style="height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary); display: none;">
                 <h3 class="diagnostic-section-title">Unit Tests & Verifizierung</h3>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                     <div class="glass-card">Benchmark: Parsers</div>
@@ -783,7 +783,7 @@
             </div>
 
             <!-- TAB: Cinema View (YouTube-like preview) -->
-            <div id="cinema-panel-container" class="tab-content" style="height: 100%; width: 100%;">
+            <div id="cinema-panel-container" class="tab-content" style="height: 100%; width: 100%; display: none;">
                 <div id="cinema-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Cinema-Grid...</div>
                 </div>
@@ -791,14 +791,14 @@
 
             <!-- TAB: Database Explorer (v1.41.00 Standalone) -->
             <div id="database-panel-container" class="tab-content" data-tab-domain="database"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <div id="database-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Datenbank-Master...</div>
                 </div>
             </div>
 
             <!-- TAB: Parser Configuration (v1.41.00 Fragment Based) -->
-            <div id="parser-panel-container" class="tab-content" style="height: 100%; width: 100%;">
+            <div id="parser-panel-container" class="tab-content" style="height: 100%; width: 100%; display: none;">
                 <div id="parser-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Parser-Metriken...</div>
                 </div>
@@ -806,7 +806,7 @@
 
 
             <!-- ===================== DIAGNOSTICS FRAGMENT PLACEHOLDER ===================== -->
-            <div id="diagnostics-suite-container" class="tab-content" style="height: 100%; flex-direction: column;">
+            <div id="diagnostics-suite-container" class="tab-content" style="height: 100%; flex-direction: column; display: none;">
                 <!-- Loaded via FragmentLoader (fragments/diagnostics_suite.html) -->
                 <div class="loading-fragment">Lade Diagnose-Suite...</div>
             </div>
@@ -814,7 +814,7 @@
 
             <!-- Video Player Fragment -->
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content tab-split-layout"
-                style="height: 100%; width: 100%;">
+                style="height: 100%; width: 100%; display: none;">
                 <!-- Video Technical Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Video-Stream</h3>
@@ -834,12 +834,12 @@
             </div>
 
             <!-- Reporting Dashboard Fragment -->
-            <div id="reporting-dashboard-container" class="tab-content" style="height: 100%; flex-direction: column;">
+            <div id="reporting-dashboard-container" class="tab-content" style="height: 100%; flex-direction: column; display: none;">
                 <div class="loading-fragment">Lade Reporting Dashboard...</div>
             </div>
 
             <!-- TAB: Logbuch -->
-            <div id="logbook-tab-container" class="tab-content" style="height: 100%; flex-direction: column;">
+            <div id="logbook-tab-container" class="tab-content" style="height: 100%; flex-direction: column; display: none;">
                 <div class="loading-fragment" style="display: none;">Lade Logbuch...</div>
             </div>
             <!-- TAB: Logbuch END -->

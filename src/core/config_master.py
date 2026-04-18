@@ -245,7 +245,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "1.46.074"
+    VERSION = "1.46.075"
 
 # --- NETWORK & HOST CALCULATION ---
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))
@@ -271,7 +271,7 @@ from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    "branch_id": os.environ.get("MWV_BRANCH", "multimedia"),
+    "branch_id": os.environ.get("MWV_BRANCH", "extended"),
     "orchestrator_version": "v1.46.017-MASTER",
     "build_id": "STABLE-FORENSIC-2026-04-12",
     "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",

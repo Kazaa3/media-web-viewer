@@ -111,10 +111,27 @@ const ForensicHydrationBridge = {
 
         // Split current registry
         const allItems = window.allLibraryItems || [];
-        const realItems = allItems.filter(it => it.id && !it.id.toString().startsWith('emergency-'));
+        let realItems = allItems.filter(it => it.id && !it.id.toString().startsWith('emergency-'));
         const mockItems = allItems.filter(it => it.id && it.id.toString().startsWith('emergency-'));
 
-        // If we have 0 real items despite transition trigger, we force a fallback mock set
+        // [v1.46.075] Synthetic Diagnostic Integration
+        // If realItems is empty, try to pull from RecoveryManager stages (user-requested repair)
+        if (realItems.length === 0 && typeof window.RecoveryManager !== 'undefined' && window.RecoveryManager.stages.length > 0) {
+            console.warn("[HYDRATION-BRIDGE] Real items missing. Injecting Synthetic Diagnostic Stages...");
+            let syntheticItems = [];
+            window.RecoveryManager.stages.forEach(stage => {
+                const typedItems = stage.items.map(item => ({
+                    ...item,
+                    is_diag: true,
+                    stage_id: stage.id,
+                    stage_name: stage.name
+                }));
+                syntheticItems = [...syntheticItems, ...typedItems];
+            });
+            realItems = syntheticItems;
+        }
+
+        // If we still have 0 real items and the database has content, force a refresh
         if (realItems.length === 0 && (window.__mwv_last_db_count || 0) > 0) {
             console.warn("[HYDRATION-BRIDGE] STAGE 2 Handshake Failed: Real items missing in registry. Forcing Backend Pulse.");
             if (typeof refreshLibrary === 'function') refreshLibrary();
