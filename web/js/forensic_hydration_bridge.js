@@ -51,6 +51,9 @@ const ForensicHydrationBridge = {
         if (realDbCount > 0 || hasRealItems) {
             console.log(`[HYDRATION-BRIDGE] Skip Stage 1: Real Items verified. DB: ${realDbCount} | FE-Cache: ${hasRealItems}`);
             this.transitionToRealData();
+            
+            // [v1.46.057] Aggressive Restoration: Trigger real load immediately to break the mock loop
+            if (typeof loadLibrary === 'function') loadLibrary();
             return;
         }
 

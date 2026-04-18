@@ -53,7 +53,8 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         }
         
         const incomingCount = (library.media || []).length;
-        const totalDbCount = library.db_count || incomingCount;
+        // [v1.46.057] HUD Priority: Always prefer backend DB record count for the 'DB:' label
+        const totalDbCount = (library.db_count !== undefined && library.db_count !== null) ? library.db_count : incomingCount;
         const audit = library.audit || {};
         const fsSize = (audit.fs || {}).size || 0;
         
