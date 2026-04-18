@@ -366,7 +366,8 @@ def get_known_media_names():
     @return A set of media names / Ein Set mit Mediennamen.
     """
     init_db()
-    conn = sqlite3.connect(DB_FILENAME)
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM media")
     names = {row[0] for row in cursor.fetchall()}
@@ -379,7 +380,8 @@ def clear_media():
     @brief Deletes all entries from the media table.
     @details Löscht alle Einträge aus der Tabelle 'media'.
     """
-    conn = sqlite3.connect(DB_FILENAME)
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
     conn.execute("DELETE FROM media")
     conn.commit()
     conn.close()
@@ -388,23 +390,34 @@ def clear_media():
 def insert_media_batch(items: list[dict]):
     """
     @brief Inserts multiple media items in a single transaction (High Performance).
+    @details Refactored v1.46.066: Analysis performed OUTSIDE transaction to prevent DB locks.
     """
     if not items: return
-    conn = sqlite3.connect(DB_FILENAME)
+    
+    # 1. PRE-ANALYSIS: Perform all slow I/O before locking the database
+    analyzed_data = []
+    from src.core.ffprobe_analyzer import ffprobe_analyze
+    
+    for item_dict in items:
+        filepath = item_dict.get('path')
+        analysis = ffprobe_analyze(filepath)
+        
+        # Merge analysis into item data
+        item_copy = item_dict.copy()
+        item_copy['_forensic_analysis'] = analysis
+        analyzed_data.append(item_copy)
+
+    # 2. FAST-TX: Open connection only for the actual write
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
     cursor = conn.cursor()
     try:
-        for item_dict in items:
-            # 4. Forensic Pulse: Detailed Tech Audit (v1.46.047)
-            from src.core.ffprobe_analyzer import ffprobe_analyze
-            filepath = item_dict.get('path')
-            analysis = ffprobe_analyze(filepath)
+        for item_dict in analyzed_data:
+            analysis = item_dict.get('_forensic_analysis', {})
             
             # Extract granular forensic markers
             subtype = analysis.get("media_subtype", "FILE")
             codec = analysis.get("codec", "unknown")
-            res = analysis.get("resolution", "SD")
-            fps = analysis.get("fps", 0)
-            interlaced = "I" if analysis.get("is_interlaced") else "P"
             
             cursor.execute('''
                 INSERT OR REPLACE INTO media (
@@ -439,10 +452,10 @@ def insert_media_batch(items: list[dict]):
 def insert_media(item_dict):
     """
     @brief Inserts a new media item into the database.
-    @details Fügt ein neues Medien-Item in die Datenbank ein.
-    @param item_dict Metadata dictionary / Dictionary mit Metadaten.
+    @details Refactored v1.46.066: Increased timeout.
     """
-    conn = sqlite3.connect(DB_FILENAME)
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -587,11 +600,9 @@ def get_all_media_items():
 def get_media_path(name):
     """
     @brief Returns the full file path for a given media name.
-    @details Gibt den vollen Dateipfad für einen Mediennamen zurück.
-    @param name Media record name / Datenbank-Name.
-    @return Full filesystem path or None / Voller Pfad oder None.
     """
-    conn = sqlite3.connect(DB_FILENAME)
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
     cursor = conn.cursor()
     cursor.execute("SELECT path FROM media WHERE name = ?", (name,))
     row = cursor.fetchone()

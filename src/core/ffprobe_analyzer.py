@@ -21,6 +21,11 @@ def ffprobe_analyze(file_path: Union[str, Path]) -> Dict[str, Any]:
             return {"error": "File not found"}
         log.info(f"[Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: {file_path}")
 
+    # [v1.46.066] Directory Guard: Prevent ffprobe from hanging on directory paths
+    if os.path.isdir(file_path):
+        log.warning(f"[Analyzer] Skipping directory path: {file_path}")
+        return {"error": "Path is a directory, skipping forensic probe"}
+
     is_iso = str(file_path).lower().endswith('.iso')
     
     # Global/Centralized Binary Orchestration (v1.41.00)
