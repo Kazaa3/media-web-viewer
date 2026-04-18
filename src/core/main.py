@@ -4702,9 +4702,8 @@ def server_file_direct(file_path):
     """
     import bottle as btl
     
-    # 1. Path Forensic Resolution
-    if not os.path.isabs(file_path):
-        file_path = os.path.abspath(file_path)
+    # 1. Path Forensic Resolution (v1.46.046)
+    file_path = resolve_media_path(file_path)
     
     if not os.path.exists(file_path):
         log.error(f"[PLAY-PULSE] CRITICAL: File not found: {file_path}")
