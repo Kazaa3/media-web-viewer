@@ -836,6 +836,18 @@ def start_app():
                     eel.refreshLibrary()()
             threading.Thread(target=boot_scan_trigger, daemon=True).start()
 
+        # --- [v1.46.097] Zero-Item Auto-Recovery Scan ---
+        elif db.get_media_count() == 0:
+            def auto_recovery_trigger():
+                log.info("[Boot-Scan] DB is empty. Triggering background Auto-Recovery scan...")
+                spawn_event.wait()
+                time.sleep(2)
+                scan_media(clear_db=True)
+                log.info("[Boot-Scan] Auto-Recovery complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=auto_recovery_trigger, daemon=True).start()
+
         # --- Debug Audit Trigger (v1.34) ---
         if "--debug" in sys.argv:
             run_app_audit_detached(port)
