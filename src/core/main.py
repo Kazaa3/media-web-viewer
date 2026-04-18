@@ -3864,7 +3864,7 @@ def init_db():
 
 
 @eel.expose
-@eel.expose
+def get_library(force_raw=False, audit_stage=False, active_branch=None):
     return api_library.get_library(force_raw, audit_stage, active_branch)
 
 
