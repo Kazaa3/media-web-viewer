@@ -228,20 +228,7 @@ def get_tech_markers():
     return TECH_MARKERS
 
 
-@eel.expose
-def get_startup_info():
-    """Returns the time the backend took to boot and total duration up to this call."""
-    import time
-    # INITIAL_START_TIME is set at the very top of main.py
-    current_time = time.time()
-    boot_duration = current_time - INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else 0
-    return {
-        "boot_duration_sec": round(boot_duration, 2),
-        "pid": os.getpid(),
-        "start_time": INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else current_time,
-        "env": "diagnostic-lab",
-        "version": GLOBAL_CONFIG.get("version", "Unknown")
-    }
+# [v1.46.090] Note: get_startup_info consolidated to enhanced version at bottom.
 
 
 @eel.expose
@@ -1433,9 +1420,8 @@ def prune_ghost_items(item_ids):
 
 
 @eel.expose
-@eel.expose
 def get_startup_info():
-    """Returns dual-PID forensic info and background process registry (v1.46.089)."""
+    """Returns dual-PID forensic info, startup metrics, and background process registry (v1.46.090)."""
     global FRONTEND_PROCESS_ID
     
     # 1. Resolve Frontend PID (Heuristic: Look for Chromium children of current process)
@@ -1454,9 +1440,12 @@ def get_startup_info():
             log.warning(f"[Forensic-PID] Failed to resolve FE PID: {e}")
 
     return {
-        "pid": os.getpid(),  # Backend
-        "fe_pid": FRONTEND_PROCESS_ID or "--",
-        "boot_duration_sec": time.time() - APP_START_TIME,
+        "pid": os.getpid(),                 # Backend (Python)
+        "fe_pid": FRONTEND_PROCESS_ID or "--", # Frontend (Browser)
+        "boot_duration_sec": round(time.time() - APP_START_TIME, 2),
+        "start_time": APP_START_TIME,
+        "env": "diagnostic-lab-forensic",
+        "version": APP_VERSION_CORE,
         "os": platform.system(),
         "node": platform.node(),
         "active_processes": ACTIVE_FORENSIC_PROCESSES
