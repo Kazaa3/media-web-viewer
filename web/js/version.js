@@ -12,7 +12,7 @@ window.MWV_STABILITY = 'Pro-Options-Active';
  * syncVersion()
  * Authoritative sync from Python backend to UI (v1.41.103 Tiered SSOT).
  */
-async function syncVersion() {
+async function syncVersion(retries = 5) {
     if (typeof eel !== 'undefined' && typeof eel.get_version_info === 'function') {
         try {
             const info = await eel.get_version_info()();
@@ -25,15 +25,22 @@ async function syncVersion() {
             window.MWV_FE_VERSION = cleanVer(info.frontend);
 
             const el = document.getElementById('mwv-footer-version');
-            if (el) el.innerText = window.MWV_VERSION;
+            if (el) {
+                el.innerText = window.MWV_VERSION;
+                el.style.opacity = "1";
+                el.style.color = "var(--accent-color)";
+            }
 
-            console.group('>>> [SYSTEM] MWV Tiered Version Sync');
-            console.log(`Global App:  ${window.MWV_VERSION}`);
-            console.log(`Backend Core: ${window.MWV_BE_VERSION}`);
-            console.log(`Frontend UI:  ${window.MWV_FE_VERSION}`);
-            console.groupEnd();
+            console.log(`[SYSTEM] Tiered Version Sync Succeeded: ${window.MWV_VERSION}`);
         } catch (e) {
-            console.warn('[Version] Tiered Sync failed:', e);
+            console.warn(`[Version] Sync failed (Retries left: ${retries}):`, e);
+            if (retries > 0) {
+                setTimeout(() => syncVersion(retries - 1), 1000);
+            }
+        }
+    } else {
+        if (retries > 0) {
+            setTimeout(() => syncVersion(retries - 1), 500);
         }
     }
 }
