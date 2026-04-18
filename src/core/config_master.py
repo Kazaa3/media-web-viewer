@@ -245,7 +245,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "1.46.067"
+    VERSION = "1.46.068"
 
 # --- NETWORK & HOST CALCULATION ---
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))
@@ -763,11 +763,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
-            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"], 
-            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
-            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
-            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"],
-            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "epub", "docs", "archives", "unknown", "spiel"]
+            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"], 
+            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"],
+            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"],
+            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"],
+            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"]
         },
 
         # --- [v1.46.00] BRANCH IDENTITY & BUILD REGISTRY ---
