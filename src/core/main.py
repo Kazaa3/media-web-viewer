@@ -56,6 +56,8 @@ import traceback
 import logging
 import json
 import time
+import os
+import psutil
 
 # Verification of Package Root
 try:
@@ -79,6 +81,8 @@ dict - Desktop Media Player and Library Manager v1.41.00
 INITIAL_START_TIME = time.time()
 APP_START_TIME = INITIAL_START_TIME
 profiler = None
+ACTIVE_FORENSIC_PROCESSES = {}  # v1.46.089 PID Registry: {pid: "component_name"}
+FRONTEND_PROCESS_ID = None      # Resolved FE PID (Chromium/Electron)
 
 # --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
 
@@ -1429,6 +1433,35 @@ def prune_ghost_items(item_ids):
 
 
 @eel.expose
+@eel.expose
+def get_startup_info():
+    """Returns dual-PID forensic info and background process registry (v1.46.089)."""
+    global FRONTEND_PROCESS_ID
+    
+    # 1. Resolve Frontend PID (Heuristic: Look for Chromium children of current process)
+    if not FRONTEND_PROCESS_ID:
+        try:
+            current_process = psutil.Process(os.getpid())
+            children = current_process.children(recursive=True)
+            for child in children:
+                name = child.name().lower()
+                # Local heuristics for most browsers used with Eel
+                if any(x in name for x in ['chrome', 'chromium', 'electron', 'brave', 'opera']):
+                    FRONTEND_PROCESS_ID = child.pid
+                    log.info(f"[Forensic-PID] Resolved Frontend: {name} (PID: {FRONTEND_PROCESS_ID})")
+                    break
+        except Exception as e:
+            log.warning(f"[Forensic-PID] Failed to resolve FE PID: {e}")
+
+    return {
+        "pid": os.getpid(),  # Backend
+        "fe_pid": FRONTEND_PROCESS_ID or "--",
+        "boot_duration_sec": time.time() - APP_START_TIME,
+        "os": platform.system(),
+        "node": platform.node(),
+        "active_processes": ACTIVE_FORENSIC_PROCESSES
+    }
+
 def kill_stalled_ffmpeg_streams():
     return api_reporting.kill_stalled_ffmpeg_streams()
 
@@ -6736,6 +6769,9 @@ def stream_to_mediamtx(file_path, protocol="hls"):
         proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL, start_new_session=True)
         ACTIVE_SUBPROCESSES.append(proc)
+        
+        # [v1.46.089] Forensic PID Tracking
+        ACTIVE_FORENSIC_PROCESSES[proc.pid] = f"FFmpeg {protocol.upper()} Push ({safe_name})"
 
         # 3. Wait a tiny bit for the stream to initialize in MediaMTX
         time.sleep(0.5)
