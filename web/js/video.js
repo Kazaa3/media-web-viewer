@@ -138,6 +138,12 @@ async function playVideo(item, path, startTime = 0) {
         showToast(`<svg width="12" height="12"><use href="#icon-search"></use></svg> Analysiere Media-Routing...`, 1500);
     }
 
+    // [v1.46.042] PLAY-PULSE: Orchestration Start
+    console.warn("%c[PLAY-PULSE] Starting Video Orchestrator...", "background: #8e44ad; color: white; padding: 2px 5px;", { path: relpath });
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('PLAYER-EVENT', 'PLAY-PULSE', { path: relpath, type: 'video', action: 'orchestrate' });
+    }
+
     try {
         const info = await eel.analyze_media(relpath)();
         if (info.error) {
