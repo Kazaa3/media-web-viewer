@@ -1,7 +1,6 @@
 import os
 import time
 import sqlite3
-import logging
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, cast
 
@@ -23,7 +22,8 @@ def get_parser_config():
     from src.core.main import PARSER_CONFIG
     return PARSER_CONFIG
 
-log = logging.getLogger("api_library")
+from src.core.logger import get_logger
+log = get_logger("api_library")
 
 def apply_library_filters(all_media: List[Dict],
                           force_raw: bool = False,
@@ -169,8 +169,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
     fs_audit = {"exists": db_exists, "size": db_size, "health": db_health, "pid": pid, "path": db_path}
 
-    if audit_stage == 1:
-        return {"media": [], "db_count": 0, "status": "mock", "audit": {"stage": 1, "pid": pid}}
+    # [v1.46.057] Trap Eliminated: Real items prioritized over stage metadata.
 
     try:
         all_media = db.get_all_media()
