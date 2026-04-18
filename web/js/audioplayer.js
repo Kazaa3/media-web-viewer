@@ -233,6 +233,8 @@ function playAudio(item, startTime = 0) {
     pipeline.type = "audio/mpeg"; // Default hinting for better browser load
     pipeline.crossOrigin = "anonymous"; // Needed for Visualizer Web Audio API
     
+    console.debug(`[PLAY-PULSE] Pipeline Handshake State: Ready=${pipeline.readyState} | Network=${pipeline.networkState}`);
+    
     // Logic: Resume for audiobooks, else start at 0
     const shouldResume = item.category === 'Audiobook' || item.category === 'Hörbruch';
     pipeline.currentTime = (shouldResume && startTime > 0) ? startTime : 0;
