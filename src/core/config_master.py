@@ -580,14 +580,25 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "hydration": {
                 "mock_count": 12,
                 "auto_hydrate_enabled": True,
-                "emergency_mock_template": {
-                    "prefix": "EX-PULSE-",
-                    "suffix": "_DATA_STREAM.wav",
-                    "path_root": "media/test_files/",
-                    "artist": "System Sentinel",
-                    "album": "Hydration Guard v1.46.094",
-                    "category": "audio"
-                }
+                "emergency_mocks": [
+                    {
+                        "id": f"emergency-{i}",
+                        "name": f"EX-PULSE-{str(i).zfill(3)}_DATA_STREAM.wav",
+                        "filename": f"EX-PULSE-{str(i).zfill(3)}_DATA_STREAM.wav",
+                        "path": f"media/test_files/EX-PULSE-{str(i).zfill(3)}_DATA_STREAM.wav",
+                        "title": f"EX-PULSE-{str(i).zfill(3)} [Proof-of-Life]",
+                        "artist": "System Sentinel",
+                        "album": f"Hydration Guard {APP_VERSION}",
+                        "category": "audio",
+                        "is_mock": True,
+                        "available": True,
+                        "tags": {
+                            "title": f"EX-PULSE-{str(i).zfill(3)} [Proof-of-Life]",
+                            "artist": "System Sentinel",
+                            "album": f"Hydration Guard {APP_VERSION}"
+                        }
+                    } for i in range(1, 13)
+                ]
             },
             "watchdog": {
                 "tick_ms": 500,

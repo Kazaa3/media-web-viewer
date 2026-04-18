@@ -63,44 +63,11 @@ const ForensicHydrationBridge = {
 
         this.stage = 1;
 
-        // [v1.46.094] Centralized Template Engine
+        // [v1.46.095] Full Centralized Consumption
         const config = window.CONFIG?.technical_orchestrator?.hydration || {};
-        const mockCount = config.mock_count || 12;
-        const template = config.emergency_mock_template || {
-            prefix: "EX-PULSE-",
-            suffix: "_DATA_STREAM.wav",
-            path_root: "media/test_files/",
-            artist: "System Sentinel",
-            album: "Hydration Guard (Legacy Fallback)",
-            category: "audio"
-        };
+        const emergencyMocks = config.emergency_mocks || [];
 
-        console.warn(`[HYDRATION-BRIDGE] STAGE 1: Injecting ${mockCount} Mocks using Centralized Template...`);
-
-        const emergencyMocks = [];
-        for (let i = 1; i <= mockCount; i++) {
-            const idxStr = i.toString().padStart(3, '0');
-            const forensicID = `${template.prefix}${idxStr}`;
-            const fileName = `${forensicID}${template.suffix}`;
-            
-            emergencyMocks.push({
-                id: `emergency-${i}`,
-                name: fileName,
-                filename: fileName,
-                path: `${template.path_root}${fileName}`,
-                title: `${forensicID} [Proof-of-Life]`,
-                artist: template.artist,
-                album: template.album,
-                category: template.category,
-                is_mock: true,
-                available: true,
-                tags: {
-                    title: `${forensicID} [Proof-of-Life]`,
-                    artist: template.artist,
-                    album: template.album
-                }
-            });
-        }
+        console.warn(`[HYDRATION-BRIDGE] STAGE 1: Injecting ${emergencyMocks.length} Centralized Mocks...`);
 
         // Hydrate both states to prove rendering path
         window.allLibraryItems = emergencyMocks;
