@@ -17,6 +17,11 @@ def smart_route(file_path):
         log.warning(f"[PLAY-PULSE] Routing fallback to direct_play due to analysis error: {info['error']}")
         return {"mode": "direct_play", "info": info}
 
+    # 0. Load Configuration (v1.46.044 Integration)
+    from src.core.config_master import GLOBAL_CONFIG
+    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {}).get("video", {})
+    flags = reg.get("orchestration_flags", {})
+    
     # Analysis
     codec = info.get('codec', 'unknown')
     container = info.get('container', 'unknown')
@@ -32,27 +37,31 @@ def smart_route(file_path):
             mode = 'direct_play'
             
     # 2. MSE (H.264 / VP9 / AV1 in various containers)
-    elif resolution in ["SD", "720p", "1080p"] and bitrate < 15000:
+    mse_threshold = flags.get("mse_threshold_mbps", 15) * 1000
+    if resolution in ["SD", "720p", "1080p"] and bitrate < mse_threshold:
         if codec in ['h264', 'vp9', 'av1']:
             mode = 'mse'
             
     # 3. VLC Bridge (ISO / Heavy Containers / Atmos)
-    elif info.get('is_iso') or info.get('has_menus') or info.get('atmos') or container == 'ts':
-        mode = 'vlc_bridge'
+    if info.get('is_iso') or info.get('has_menus') or info.get('atmos') or container == 'ts':
+        if flags.get("force_vlc_for_iso", True):
+            mode = 'vlc_bridge'
         
     # 4. DASH (Experimental high-bitrate)
-    elif container == 'mpd' or (resolution == '4K' and bitrate > 30000):
+    dash_threshold = flags.get("dash_threshold_mbps", 30) * 1000
+    if container == 'mpd' or (resolution == '4K' and bitrate > dash_threshold):
         mode = 'dash'
         
     # 5. MPV WASM (Interactive / libmpv features)
-    elif info.get('is_interactive') or container == 'webm':
+    if info.get('is_interactive') or (container == 'webm' and flags.get("prefer_mpv_wasm_for_webm", True)):
         mode = 'mpv_wasm'
-
+ 
     # 6. Fallback to Native External (Ultra high-end)
-    if resolution == '4K' and bitrate > 50000:
+    mpv_native_threshold = flags.get("mpv_native_threshold_mbps", 50) * 1000
+    if resolution == '4K' and bitrate > mpv_native_threshold:
         mode = 'mpv_native'
 
-    log.info(f"[PLAY-PULSE] smart_route decision: {mode} | Codec: {codec} | Res: {resolution}")
+    log.info(f"[PLAY-PULSE] smart_route decision: {mode} | Codec: {codec} | Res: {resolution} (Config-Tuned)")
     return {
         "mode": mode,
         "info": info
