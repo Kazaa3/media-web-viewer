@@ -138,6 +138,7 @@ try:
     )
     from src.core.transcoder import TranscoderManager
     from src.core import handbrake_wrapper as handbrake
+    from src.core import api_library
     from src.core import mkv_tool_wrapper as mkv_tool
     from src.core.subtitle_processor import SubtitleProcessor
     import requests
@@ -4351,144 +4352,11 @@ def get_db_info():
         return None
 
 
-def _apply_library_filters(all_media: List[Dict],
-                           force_raw: bool = False,
-                           search: str = "",
-                           genre: str = "all",
-                           year: str = "all",
-                           active_branch: str = None) -> Tuple[List[Dict],
-                                                               Dict[str,
-                                                                    Any]]:
-    """
-    @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
-    @return Tuple of (filtered_list, audit_metadata)
-    """
-    # RAW BYPASS (v1.37.07) - Truly bypass IF force_raw is true, regardless of search unless explicitly filtered.
-    if force_raw and not search and genre == "all" and year == "all":
-        log.info("[BD-AUDIT] STAGE 0 (RAW): Bypassing all filters.")
-        return all_media, {"status": "raw_bypass", "dropped_total": 0, "stage": 0}
-
-    displayed_cats = PARSER_CONFIG.get("displayed_categories")
-    if not displayed_cats:
-        displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
-
-    allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
-
-    # [V1.45.142] ARCHITECTURAL BRANCH CONSTRAINTS
-    # Resolve which categories are strictly supported by the active branch
-    branch_registry = GLOBAL_CONFIG.get("branch_architecture_registry", {})
-    supported_by_branch = branch_registry.get(active_branch) if active_branch else None
-
-    if supported_by_branch:
-        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {str(active_branch).upper() if active_branch else 'NONE'}")
-
-    filtered = []
-
-    # [v1.46.026] Centralized Audit Template
-    from src.core.config_master import log_dropped_reasons, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS, ARCHIVE_EXTENSIONS
-    dropped_reasons = GLOBAL_CONFIG["audit_registry"]["dropped_reasons_template"].copy()
-    dropped_paths = []
-
-    for item in all_media:
-        # [MOCK-FILTER] v1.41.00 Unified Hydration Logic
-        item_is_mock = bool(item.get('is_mock', 0))
-        h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
-
-        if h_mode == 'real' and item_is_mock:
-            dropped_reasons["mock_filtered"] = dropped_reasons.get("mock_filtered", 0) + 1
-            continue
-        if h_mode == 'mock' and not item_is_mock:
-            dropped_reasons["real_filtered"] = dropped_reasons.get("real_filtered", 0) + 1
-            continue
-
-        # [BYPASS] If All is requested, we keep everything (v1.41.00 Stability)
-        if genre == "all" and "all" in displayed_cats:
-            filtered.append(item)
-            continue
-
-        # 1.0 Category Normalization (Extension-First SSOT v1.46.026)
-        # We normalize the category BEFORE any branch or search filters apply.
-        item_cat = str(item.get('category', 'unknown')).lower()
-        path = str(item.get('path', '')).lower()
-        ext = os.path.splitext(path)[1] if path else ""
-
-        # Smart Mapping: If category is unknown or legacy, use extension
-        if item_cat not in allowed_internal_cats or item_cat in ['klassik', 'musik', 'music', 'multimedia']:
-            if ext in ALL_AUDIO_EXTENSIONS or item_cat in ['klassik', 'musik', 'music']:
-                item_cat = 'audio'
-            elif ext in ALL_VIDEO_EXTENSIONS:
-                item_cat = 'video'
-            elif item_cat == 'multimedia':
-                item_cat = 'video' # Default multimedia mapping
-            
-            item['category'] = item_cat # Inject back into item for UI SSOT
-            
-        # 2.0 Architectural Branch Enforcement (v1.46.026 Audit)
-        if not force_raw and supported_by_branch:
-            # We check if the normalized category is allowed in this branch
-            if "all" not in supported_by_branch and item_cat not in supported_by_branch:
-                # Granular Stage Check (Optional legacy support)
-                item_stage = item.get('capability_stage') or item_cat
-                if item_stage not in supported_by_branch:
-                    dropped_reasons["branch_lock"] += 1
-                    dropped_paths.append(path)
-                    log.debug(f"[BRANCH-AUDIT] Dropped '{item.get('name')}' due to branch mismatch ({item_cat} not in {supported_by_branch})")
-                    continue
-
-        # 3.0 Search / Genre / Year Filters
-
-            # [Refine] 'multimedia'-> Map to 'video' (v1.41.00 Final)
-            if cat == 'multimedia':
-                cat = 'video'
-                item['category'] = 'video'  # Immediate re-map for UI consistency
-
-                # If still unknown, use multimedia as fallback instead of dropping
-                item['category'] = 'multimedia'
-                filtered.append(item)
-                continue
-
-        # 2. Search check
-        if search and search.lower() not in str(item.get('name', '')).lower():
-            dropped_reasons["search_mismatch"] += 1
-            continue
-
-        # 3. Genre check
-        item_genre = item.get('tags', {}).get('genre', '').lower()
-        if genre != "all" and genre.lower() not in item_genre:
-            dropped_reasons["genre_mismatch"] += 1
-            continue
-
-        # 4. Year check
-        item_year = str(item.get('tags', {}).get('year', ''))
-        if year != "all" and year != item_year:
-            dropped_reasons["year_mismatch"] += 1
-            continue
-
-        filtered.append(item)
-
-    audit_meta = {
-        "status": "filtered",
-        "kept": len(filtered),
-        "dropped_total": sum(dropped_reasons.values()),
-        "dropped_reasons": dropped_reasons,
-        "allowed_cats": allowed_internal_cats
-    }
-
-    # [v1.46.026] Centralized Forensic Logging
-    log_dropped_reasons(dropped_reasons, f"Library Filter ({active_branch or 'ALL'})", sample_paths=dropped_paths)
-
-    if not filtered and all_media:
-        log.critical(
-            f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_media)}). Audit: {audit_meta}")
-        return all_media, {"status": "emergency_raw", "dropped_total": 0, "stage": 0, "audit": audit_meta}
-
-    log.info(f"[BD-AUDIT] Filter complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
-    return filtered, audit_meta
+from src.core import api_library
 
 
 @eel.expose
 def get_library_forensics():
-    """
     @brief Unified Forensic Bridge (v1.41.00).
     @details Fixes 'Audit Bridge Fault' by ensuring full object integrity.
     """
@@ -4539,7 +4407,9 @@ def init_db():
 
 
 @eel.expose
-def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
+@eel.expose
+def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None):
+    return api_library.get_library(force_raw, audit_stage, active_branch)
     """
     @brief Unified library bridge with integrated forensics (v1.35.96)
     """
@@ -4759,61 +4629,16 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
 @eel.expose
 def sync_playback_state(payload: Dict[str, Any]) -> bool:
-    """
-    @brief Synchronizes the technical playback state from the GUI to the backend.
-    @details Forensic v1.46.026: Populates SHARED_PLAYBACK_STATE for logging and persistence.
-    """
-    from src.core import config_master
-    try:
-        config_master.SHARED_PLAYBACK_STATE.update({
-            "queue_count": payload.get("queueCount", 0),
-            "active_index": payload.get("index", -1),
-            "active_path": payload.get("path"),
-            "last_update": time.time()
-        })
-        log.info(f"[STATE-TRACE] Playback Context Updated: Items={payload.get('queueCount')} | Active={payload.get('path')}")
-        return True
-    except Exception as e:
-        log.error(f"[STATE-TRACE] Synchronization Error: {e}")
-        return False
-
-
-@eel.expose
-def get_library_audit_summary() -> Dict[str, Any]:
-    """Provides a breakdown of item counts at each stage of hydration (541 -> 527 -> X)."""
-    from src.core import db
-    all_media = db.get_all_media()
-    total = len(all_media)
-
-    # Calculate Stages explicitly for the audit
-    cat_filtered, cat_audit = _apply_library_filters(all_media, force_raw=True)
-    full_filtered, full_audit = _apply_library_filters(all_media, force_raw=False)
-
-    return {
-        "stages": {
-            "0_db_raw": total,
-            "1_ssot_norm": total,  # Current SSOT level includes everything if force_raw
-            "2_cat_mapped": len(cat_filtered),
-            "3_production": len(full_filtered)
-        },
-        "dropped_reasons": full_audit.get("dropped_reasons", {}),
-        "allowed_cats": full_audit.get("allowed_cats", [])
-    }
+    return api_library.sync_playback_state(payload)
 
 
 @eel.expose
 def force_sync_all():
-    """
-    @brief Emergency recovery function to bypass all filters and sync EVERYTHING to the UI.
-    """
-    from src.core import db
-    log.warning("[RECOVERY] FORCE SYNC ALL triggered. Bypassing all filters (RAW MODE).")
-    all_media = db.get_all_media()
-    return {
-        "media": all_media,
-        "db_count": len(all_media),
-        "status": "raw-recovery"
-    }
+    return api_library.force_sync_all()
+
+@eel.expose
+def get_library_audit_summary():
+    return api_library.get_library_audit_summary()
 
 
 @eel.expose
