@@ -246,38 +246,66 @@ def get_startup_report():
 
 
 @eel.expose
-def get_frontend_forensics():
+def get_system_forensics():
     """
-    Forensic probing of the frontend process environment (v1.46.081).
-    Attempts to locate the specific browser process serving the UI.
+    Global system forensics (v1.46.082).
+    Attempts to identify the frontend PID and any active media subordinates (FFmpeg, VLC, etc.).
     """
     import psutil
     import os
 
     be_pid = os.getpid()
-    browser_info = {
-        "be_pid": be_pid,
-        "fe_pid": "N/A",
-        "browser_type": "Discovery..."
+    forensics = {
+        "be": {"pid": be_pid},
+        "fe": {"pid": "N/A", "type": "Discovery..."},
+        "tools": {}  # Format: { "tool": [pids] }
     }
 
     try:
-        parent = psutil.Process(be_pid)
-        # Scan children recursively for browser signatures
-        for child in parent.children(recursive=True):
-            try:
-                name = child.name().lower()
-                # Common browser binary patterns
-                if any(b in name for b in ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]):
-                    browser_info["fe_pid"] = child.pid
-                    browser_info["browser_type"] = child.name()
-                    break
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-    except Exception as e:
-        log.error(f"[Forensics] Browser probe failed: {e}")
+        # Scanned tool targets
+        targets = ['ffmpeg', 'ffplay', 'ffprobe', 'vlc', 'mediainfo', 'mkvmerge']
         
-    return browser_info
+        # 1. Direct Child Scan (Fast path for most tools and browser)
+        try:
+            parent = psutil.Process(be_pid)
+            for child in parent.children(recursive=True):
+                try:
+                    name = child.name().lower()
+                    pid = child.pid
+                    
+                    # Browser check
+                    if any(b in name for b in ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]):
+                        if forensics["fe"]["pid"] == "N/A":
+                            forensics["fe"]["pid"] = pid
+                            forensics["fe"]["type"] = child.name()
+
+                    # Tool check
+                    for t in targets:
+                        if t in name:
+                            if t not in forensics["tools"]: forensics["tools"][t] = []
+                            forensics["tools"][t].append(pid)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+        except: pass
+
+        # 2. Global Scan Fallback (For detached tools like VLC)
+        if not forensics["tools"] or forensics["fe"]["pid"] == "N/A":
+             for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    name = proc.info['name'].lower()
+                    pid = proc.info['pid']
+                    for t in targets:
+                        if t in name:
+                            if t not in forensics["tools"]: forensics["tools"][t] = []
+                            if pid not in forensics["tools"][t]:
+                                forensics["tools"][t].append(pid)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+    except Exception as e:
+        log.error(f"[Forensics] Global system scan failed: {e}")
+        
+    return forensics
 
 
 @eel.expose

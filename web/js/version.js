@@ -33,17 +33,28 @@ async function syncVersion(retries = 5) {
 
             console.log(`[SYSTEM] Tiered Version Sync Succeeded: ${window.MWV_VERSION}`);
 
-            // [v1.46.081] FE Forensics (PID & Browser Identity)
-            if (typeof eel.get_frontend_forensics === 'function') {
+            // [v1.46.082] Global System Forensics (FE & BE)
+            if (typeof eel.get_system_forensics === 'function') {
                 try {
-                    const feInfo = await eel.get_frontend_forensics()();
+                    const forensics = await eel.get_system_forensics()();
+                    
+                    // Update FE HUD (Browser Identity)
                     const hudFe = document.getElementById('hud-fe');
                     if (hudFe) {
-                        const browserStr = feInfo.browser_type !== "Discovery..." ? feInfo.browser_type : "N/A";
-                        hudFe.setAttribute('data-hud-metrics', `[FRONTEND FORENSICS] PID: ${feInfo.fe_pid} | Browser: ${browserStr}`);
+                        const browserStr = forensics.fe.type !== "Discovery..." ? forensics.fe.type : "N/A";
+                        hudFe.setAttribute('data-hud-metrics', `[FRONTEND FORENSICS] PID: ${forensics.fe.pid} | Browser: ${browserStr}`);
                     }
-                } catch (feErr) {
-                    console.warn('[Forensics] FE Probe failed:', feErr);
+
+                    // Update BE HUD (Active Media Tools: FFmpeg, VLC, etc.)
+                    const hudBe = document.getElementById('hud-be');
+                    if (hudBe) {
+                        const activeTools = Object.keys(forensics.tools)
+                            .map(t => `${t.toUpperCase()}(PID:${forensics.tools[t].join(',')})`)
+                            .join(', ') || "NONE";
+                        hudBe.setAttribute('data-hud-metrics', `[BACKEND FORENSICS] PID: ${forensics.be.pid} | ACTIVE: ${activeTools}`);
+                    }
+                } catch (err) {
+                    console.warn('[Forensics] System Probe failed:', err);
                 }
             }
         } catch (e) {
