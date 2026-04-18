@@ -505,16 +505,7 @@ function isImageItem(item) {
 
     return false;
 }
-if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
-if (item.duration && !item.fps && !isPhotoItem(item) && !isVideoItem(item)) return true;
 
-// [v1.46.026] Unknown items defaulting to Audio for visibility
-const isVid = isVideoItem(item);
-const isPic = isPhotoItem(item);
-if (!isVid && !isPic && path) return true;
-
-return false;
-}
 
 /**
  * [v1.46.023] Forensic Photo Detection
