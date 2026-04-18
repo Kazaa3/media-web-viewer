@@ -345,11 +345,18 @@ window.MWV_UI = (() => {
      * Syncs sidebar classes and splitter visibility.
      */
     function syncSidebar() {
-        document.body.classList.toggle('mwv-sidebar-collapsed', !registry.sidebarVisible);
+        // [v1.46.076] Adaptive Sidebar Logic
+        // Collapse global sidebar if module-specific sidebars (like Library Sidebar) are detected as visible.
+        const libSidebar = document.getElementById('lib-sidebar-left');
+        const isModuleSidebarVisible = libSidebar && (libSidebar.style.display !== 'none' && !libSidebar.classList.contains('mwv-flag-hidden'));
+        
+        const forceCollapse = isModuleSidebarVisible || !registry.sidebarVisible;
+        
+        document.body.classList.toggle('mwv-sidebar-collapsed', forceCollapse);
         
         // Update toggle icons
         const headerToggle = document.getElementById('header-btn-sidebar-toggle');
-        if (headerToggle) headerToggle.classList.toggle('active', registry.sidebarVisible);
+        if (headerToggle) headerToggle.classList.toggle('active', !forceCollapse);
     }
 
     /**

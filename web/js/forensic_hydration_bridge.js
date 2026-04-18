@@ -1,5 +1,5 @@
 /**
- * Forensic Hydration Bridge (v1.46.001)
+ * Forensic Hydration Bridge (v1.46.076)
  * Orchestrates the mandatory 0 -> 12 -> Real hydration handshake.
  * Proves rendering health via specific emergency mock stages.
  */
@@ -13,7 +13,7 @@ const ForensicHydrationBridge = {
      * Initializes the bridge and monitors the boot state.
      */
     init() {
-        console.log("%c[HYDRATION-BRIDGE] ARMED. Version v1.46.001", "color: #ff9500; font-weight: 900;");
+        console.log("%c[HYDRATION-BRIDGE] ARMED. Version v1.46.076", "color: #ff9500; font-weight: 900;");
         this.auditLoop();
     },
 
@@ -123,6 +123,7 @@ const ForensicHydrationBridge = {
                 const typedItems = stage.items.map(item => ({
                     ...item,
                     is_diag: true,
+                    is_mock: false, // Force real status for diagnostic samples
                     stage_id: stage.id,
                     stage_name: stage.name
                 }));
