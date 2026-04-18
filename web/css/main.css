@@ -2204,6 +2204,13 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     border-color: rgba(46, 204, 113, 0.3);
 }
 
+.provenance-badge.diag {
+    background: rgba(255, 149, 0, 0.1); /* Orange for Diagnostic */
+    color: #ff9500;
+    border-color: rgba(255, 149, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.2);
+}
+
 .provenance-badge.video {
     background: rgba(255, 59, 48, 0.1);
     color: #ff3b30;
