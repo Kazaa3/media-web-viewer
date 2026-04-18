@@ -601,9 +601,20 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     const footerAnchor = document.getElementById('footer-sync-anchor');
     if (footerAnchor) {
         footerAnchor.innerText = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
-        const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
+        const finalDbParsed = parseInt(finalDb) || 0;
+        const finalGuiParsed = parseInt(finalGui) || 0;
+        // [v1.46.058] Forensic Parity: Match Green, Mismatch Yellow (Gelb)
+        const isParity = (finalDb !== '--' && finalGui !== '--' && finalDbParsed === finalGuiParsed && finalDbParsed > 0);
+        
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
+        
+        // Pulse Effect if items are 0 to draw attention to the yellow warning
+        if (!isParity && finalDbParsed > 0) {
+            footerAnchor.classList.add('pulse-yellow-warning');
+        } else {
+            footerAnchor.classList.remove('pulse-yellow-warning');
+        }
 
         // [v1.46.015] Manual Sync Trigger
         if (!footerAnchor.onclick) {

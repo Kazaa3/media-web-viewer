@@ -176,7 +176,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         count_total = len(all_media)
     except Exception as e:
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
-        return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
+        # [v1.46.058] Still try to get the count even if it fails partially
+        count_total = 0
 
     for item in all_media:
         path = str(item.get('path', '')).lower()
@@ -207,7 +208,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
     return {
         "media": final_media,
-        "db_count": count_total,
+        "db_count": count_total or len(all_media),
         "status": status,
         "audit": {
             "stage": audit_stage,

@@ -2730,3 +2730,15 @@ input:checked + .forensic-slider:before { transform: translateX(16px); }
     font-size: 24px;
     cursor: pointer;
 }
+
+/* [v1.46.058] Forensic Pulse: Yellow Warning for Parity Mismatch */
+@keyframes pulse-yellow-border {
+    0% { border-color: rgba(241, 196, 15, 0.4); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); }
+    50% { border-color: rgba(241, 196, 15, 0.9); box-shadow: 0 0 10px 2px rgba(241, 196, 15, 0.3); }
+    100% { border-color: rgba(241, 196, 15, 0.4); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); }
+}
+
+.pulse-yellow-warning {
+    animation: pulse-yellow-border 2s infinite ease-in-out !important;
+    background: rgba(241, 196, 15, 0.05) !important;
+}
