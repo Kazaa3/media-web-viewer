@@ -158,6 +158,12 @@ function updateVideoModes() {
 function orchestrateVideoPlaybackMode() {
     const dndPanel = document.getElementById('orchestrator-ingress-drag-drop-buffer');
     const embedded = document.getElementById('coordinated-media-renderer-pipeline-viewport');
+    
+    console.warn("%c[PLAY-PULSE] Orchestrating UI Transition: Embedded Playback Active", "background: #27ae60; color: white; padding: 2px 5px;");
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('PLAYER-EVENT', 'ORCHESTRATOR-TRANSITION', { target: 'embedded-viewport', path: window.currentVideoPath });
+    }
+
     if (dndPanel) dndPanel.style.display = 'none';
     if (embedded) embedded.style.display = 'flex';
 }
