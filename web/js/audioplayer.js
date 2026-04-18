@@ -597,18 +597,21 @@ function renderAudioQueue() {
 
                 div.onclick = () => {
                     if (typeof playMediaObject === 'function') playMediaObject(item, index);
-            // [v1.46.024] Atomic Clear is now centrally managed by syncQueueWithLibrary().
-            const beforeCount = list.childElementCount;
-            list.appendChild(fragment);
-            const afterCount = list.childElementCount;
+                };
+
+                fragment.appendChild(div);
+            });
+
+            // --- THE CRITICAL RESTORATION (v1.46.026) ---
+            list.innerHTML = ''; // Atomic Clear
+            list.appendChild(fragment); // Atomic Injection
             
-            console.info(`[Audit-Pulse] Audio Renderer: ${beforeCount} -> ${afterCount} items (Target: ${list.id})`);
-            console.debug(`[Queue-UI] Successfully injected ${activeList.length} items to ${list.id}`);
+            console.log(`[RENDER-STEP] Injection Success: ${activeList.length} items to ${list.id}`);
         }
     });
 
     const renderTime = performance.now() - renderStart;
-    console.log(`[Queue-UI] renderAudioQueue completed in ${renderTime.toFixed(2)}ms`); // v1.41.00 Final closing block
+    console.log(`[Queue-UI] renderAudioQueue completed in ${renderTime.toFixed(2)}ms`); 
 }
 
 /**
