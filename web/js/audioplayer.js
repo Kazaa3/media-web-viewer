@@ -102,6 +102,27 @@ function initAudioPipeline() {
         updatePlaybackProgress();
     };
 
+    // [v1.46.026] Forensic Playback Diagnostics
+    pipeline.onwaiting = () => console.warn("[PLAYBACK-DIAG] Pipeline is WAITING for data...");
+    pipeline.onstalled = () => console.error("[PLAYBACK-DIAG] Pipeline STALLED (Network/Buffer Issue).");
+    
+    pipeline.onerror = () => {
+        const err = pipeline.error;
+        const errMsg = err ? `Code ${err.code}: ${err.message}` : "Unknown Stream Error";
+        let detailedReason = "Unknown forensic failure.";
+        
+        switch(err?.code) {
+            case 1: detailedReason = "MEDIA_ERR_ABORTED (Playback stopped by user)"; break;
+            case 2: detailedReason = "MEDIA_ERR_NETWORK (Connection lost)"; break;
+            case 3: detailedReason = "MEDIA_ERR_DECODE (File might be corrupt)"; break;
+            case 4: detailedReason = "MEDIA_ERR_SRC_NOT_SUPPORTED (Codec/Format Mismatch)"; break;
+        }
+        
+        console.error(`>>> [PLAY-TRACE] CRITICAL FAILURE: ${errMsg} | ${detailedReason}`);
+        mwv_trace('PLAYER-EVENT', 'PLAYBACK-CRITICAL', { code: err?.code, reason: detailedReason });
+        if (typeof showToast === 'function') showToast(`Playback Failed: ${detailedReason}`, "error");
+    };
+
     const slider = document.getElementById('global-seek-slider');
     if (slider) {
         slider.oninput = () => {
