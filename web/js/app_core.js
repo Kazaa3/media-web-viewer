@@ -446,6 +446,12 @@ window.addEventListener('DOMContentLoaded', async () => {
             window.GLOBAL_CONFIG = config;
             window.CONFIG = config; // Ensure legacy/standard references are also updated (v1.45.310 Sync)
 
+            // [v1.46.067] Dynamic Identity Sync: Remove hardcoded ghost versions
+            if (config.version) {
+                document.body.setAttribute('data-mwv-version', config.version);
+                console.info(`[ORCHESTRATOR] System Identity Sync: ${config.version}`);
+            }
+
             // [v1.43] MASTER GEOMETRY SYNC
             syncUiGeometry(config);
 
