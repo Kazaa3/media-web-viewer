@@ -4390,57 +4390,36 @@ def _apply_library_filters(all_media: List[Dict],
             filtered.append(item)
             continue
 
-        # 1.0 Branch / Category check (Bypass logic v1.37.07)
-        if not force_raw:
-            item_cat = str(item.get('category', 'unknown')).lower()
+        # 1.0 Category Normalization (Extension-First SSOT v1.46.026)
+        # We normalize the category BEFORE any branch or search filters apply.
+        item_cat = str(item.get('category', 'unknown')).lower()
+        path = str(item.get('path', '')).lower()
+        ext = os.path.splitext(path)[1] if path else ""
+
+        # Smart Mapping: If category is unknown or legacy, use extension
+        if item_cat not in allowed_internal_cats or item_cat in ['klassik', 'musik', 'music', 'multimedia']:
+            if ext in ALL_AUDIO_EXTENSIONS or item_cat in ['klassik', 'musik', 'music']:
+                item_cat = 'audio'
+            elif ext in ALL_VIDEO_EXTENSIONS:
+                item_cat = 'video'
+            elif item_cat == 'multimedia':
+                item_cat = 'video' # Default multimedia mapping
             
-            # [Branch Integrity Audit]
-            if supported_by_branch and item_cat not in supported_by_branch:
-                if item_cat != 'all': 
+            item['category'] = item_cat # Inject back into item for UI SSOT
+            
+        # 2.0 Architectural Branch Enforcement (v1.46.026 Audit)
+        if not force_raw and supported_by_branch:
+            # We check if the normalized category is allowed in this branch
+            if "all" not in supported_by_branch and item_cat not in supported_by_branch:
+                # Granular Stage Check (Optional legacy support)
+                item_stage = item.get('capability_stage') or item_cat
+                if item_stage not in supported_by_branch:
                     dropped_reasons["branch_lock"] += 1
-                    dropped_paths.append(item.get('path', 'unknown'))
+                    dropped_paths.append(path)
+                    log.debug(f"[BRANCH-AUDIT] Dropped '{item.get('name')}' due to branch mismatch ({item_cat} not in {supported_by_branch})")
                     continue
-            cat = str(item.get('category', 'Unbekannt')).lower()
 
-            # [v1.46.004] LEGACY CATEGORY RECOVERY
-            # Map legacy types (e.g. 'klassik') to standard branches BEFORE enforcement
-            if cat not in allowed_internal_cats or cat in ['klassik', 'musik', 'music']:
-                ext = os.path.splitext(str(item.get('path', '')))[1].lower()
-                if ext in AUDIO_EXTENSIONS or cat in ['klassik', 'musik', 'music']:
-                    cat = 'audio'
-                    item['category'] = 'audio'
-                elif ext in VIDEO_EXTENSIONS:
-                    cat = 'video'
-                    item['category'] = 'video'
-
-            # [V1.45.142] ARCHITECTURAL BRANCH ENFORCEMENT
-            # If a branch is active, we check if this item's capability is supported.
-            if supported_by_branch and "all" not in supported_by_branch:
-                # We check both the canonical category (e.g. 'audio') and granular stages (e.g. 'audio_native')
-                # For now, we perform a smart-match.
-                # If cat is 'audio', we try to see if 'audio_native' or 'audio_transcode' are in supported_by_branch.
-
-                # Check for granular match first (if item has it)
-                item_stage = item.get('capability_stage') or cat
-
-                is_supported = (cat in supported_by_branch) or (item_stage in supported_by_branch)
-
-                # Special logic for category groups (smart-match)
-                if not is_supported:
-                    if cat == 'audio':
-                        is_supported = 'audio_native' in supported_by_branch or 'audio_transcode' in supported_by_branch
-                    elif cat == 'video':
-                        is_supported = any(
-                            v in supported_by_branch for v in [
-                                'video_native', 'video_hd', 'video_pal', 'video_iso'])
-                    elif cat in ['pictures', 'bilder']:
-                        is_supported = 'bilder' in supported_by_branch or 'pictures' in supported_by_branch
-                    elif cat in ['ebooks', 'epub']:
-                        is_supported = 'epub' in supported_by_branch or 'ebooks' in supported_by_branch
-
-                if not is_supported:
-                    dropped_reasons["branch_mismatch"] = dropped_reasons.get("branch_mismatch", 0) + 1
-                    continue
+        # 3.0 Search / Genre / Year Filters
 
             # [Refine] 'multimedia'-> Map to 'video' (v1.41.00 Final)
             if cat == 'multimedia':
@@ -4694,12 +4673,12 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         final_media = [
             {
                 "id": "recovery-1", "name": "[RECOVERY] Database Connection Error?", "artist": "System", "album": "Hydration Guard",
-                "category": "audio", "path": "", "is_mock": True, "available": False, "is_recovery": True,
+                "category": "audio", "path": "/media/mock/diag.mp3", "is_mock": True, "available": False, "is_recovery": True,
                 "tags": {"title": "DB DISCONNECT / 0 ITEMS", "artist": "Forensic Unit"}
             },
             {
                 "id": "recovery-2", "name": "[RECOVERY] Check active_branch settings", "artist": "System", "album": "Hydration Guard",
-                "category": "audio", "path": "", "is_mock": True, "available": False, "is_recovery": True,
+                "category": "audio", "path": "/media/mock/diag.mp3", "is_mock": True, "available": False, "is_recovery": True,
                 "tags": {"title": "BRANCH FILTER COLLISION?", "artist": "Forensic Unit"}
             }
         ]
