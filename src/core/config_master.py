@@ -364,7 +364,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "prefer_vlc_for_menus": True,   # [v1.46.045] ISO Hardening
                 "enable_3d_detection": True,    # [v1.46.045] 3D Routing
                 
-                # --- [v1.46.049] Granular Steering Matrix ---
+                # --- [v1.46.049/051] Master Steering Matrix ---
+                "frequency_steering": {
+                    "pal_50hz": "auto",    # Master Profile for PAL/50Hz content
+                    "ntsc_60hz": "auto"     # Master Profile for NTSC/60Hz content
+                },
                 "codec_steering": {
                     "h264": "auto",       # OPTIONS: "auto", "direct", "mse", "hls"
                     "hevc": "auto",       # H.265 mandatory HEVC guard still applies
