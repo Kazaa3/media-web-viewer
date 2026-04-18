@@ -732,6 +732,14 @@ function setHydrationMode(mode) {
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
 
+    // 1. Sync Backend
+    if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
+        console.debug(`[Hydration] Syncing backend...`);
+        eel.set_hydration_mode(mode)(() => {
+            console.info(`[Hydration] Backend ACK received.`);
+        });
+    }
+
     if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
 
     if (typeof showToast === 'function') showToast(`HYDRATION: ${mode.toUpperCase()}`, 1000);
