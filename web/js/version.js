@@ -38,11 +38,11 @@ async function syncVersion(retries = 5) {
                 try {
                     const forensics = await eel.get_system_forensics()();
                     
-                    // Update FE HUD (Browser Identity)
                     const hudFe = document.getElementById('hud-fe');
                     if (hudFe) {
-                        const browserStr = forensics.fe.type !== "Discovery..." ? forensics.fe.type : "N/A";
-                        hudFe.setAttribute('data-hud-metrics', `[FRONTEND FORENSICS] PID: ${forensics.fe.pid} | Browser: ${browserStr}`);
+                        const browserStr = (forensics.fe && forensics.fe.type !== "Scanning...") ? forensics.fe.type : "N/A";
+                        const fePid = (forensics.fe && forensics.fe.pid !== "N/A") ? forensics.fe.pid : "PROBING...";
+                        hudFe.setAttribute('data-hud-metrics', `[FRONTEND FORENSICS] PID: ${fePid} | Browser: ${browserStr}`);
                     }
 
                     // Update BE HUD (Active Media Tools: FFmpeg, VLC, etc.)

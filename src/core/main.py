@@ -248,8 +248,8 @@ def get_startup_report():
 @eel.expose
 def get_system_forensics():
     """
-    Global system forensics (v1.46.082).
-    Attempts to identify the frontend PID and any active media subordinates (FFmpeg, VLC, etc.).
+    Global system forensics (v1.46.084).
+    Enforces PID differentiation and aggressive browser discovery.
     """
     import psutil
     import os
@@ -257,24 +257,26 @@ def get_system_forensics():
     be_pid = os.getpid()
     forensics = {
         "be": {"pid": be_pid},
-        "fe": {"pid": "N/A", "type": "Discovery..."},
-        "tools": {}  # Format: { "tool": [pids] }
+        "fe": {"pid": "N/A", "type": "Scanning..."},
+        "tools": {}
     }
 
     try:
-        # Scanned tool targets
         targets = ['ffmpeg', 'ffplay', 'ffprobe', 'vlc', 'mediainfo', 'mkvmerge']
+        browser_sigs = ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]
         
-        # 1. Direct Child Scan (Fast path for most tools and browser)
+        # 1. Recursive Child Scan (PID differentiation enforced)
         try:
             parent = psutil.Process(be_pid)
             for child in parent.children(recursive=True):
                 try:
-                    name = child.name().lower()
                     pid = child.pid
+                    if pid == be_pid: continue # Absolute Guard
+                    
+                    name = child.name().lower()
                     
                     # Browser check
-                    if any(b in name for b in ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]):
+                    if any(b in name for b in browser_sigs):
                         if forensics["fe"]["pid"] == "N/A":
                             forensics["fe"]["pid"] = pid
                             forensics["fe"]["type"] = child.name()
@@ -288,12 +290,26 @@ def get_system_forensics():
                     continue
         except: pass
 
-        # 2. Global Scan Fallback (For detached tools like VLC)
-        if not forensics["tools"] or forensics["fe"]["pid"] == "N/A":
-             for proc in psutil.process_iter(['pid', 'name']):
+        # 2. Aggressive Global Scan (For detached browsers and tools)
+        if forensics["fe"]["pid"] == "N/A" or not forensics["tools"]:
+             potential_browsers = []
+             
+             for proc in psutil.process_iter(['pid', 'name', 'create_time']):
                 try:
-                    name = proc.info['name'].lower()
                     pid = proc.info['pid']
+                    if pid == be_pid: continue # Absolute Guard
+                    
+                    name = proc.info['name'].lower()
+                    
+                    # Global Browser Detection
+                    if any(b in name for b in browser_sigs):
+                        potential_browsers.append({
+                            "pid": pid,
+                            "type": proc.info['name'],
+                            "time": proc.info['create_time']
+                        })
+
+                    # Global Tool Detection
                     for t in targets:
                         if t in name:
                             if t not in forensics["tools"]: forensics["tools"][t] = []
@@ -301,6 +317,12 @@ def get_system_forensics():
                                 forensics["tools"][t].append(pid)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
+             
+             # Pick the youngest browser (likely the one just opened by Eel)
+             if potential_browsers and forensics["fe"]["pid"] == "N/A":
+                 potential_browsers.sort(key=lambda x: x["time"], reverse=True)
+                 forensics["fe"]["pid"] = potential_browsers[0]["pid"]
+                 forensics["fe"]["type"] = potential_browsers[0]["type"]
 
     except Exception as e:
         log.error(f"[Forensics] Global system scan failed: {e}")
