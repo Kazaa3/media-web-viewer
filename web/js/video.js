@@ -157,7 +157,8 @@ async function playVideo(item, path, startTime = 0) {
         // Resolve final play source
         const source = await eel.get_play_source(relpath)();
         
-        if (source.mode === 'direct' || source.mode === 'transcode' || source.mode === 'hls') {
+        // --- Unified Orchestrator Bridge (v1.46.043) ---
+        if (source.mode === 'direct' || source.mode === 'direct_play' || source.mode === 'transcode' || source.mode === 'hls' || source.mode === 'mse') {
             if (typeof switchTab === 'function') {
                 switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
             }
@@ -167,10 +168,22 @@ async function playVideo(item, path, startTime = 0) {
             const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
             
             startEmbeddedVideo(item, source.url, startTime, mimeType, d_sec);
+        } else if (source.mode === 'mpv_wasm') {
+            if (typeof switchTab === 'function') switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+            if (typeof selectEngine === 'function') selectEngine('pyplayer'); // Logic: Map WASM to specialized internal engine
+            
+            console.log("[PLAY-PULSE] Triggering MPV WASM Engine for:", relpath);
+            if (window.mpvPlayer) {
+                window.mpvPlayer.play(source.url || path);
+            }
         } else if (source.mode === 'vlc') {
             if (typeof switchTab === 'function') switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
             if (typeof selectEngine === 'function') selectEngine('vlc');
             if (typeof startVLC === 'function') startVLC(source.path || path);
+        } else if (source.mode === 'mpv') {
+            if (typeof switchTab === 'function') switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+            if (typeof selectEngine === 'function') selectEngine('mpv');
+            // MPV Native helper from main.py is called via eel inside handlers
         } else if (source.mode === 'error') {
             showPlaybackError("Routing Fehler", source.message || "Fehler beim Routing", { path: relpath });
         }
