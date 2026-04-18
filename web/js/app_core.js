@@ -305,9 +305,19 @@ function play(item, path, startTime = 0) {
 function playMediaObject(item) {
     if (!item) return;
 
-    const isVideo = isVideoItem(item);
+    const activeTab = document.body.getAttribute('data-mwv-tab') || 'player';
+
     if (isVideo) {
         console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);
+        
+        // [v1.46.088] Adaptive routing: if already on video tab, fire immediately
+        if (activeTab === 'video') {
+            if (typeof playVideo === 'function') {
+                playVideo(item, item.path);
+            }
+            return;
+        }
+
         if (typeof switchTab === 'function') {
             switchTab('video', null, () => {
                 if (typeof playVideo === 'function') {
@@ -323,6 +333,17 @@ function playMediaObject(item) {
         // [v1.46.087] Non-blocking queue injection
         addToQueue(item, true); // silent=true
         
+        // [v1.46.088] Adaptive routing: avoid destructive reload if already on player
+        if (activeTab === 'player') {
+            console.debug("[Play-Routing] Already on Player tab. Direct fire playback.");
+            if (typeof playAudio === 'function') {
+                playAudio(item);
+            } else {
+                console.error("[Play-Routing] Critical: playAudio() not found.");
+            }
+            return;
+        }
+
         if (typeof switchTab === 'function') {
             switchTab('player', null, () => {
                 console.debug("[Play-Routing] App Context Switched. Executing playAudio...");

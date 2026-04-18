@@ -641,7 +641,7 @@ function renderAudioQueue() {
                 const isAvailable = item.available !== false;
                 
                 div.innerHTML = `
-                    <div style="display: flex; align-items: center; width: 100%; pointer-events: none; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
+                    <div style="display: flex; align-items: center; width: 100%; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
                         <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover;">
                         <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
                             <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center;">
