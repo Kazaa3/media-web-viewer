@@ -430,6 +430,7 @@ function changeQueueFilter(filter) {
  * Renders the audio-only portion of the unified global queue.
  */
 function renderAudioQueue() {
+    const renderStart = performance.now();
     // [v1.46.022] Technical Pulse Governance
     if (window.CONFIG && window.CONFIG.render_audio_queue_enabled === false) {
         console.warn("[Pulse] renderAudioQueue blocked by GLOBAL_CONFIG.");
@@ -666,8 +667,6 @@ function renderPhotoQueue() {
         return;
     }
 
-    function renderAudioQueue() {
-    const renderStart = performance.now();
     const containers = [
         document.getElementById('active-queue-list-render-target-warteschlange'),
         document.getElementById('player-active-queue-list')
