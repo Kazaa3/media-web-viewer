@@ -307,6 +307,26 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "audit_stage": 0                # Current forensic stage (0=Raw, 1=Mock, 2=Sync)
     },
 
+    # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
+    "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
+    "unicode_safety_mode": False,   # If True, strips/tags emojis
+    "unicode_safety_map": {
+        "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 
+        "⚠️": "[WARNING]", "🚀": "[STARTUP]", "⚡": "[ACTIVE]"
+    },
+
+    # System & Ports
+    "port": APP_PORT,
+    "vlc_port": int(os.environ.get("MWV_VLC_PORT", 8080)),
+    "mtx_port": int(os.environ.get("MWV_MTX_PORT", 8888)),
+    "debug_mode": get_env_bool("MWV_DEBUG", True),
+    "db_filename": str(SELECTED_DB_PATH),
+    "docker_mode": get_env_bool("MWV_DOCKER", False),
+    "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
+    "installed_packages": {},
+    "enable_collection_management": True, # GLOBAL: Automatische Ordner-Gruppierung.
+    "enable_nfo_parsing": True,          # GLOBAL: XML-Extraktion aus .nfo Dateien.
+
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
