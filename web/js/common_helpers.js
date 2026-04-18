@@ -425,9 +425,11 @@ function isVideoItem(item) {
 
     // 1. [v1.46.087] AUDIO GUARD: If it matches an audio extension, it is NEVER a video.
     // This prevents "multimedia" category from misrouting mp3s to the video player.
-    if (ext && audioExtensions.includes(ext)) {
-        return false;
-    }
+    const isActuallyAudio = ext && audioExtensions.includes(ext);
+    if (isActuallyAudio) return false;
+
+    // 1.5 [v1.46.096] IMAGE GUARD: If it matches an image extension, it is NEVER a video.
+    if (isImageItem(item)) return false;
 
     // 2. Strict Video Extension Match (v1.46.092: Added ISO/IMG)
     if (ext && videoExtensions.includes(ext)) return true;
@@ -458,13 +460,16 @@ function isAudioItem(item) {
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
 
+    // [v1.46.096] Hardened Extension Match
+    const hasAudioExt = ext && audioExtensions.includes(ext);
+
     // [v1.46.026] Forensic Logging
     if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
     if (window.__mwv_audio_log_count < 10) {
-        console.debug(`[FE-AUDIT] Extension Match: ${item.name} | Ext: ${ext} | Result: AUDIO`);
+        console.debug(`[FE-AUDIT] Extension Match: ${item.name} | Ext: ${ext} | Result: ${hasAudioExt ? 'AUDIO' : 'NO'}`);
         window.__mwv_audio_log_count++;
     }
-    if (extMatch) return true;
+    if (hasAudioExt) return true;
 
 // 2. Category Matching
 const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
@@ -478,6 +483,28 @@ if (audioCategories.includes(cat)) {
 }
 
 // Forensic signature fallbacks
+    if (path.includes("_DATA_STREAM") && !path.includes(".mp4")) return true;
+
+    return false;
+}
+
+/**
+ * [v1.46.096] Forensic Media Detector: Image / Photo
+ */
+function isImageItem(item) {
+    if (!item) return false;
+    const path = item.path || item.relpath || "";
+    const cat = (item.category || '').toLowerCase();
+
+    const imageExtensions = window.CONFIG?.image_extensions || ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+    const extMatch = path.match(/\.([a-z0-9_]+)$/);
+    const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+
+    if (ext && imageExtensions.includes(ext)) return true;
+    if (['bilder', 'pictures', 'photos', 'images'].includes(cat)) return true;
+
+    return false;
+}
 if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
 if (item.duration && !item.fps && !isPhotoItem(item) && !isVideoItem(item)) return true;
 

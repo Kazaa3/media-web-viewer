@@ -299,9 +299,15 @@ async function renderLibrary() {
         const subAllowed = subCatInfo ? (subCatInfo.aliases || []) : [librarySubFilter];
         
         projectedItems = projectedItems.filter(i => {
-            if (i.is_mock) return true;
             const cat = (i.category || '').toLowerCase();
-            return subAllowed.some(a => a.toLowerCase() === cat) || cat === librarySubFilter.toLowerCase();
+            const matches = subAllowed.some(a => a.toLowerCase() === cat) || cat === librarySubFilter.toLowerCase();
+            
+            // [v1.46.096] Hardened Forensic Log
+            if (!matches && i.is_mock && librarySubFilter !== 'all') {
+                console.debug(`[FE-FILTER] Dropping mock item ${i.name} (Cat: ${cat}) - mismatch with sub-filter: ${librarySubFilter}`);
+            }
+            
+            return matches;
         });
     }
 
