@@ -27,8 +27,8 @@ class AudioHandler(MediaHandler):
         d_sec = analysis.get("duration_sec", 0)
         
         # Audio is almost always direct streamed.
-        # Fallback to transcode (e.g. for DSD or unsupported FLAC in some browsers) could be added here.
-        url = f"/direct/{urllib.parse.quote(str(relpath))}"
+        # [v1.46.046] Synchronize with unified Forensic Stream Bridge (v1.46.042)
+        url = f"/stream/via/direct/{urllib.parse.quote(str(relpath))}"
         
         # A full routing might need the relative path from the media root
         # This will be passed from the orchestrator
