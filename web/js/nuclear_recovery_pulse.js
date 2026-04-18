@@ -26,13 +26,18 @@ const NuclearPulsar = {
         this.iterations++;
 
         // 1. NON-DESTRUCTIVE Visibility Enforcement
-        const targets = ['player-panel-container', 'player-main-viewport', 'main-content-area', 'player-deck-column', 'player-playlist-column'];
+        const targets = [
+            'player-panel-container', 'player-main-viewport', 'main-content-area', 
+            'player-deck-column', 'player-playlist-column', 'audio-player-container',
+            'native-html5-audio-pipeline-element'
+        ];
         targets.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 // Only enforce flex if it's the main container or an active tab
-                if (el.id === 'main-content-area' || el.classList.contains('active') || el.id.includes('panel')) {
-                    el.style.setProperty('display', 'flex', 'important');
+                if (el.id === 'main-content-area' || el.classList.contains('active') || el.id.includes('panel') || el.id.includes('container')) {
+                    const displayType = el.tagName === 'AUDIO' ? 'block' : 'flex';
+                    el.style.setProperty('display', displayType, 'important');
                 }
                 el.style.setProperty('visibility', 'visible', 'important');
                 el.style.setProperty('opacity', '1', 'important');
