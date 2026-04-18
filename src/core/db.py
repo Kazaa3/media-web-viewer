@@ -189,7 +189,9 @@ def init_db(depth: int = 0):
             conn = None
             while retry_count < MAX_INIT_RETRIES:
                 try:
-                    conn = sqlite3.connect(DB_FILENAME, timeout=5)
+                    # [v1.46.061] Centralized Timeout (SSOT)
+                    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 2.0)
+                    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
                     cursor = conn.cursor()
                     break
                 except Exception as e:
@@ -562,8 +564,9 @@ def get_all_media_items():
     
     init_db()
     try:
-        # [v1.46.059] Fail-fast for library requests (2s timeout)
-        conn = sqlite3.connect(DB_FILENAME, timeout=2)
+        # [v1.46.061] Centralized Fail-fast (SSOT)
+        db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 2.0)
+        conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -801,8 +804,14 @@ def get_db_stats():
     @return Stats dictionary / Dictionary mit Statistiken.
     """
     init_db()
-    conn = sqlite3.connect(DB_FILENAME)
-    cursor = conn.cursor()
+    try:
+        # [v1.46.061] Centralized Fail-fast (SSOT)
+        db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 2.0)
+        conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
+        cursor = conn.cursor()
+    except sqlite3.OperationalError as e:
+        log.warning(f"[DB-STATS-LOCKED] Statistics query blocked: {e}")
+        return {'total_items': 0, 'mock_items': 0, 'categories': {}}
 
     cursor.execute("SELECT COUNT(*) FROM media")
     total_items = cursor.fetchone()[0]

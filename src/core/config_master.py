@@ -302,6 +302,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "forensic_hydration_registry": {
         "mode": "both",                 # OPTIONS: "real", "mock", "both"
         "db_active": True,              # Master DB-Visibility Switch
+        "db_timeout": 2.0,              # [v1.46.061] Centralized Fail-Fast (seconds)
         "mock_limit": 516,              # Target count for mock assets
         "auto_repair_enabled": True,    # Self-healing flag for hydration stalls
         "audit_stage": 0                # Current forensic stage (0=Raw, 1=Mock, 2=Sync)
