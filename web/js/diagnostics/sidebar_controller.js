@@ -603,6 +603,8 @@ window.sentinelPulse = sentinelPulse;
  * HYDRATION MASTER CONSOLE (v1.37.14)
  */
 async function triggerMasterScan() {
+    console.info("[FE-AUDIT] User Reaction: triggerMasterScan() triggered.");
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'SCAN-CLICK', { ts: Date.now() });
     sentinelPulse('COMMAND', 'Triggering Deep Direct Scan (Re-Index)...');
     try {
         const res = await eel.run_direct_scan()();
@@ -618,6 +620,8 @@ async function triggerMasterScan() {
 }
 
 async function triggerMasterSync() {
+    console.info("[FE-AUDIT] User Reaction: triggerMasterSync() triggered.");
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'SYNC-CLICK', { ts: Date.now() });
     sentinelPulse('COMMAND', 'Triggering Atomic SQLite Sync...');
     try {
         const res = await eel.sync_library_atomic()();
@@ -653,6 +657,8 @@ async function triggerNuclearRecovery() {
  * NATIVE FLOW AUDITOR (7-Stage Visualization)
  */
 async function runHydrationAuditProbe() {
+    console.info("[FE-AUDIT] User Reaction: runHydrationAuditProbe() triggered.");
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'PROBE-CLICK', { ts: Date.now() });
     const viewport = document.getElementById('diag-logic-audit-viewport');
     if (!viewport) return;
 

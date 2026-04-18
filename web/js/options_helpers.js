@@ -829,6 +829,8 @@ async function triggerDirectScan() {
 }
 
 async function triggerDeepSync() {
+    console.info("[FE-AUDIT] User Reaction: triggerDeepSync() triggered.");
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'SYNC-CLICK', { ts: Date.now() });
     if (typeof eel === 'undefined' || typeof eel.sync_library_atomic !== 'function') {
         // Fallback to simple hydration if atomic is missing
         if (typeof force_rehydration === 'function') {
