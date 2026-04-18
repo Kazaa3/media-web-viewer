@@ -50,7 +50,7 @@ const ForensicHydrationBridge = {
     forceEmergencyHydration() {
         // [v1.46.056] Hardened Forensic Skip Logic
         const realDbCount = window.__mwv_last_db_count || 0;
-        const hasRealItems = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0 && !window.__mwv_all_library_items[0].id?.startsWith('emergency-'));
+        const hasRealItems = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0 && !window.__mwv_all_library_items[0].id?.toString().startsWith('emergency-'));
 
         if (realDbCount > 0 || hasRealItems) {
             console.log(`[HYDRATION-BRIDGE] Skip Stage 1: Real Items verified. DB: ${realDbCount} | FE-Cache: ${hasRealItems}`);

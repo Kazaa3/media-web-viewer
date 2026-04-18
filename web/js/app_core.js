@@ -307,7 +307,7 @@ function playMediaObject(item) {
 
     const activeTab = document.body.getAttribute('data-mwv-tab') || 'player';
 
-    const isVideo = ['video', 'film', 'serie', 'series', 'multimedia', 'dokumentation'].includes((item.category || '').toLowerCase());
+    const isVideo = isVideoItem(item);
 
     if (isVideo) {
         console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);

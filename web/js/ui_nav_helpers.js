@@ -1140,15 +1140,40 @@ function switchOptionsView(viewId) {
  */
 function switchLibrarySubTab(tabId) {
     if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-LIB', tabId);
-    let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+    
+    // [v1.46.092] Forensic Routing: Determine if this is a View or a Filter
+    const viewModes = ['coverflow', 'grid', 'details', 'database', 'table'];
+    const filterModes = ['cinema', 'films', 'series', 'albums', 'audiobooks', 'pictures', 'documents', 'video_iso'];
+    const isFilter = filterModes.includes(tabId);
+    
+    if (isFilter) {
+        console.info(`[UI-NAV] Category Filter Pulse: ${tabId}`);
+        window.librarySubFilter = tabId;
+        localStorage.setItem('mwv_library_sub_filter', tabId);
+        
+        // Ensure we stay in the current view mode or default to coverflow
+        let currentView = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+        if (!viewModes.includes(currentView)) currentView = 'coverflow';
+        
+        // Sync button states for filters
+        document.querySelectorAll('.library-sidebar-item, .sub-tab-btn').forEach(b => {
+             if (b.getAttribute('onclick')?.includes(tabId)) b.classList.add('active');
+             else if (!b.getAttribute('onclick')?.includes(currentView)) b.classList.remove('active');
+        });
+    } else {
+        // [v1.46.092] View Mode Switch
+        console.info(`[UI-NAV] View Mode Switch: ${tabId}`);
+        localStorage.setItem('mwv_library_sub_tab', tabId);
+        window.librarySubTab = tabId;
 
-    document.querySelectorAll('#coverflow-library-panel button.options-subtab, #lib-nav-views-container .options-subtab').forEach(btn => btn.classList.remove('active'));
-    const btn = document.getElementById(`lib-tab-btn-${tabId}`);
-    if (btn) btn.classList.add('active');
+        document.querySelectorAll('#coverflow-library-panel button.options-subtab, #lib-nav-views-container .options-subtab').forEach(btn => btn.classList.remove('active'));
+        const btn = document.getElementById(`lib-tab-btn-${tabId}`);
+        if (btn) btn.classList.add('active');
 
-    document.querySelectorAll('.library-sub-content').forEach(view => view.style.display = 'none');
-    const view = document.getElementById(`lib-view-${tabId}`);
-    if (view) view.style.display = 'block';
+        document.querySelectorAll('.library-sub-content').forEach(view => view.style.display = 'none');
+        const view = document.getElementById(`lib-view-${tabId}`);
+        if (view) view.style.display = 'block';
+    }
 
     if (typeof renderLibrary === 'function') renderLibrary();
 }

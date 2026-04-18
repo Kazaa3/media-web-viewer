@@ -419,7 +419,7 @@ function isVideoItem(item) {
     const extMatch = path.match(/\.([a-z0-9_]+)$/i);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
 
-    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts'];
+    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts', '.iso', '.img', '.bin', '.vob'];
     const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
 
     // 1. [v1.46.087] AUDIO GUARD: If it matches an audio extension, it is NEVER a video.
@@ -428,11 +428,11 @@ function isVideoItem(item) {
         return false;
     }
 
-    // 2. Strict Video Extension Match
+    // 2. Strict Video Extension Match (v1.46.092: Added ISO/IMG)
     if (ext && videoExtensions.includes(ext)) return true;
 
     // 3. Category Fallbacks (Legacy)
-    const videoCategories = ['video', 'movie', 'serie', 'sh', 'sz', 'sp', 'sw', 'documentation'];
+    const videoCategories = ['video', 'movie', 'serie', 'sh', 'sz', 'sp', 'sw', 'documentation', 'video_iso', 'iso-image', 'film'];
     if (videoCategories.includes(cat)) return true;
 
     // 4. Multimedia Ambiguity Resolution
