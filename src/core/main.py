@@ -8768,7 +8768,6 @@ def analyze_media(relpath: str, client: str = 'browser'):
 
 
 @eel.expose
-@eel.expose
 def get_play_source(item_path: str, client: str = 'browser'):
     """
     Resolves the final abspielbare URL, handling cache/remuxing/transcoding via Handlers.
