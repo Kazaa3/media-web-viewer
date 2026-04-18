@@ -1,4 +1,5 @@
 import eel
+import os
 from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
 from src.core.logger import get_logger
 log = get_logger("mode_router")
@@ -9,55 +10,48 @@ def smart_route(file_path):
     @brief The central decision engine for playback modes.
     @details Maps media analysis to one of the 8+ primary streaming paths.
     @param file_path Path to the media file.
-    @return Dictionary with 'mode' and 'info'.
+    @return Dictionary with 'mode' and 'info' and 'reason'.
     """
     log.info(f"[PLAY-PULSE] smart_route analysis started for: {file_path}")
     info = ffprobe_analyze(file_path)
     if "error" in info:
         log.warning(f"[PLAY-PULSE] Routing fallback to direct_play due to analysis error: {info['error']}")
-        return {"mode": "direct_play", "info": info}
+        return {"mode": "direct_play", "info": info, "reason": "Analysis Error Fallback"}
 
-    # 0. Load Configuration (v1.46.045 Integration)
+    # --- [v1.46.052] EMERGENCY AUDIO REPAIR ---
+    # Fix for: "repariere. alles sodass mp3s abgespielt werden"
+    if info.get('has_audio') and not info.get('has_video'):
+        reason = "Audio Direct Play (Bypass)"
+        log.info(f"[PLAY-PULSE] Routing Audio: {os.path.basename(file_path)} -> direct_play")
+        return {"mode": "direct_play", "info": info, "reason": reason}
+
+    # 0. Load Configuration (v1.46.052 Ultimate Matrix)
     from src.core.config_master import GLOBAL_CONFIG
+    item_name = os.path.basename(file_path)
+    
     reg = GLOBAL_CONFIG.get("media_pipeline_registry", {}).get("video", {})
     flags = reg.get("orchestration_flags", {})
     thresholds = reg.get("bitrate_thresholds", {})
+    
+    # Extract Matrix Tiers
+    steering_s = flags.get("special_format_steering", {})
+    steering_f = flags.get("frequency_steering", {})
+    steering_c = flags.get("codec_steering", {})
+    steering_r = flags.get("resolution_steering", {})
     
     # Analysis
     codec = info.get('codec', 'unknown')
     container = info.get('container', 'unknown')
     resolution = info.get('resolution', 'SD')
     bitrate = info.get('bitrate_kbps', 0)
-    
-    # [v1.46.049] Granular Steering Matrix
-    steering_c = flags.get("codec_steering", {})
-    steering_r = flags.get("resolution_steering", {})
-    
-    # Defaults
-    mode = 'hls_fmp4'
-    reason = "Fallback (HLS/fMP4)"
-    
-    # [v1.46.048] Hardware & Complexity Matrix
-    hw_info = GLOBAL_CONFIG.get("hardware_info", {})
-    hevc_hw = hw_info.get("hevc_hw_decoding_available", False)
-    # [v1.46.049/051] Master Steering Matrix
-    steering_f = flags.get("frequency_steering", {})
-    steering_c = flags.get("codec_steering", {})
-    steering_r = flags.get("resolution_steering", {})
-    
-    # Defaults
-    mode = 'hls_fmp4'
-    reason = "Fallback (HLS/fMP4)"
-    
-    # [v1.46.048] Hardware & Complexity Matrix
-    hw_info = GLOBAL_CONFIG.get("hardware_info", {})
-    hevc_hw = hw_info.get("hevc_hw_decoding_available", False)
     subtype = info.get('media_subtype', 'FILE')
     
+    # Hardware Awareness
+    hw_info = GLOBAL_CONFIG.get("hardware_info", {})
+    hevc_hw = hw_info.get("hevc_hw_decoding_available", False)
     is_easy_container = container in ['mp4', 'mkv', 'webm', 'mov', 'ts']
-    is_complex_media = subtype.startswith(("DVD", "BD")) or info.get('is_3d')
     
-    # 1. 4K HEVC Mandatory Hardware Check (Forensic Guard)
+    # 1. Mandatory Hardware Safety Guard (4K HEVC)
     if resolution == "4K" and info.get('is_hevc'):
         if not hevc_hw:
             log.warning(f"[PLAY-PULSE] 4K HEVC Detect: Hardware decoder missing! Forensic error triggered.")
@@ -67,27 +61,22 @@ def smart_route(file_path):
                 "info": info
             }
         else:
-            reason = "4K HEVC (Hardware Supported)"
+            reason = "4K HEVC Mandatory Hardware Path"
             mode = 'direct_play' if bitrate < thresholds.get("direct_play_max_kbps", 20000) else 'mpv_native'
             return {"mode": mode, "info": info, "reason": reason}
 
-    # 2. Priority: Physical Media & Specialized Steering (COMPLEX MASTERS)
-    if is_complex_media:
-        if subtype.startswith("DVD"):
-            routing = flags.get("dvd_pal_routing" if info.get('is_pal') else "dvd_ntsc_routing", "menu")
-            mode = 'vlc_bridge' if routing == "menu" else 'mse'
-            reason = f"Complex Steering ({subtype} via {routing})"
-        elif subtype.startswith("BD"):
-            bd_mode_map = {"BD-4K": "bd_4k_routing", "BD-3D": "bd_3d_routing", "BD-STD": "bd_standard_routing"}
-            routing = flags.get(bd_mode_map.get(subtype, "bd_standard_routing"), "menu")
-            mode = 'vlc_bridge' if routing == "menu" else 'mse'
-            reason = f"Complex Steering ({subtype} via {routing})"
-        elif info.get('is_3d'):
-            mode = 'vlc_bridge'
-            reason = "3D Specialized Routing"
-        return {"mode": mode, "info": info, "reason": reason}
+    # 2. Priority: Special Format Steering (3D Sonderfall)
+    if info.get('is_3d'):
+        s_policy = steering_s.get("3d", "auto")
+        if s_policy != "auto":
+            mode = 'vlc_bridge' if s_policy == "menu" else 'mse' if s_policy == "mse" else 'mpv_native' if s_policy == "native" else 'hls_fmp4'
+            reason = f"Special Format Steering (3D -> {s_policy})"
+            return {"mode": mode, "info": info, "reason": reason}
+        else:
+            # Default 3D behavior (often requires special depth handling)
+            return {"mode": "vlc_bridge", "info": info, "reason": "3D Standard Routing"}
 
-    # 3. Priority: Frequency Master Overrides (v1.46.051 - 50Hz vs 60Hz)
+    # 3. Priority: Frequency Master Overrides (PAL-50Hz vs NTSC-60Hz)
     f_policy = "auto"
     if info.get('is_pal'): f_policy = steering_f.get("pal_50hz", "auto")
     elif info.get('is_ntsc'): f_policy = steering_f.get("ntsc_60hz", "auto")
@@ -97,9 +86,22 @@ def smart_route(file_path):
         reason = f"Frequency Master Override ({'PAL' if info.get('is_pal') else 'NTSC'} -> {f_policy})"
         return {"mode": mode, "info": info, "reason": reason}
     
-    # 4. Priority: Manual Codec/Resolution Overrides (v1.46.049 Override Path)
+    # 4. Priority: Granular Manual Overrides (Resolution & Codec Matrix)
     c_policy = steering_c.get(codec.replace("h265", "hevc"), "auto")
-    r_key = resolution.lower() if resolution in ["720p", "1080p", "2160p"] else "pal" if info.get('is_pal') else "ntsc" if info.get('is_ntsc') else "auto"
+    
+    # Dynamic Resolution Key Generation (High-Fidelity)
+    suffix = 'i' if info.get('is_interlaced') else 'p'
+    r_key = "auto"
+    if resolution == "SD":
+        r_key = "sd_pal" if info.get('is_pal') else "sd_ntsc" if info.get('is_ntsc') else "sd_p"
+    elif resolution == "4K":
+        r_key = "2160p"
+    else:
+        # Generate keys like "720p", "1080i"
+        base_res = str(resolution).lower().replace("p", "").replace("i", "")
+        if base_res in ["720", "1080"]:
+            r_key = f"{base_res}{suffix}"
+    
     r_policy = steering_r.get(r_key, "auto")
 
     if c_policy != "auto":
@@ -109,20 +111,10 @@ def smart_route(file_path):
     
     if r_policy != "auto":
         mode = 'direct_play' if r_policy == "direct" else 'mse' if r_policy == "mse" else 'mpv_native' if r_policy == "native" else 'hls_fmp4'
-        reason = f"Manual Resolution Steering ({resolution} -> {r_policy})"
+        reason = f"Manual Resolution Steering ({r_key} -> {r_policy})"
         return {"mode": mode, "info": info, "reason": reason}
 
-    # 5. HEVC HD Steering Policy (Resolution-Aware Backup)
-    if resolution in ["1080p", "720p"] and info.get('is_hevc'):
-        if flags.get("hevc_force_transcode_on_hd", True):
-            mode = 'mse' if bitrate < thresholds.get("mse_max_kbps", 15000) else 'hls_fmp4'
-            reason = "HEVC HD Force-Transcode Policy"
-        else:
-            mode = 'direct_play'
-            reason = "HEVC HD Native (Policy: Direct)"
-        return {"mode": mode, "info": info, "reason": reason}
-
-    # 6. Standard Digital Steering (EASY)
+    # 5. Fallback Heuristics (Standard Digital)
     direct_limit = thresholds.get("direct_play_max_kbps", 20000)
     if codec == 'h264' and is_easy_container:
         if resolution != "4K" and bitrate < direct_limit:
@@ -130,8 +122,6 @@ def smart_route(file_path):
             reason = "Direct Play (Easy Container/Bitrate)"
             return {"mode": mode, "info": info, "reason": reason}
             
- 
-    # 7. MSE / HLS Fallback (Standard Heuristics)
     if bitrate < thresholds.get("mse_max_kbps", 15000) and codec in ['h264', 'vp9', 'av1']:
         mode = 'mse'
         reason = "MSE Standard Heuristic"
@@ -139,12 +129,8 @@ def smart_route(file_path):
         mode = 'hls_fmp4'
         reason = "HLS/fMP4 Standard Heuristic (Fallback)"
 
-    log.info(f"[PLAY-PULSE] Final Routing: {mode} | Reason: {reason} | Subtype: {subtype}")
-    return {
-        "mode": mode,
-        "info": info,
-        "reason": reason
-    }
+    log.info(f"[PLAY-PULSE] Final Routing ({item_name}): {mode} | Reason: {reason} | Subtype: {subtype}")
+    return {"mode": mode, "info": info, "reason": reason}
 
 def get_mode_description(mode):
     """
