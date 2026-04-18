@@ -4555,12 +4555,26 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     db_path = str(Path(db.DB_FILENAME).resolve())
     log.info(f"[BD-AUDIT] STAGE 1.1: Database path: {db_path}")
 
-    # [FS-AUDIT] Internal filesystem check
+    # [FS-AUDIT] Internal filesystem check (v1.46.026)
     db_exists = os.path.exists(db_path)
     db_size = os.path.getsize(db_path) if db_exists else -1
+    db_health = "unknown"
+    
+    if db_exists:
+        try:
+            import sqlite3
+            conn = sqlite3.connect(db_path, timeout=1)
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA integrity_check")
+            db_health = cursor.fetchone()[0].lower() # 'ok' or error msg
+            conn.close()
+        except Exception as e:
+            db_health = f"error: {str(e)}"
+
     fs_audit = {
         "exists": db_exists,
         "size": db_size,
+        "health": db_health,
         "pid": pid,
         "path": db_path
     }
@@ -4716,6 +4730,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         cat_distribution[cat] = cat_distribution.get(cat, 0) + 1
     
     log.info(f"[BD-AUDIT] STAGE 4: Handshake payload prepared. Count: {len(final_media)} | Stats: {cat_distribution}")
+    log.info(f"[BD-AUDIT] Database Integrity: {db_health} | Size: {db_size} bytes")
     log.info(f"[BD-AUDIT] Active Flags: Branch={active_branch}, Mode={h_mode}, Raw={force_raw}")
 
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.41.00)

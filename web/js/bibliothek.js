@@ -64,8 +64,14 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
             return acc;
         }, {});
         console.warn(`>>> [FE-AUDIT] Handshake Received. Stage: ${audit.stage || 'N/A'}. Stats:`, incomingStats);
-        console.info(`[BD-AUDIT] Raw Payload: ${incomingCount} items (DB: ${totalDbCount}). PID: ${audit.pid || '?'}`);
-        if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path} | FS Size: ${fsSize}`);
+        console.info(`[BD-AUDIT] Raw Payload: ${incomingCount} items (DB: {totalDbCount}). PID: ${audit.pid || '?'}`);
+        
+        // [v1.46.026] Extraction of Forensic DB Health
+        const dbInfo = audit.db || {};
+        window.__mwv_last_db_health = dbInfo.health || 'unknown';
+        window.__mwv_last_db_size = dbInfo.size || 0;
+        
+        if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path} | Health: ${window.__mwv_last_db_health}`);
         
         window.__mwv_last_db_count = totalDbCount;
         window.__mwv_debug_library = library; // Global for manual trace
