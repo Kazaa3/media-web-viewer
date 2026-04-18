@@ -201,10 +201,15 @@ function playAudio(item, startTime = 0) {
     // [v1.46.026] Forensic Route Alignment (Fixes 'Play doesn't work')
     // We must use the backend's direct stream route for absolute local paths.
     const proxyUrl = "/stream/via/direct/" + encodeURIComponent(rawPath);
-    const logMsg = `[Audio] Attempting to play: ${item.name || 'Unknown'} | Path: ${rawPath}`;
+    const logMsg = `[PLAY-PULSE] Audio Handshake: ${item.name || 'Unknown'} | Path: ${rawPath}`;
     
-    console.info(">>> [FE-PLAY] Alignment Check:", { name: item.name, route: proxyUrl });
-    mwv_trace('PLAYER-EVENT', 'PLAYBACK-START', { name: item.name, path: rawPath, proxy: proxyUrl });
+    console.warn("%c[PLAY-PULSE] Starting Audio Stream...", "background: #2980b9; color: white; padding: 2px 5px;", { name: item.name, route: proxyUrl });
+    
+    // Forensic Trace (v1.46.042)
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('PLAYER-EVENT', 'PLAY-PULSE', { name: item.name, path: rawPath, proxy: proxyUrl, type: 'audio' });
+    }
+    
     if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     
     pipeline.src = proxyUrl;
@@ -214,6 +219,7 @@ function playAudio(item, startTime = 0) {
     pipeline.currentTime = (shouldResume && startTime > 0) ? startTime : 0;
 
     pipeline.play().then(() => {
+        console.info(`[PLAY-PULSE] Pipeline Active: ${item.name}`);
         setupVisualizer(pipeline);
     }).catch(e => {
         mwv_trace('PLAYER-EVENT', 'PLAYBACK-FAIL', { message: e.message, name: item.name });

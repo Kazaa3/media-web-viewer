@@ -4698,29 +4698,40 @@ def get_best_hw_encoder():
 def server_file_direct(file_path):
     """
     @brief Serves local media files directly via the Eel/Bottle bridge.
-    @details Hardened v1.46.026: Supports absolute paths and explicit MIME overrides.
+    @details Hardened v1.46.042: Explicit MIME mapping and Play-Pulse audit.
     """
     import bottle as btl
-    log.info(f"[PLAY-TRACE] Requesting direct stream for: {file_path}")
     
     # 1. Path Forensic Resolution
     if not os.path.isabs(file_path):
         file_path = os.path.abspath(file_path)
     
     if not os.path.exists(file_path):
-        log.error(f"[PLAY-TRACE] CRITICAL: File not found: {file_path}")
+        log.error(f"[PLAY-PULSE] CRITICAL: File not found: {file_path}")
         return btl.HTTPResponse(status=404, body=f"File not found: {file_path}")
 
-    # 2. MIME Type Intelligence (v1.46.026)
+    # 2. MIME Type Intelligence (v1.46.042 Explicit)
+    ext = file_path.lower()
     mimetype = 'auto'
-    if file_path.lower().endswith('.mkv'):
-        mimetype = 'video/x-matroska'
-    elif file_path.lower().endswith('.webm'):
-        mimetype = 'video/webm'
-    elif file_path.lower().endswith('.opus'):
+    if ext.endswith('.mp3'):
+        mimetype = 'audio/mpeg'
+    elif ext.endswith('.wav'):
+        mimetype = 'audio/wav'
+    elif ext.endswith('.m4a'):
+        mimetype = 'audio/mp4'
+    elif ext.endswith('.flac'):
+        mimetype = 'audio/flac'
+    elif ext.endswith('.ogg') or ext.endswith('.opus'):
         mimetype = 'audio/ogg'
+    elif ext.endswith('.mp4'):
+        mimetype = 'video/mp4'
+    elif ext.endswith('.mkv'):
+        mimetype = 'video/x-matroska'
+    elif ext.endswith('.webm'):
+        mimetype = 'video/webm'
     
-    log.debug(f"[PLAY-TRACE] Serving file with MIME: {mimetype} | Path: {file_path}")
+    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | MIME: {mimetype}")
+    log.debug(f"[PLAY-PULSE-DEBUG] Resolved Path: {file_path}")
         
     return btl.static_file(
         os.path.basename(file_path),
@@ -8757,6 +8768,7 @@ def analyze_media(relpath: str, client: str = 'browser'):
 
 
 @eel.expose
+@eel.expose
 def get_play_source(item_path: str, client: str = 'browser'):
     """
     Resolves the final abspielbare URL, handling cache/remuxing/transcoding via Handlers.
@@ -8765,14 +8777,20 @@ def get_play_source(item_path: str, client: str = 'browser'):
 
     # 0. Robust path resolution
     full = Path(resolve_media_path(item_path))
+    log.info(f"[PLAY-PULSE] Orchestrator Routing Request: {item_path} | Client: {client}")
+    
     if not full.exists():
+        log.error(f"[PLAY-PULSE] Routing Failure: File not found: {item_path}")
         return {
             "mode": "error",
             "message": f"File not found: {item_path}"
         }
 
     handler = get_handler_for_file(full)
-    return handler.process(client=client, relpath=item_path)
+    source = handler.process(client=client, relpath=item_path)
+    
+    log.info(f"[PLAY-PULSE] Routing Resolved: Mode={source.get('mode', 'unknown')} | Handler={handler.__class__.__name__}")
+    return source
 
 
 @eel.expose
