@@ -326,6 +326,42 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_diagnostics_helpers": True
     },
 
+    # --- [v1.46.044] MEDIA PIPELINE REGISTRY (Audio/Video SSOT) ---
+    "media_pipeline_registry": {
+        "audio": {
+            "extensions": [".mp3", ".flac", ".m4a", ".wav", ".ogg", ".aac", ".wma", ".ape", ".dsd", ".opus"],
+            "mime_map": {
+                ".mp3": "audio/mpeg",
+                ".wav": "audio/wav",
+                ".m4a": "audio/mp4",
+                ".flac": "audio/flac",
+                ".ogg": "audio/ogg",
+                ".opus": "audio/ogg",
+                ".aac": "audio/aac",
+                ".wma": "audio/x-ms-wma"
+            },
+            "default_mode": "direct"
+        },
+        "video": {
+            "extensions": [".mp4", ".mkv", ".webm", ".mov", ".avi", ".ts", ".iso", ".m4v"],
+            "mime_map": {
+                ".mp4": "video/mp4",
+                ".mkv": "video/x-matroska",
+                ".webm": "video/webm",
+                ".mov": "video/quicktime",
+                ".ts": "video/mp2t",
+                ".m4v": "video/x-m4v"
+            },
+            "orchestration_flags": {
+                "prefer_mpv_wasm_for_webm": True,
+                "force_vlc_for_iso": True,
+                "mse_threshold_mbps": 15,
+                "dash_threshold_mbps": 30,
+                "mpv_native_threshold_mbps": 50
+            }
+        }
+    },
+
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
     "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis

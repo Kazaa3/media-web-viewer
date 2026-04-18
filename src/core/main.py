@@ -4698,7 +4698,7 @@ def get_best_hw_encoder():
 def server_file_direct(file_path):
     """
     @brief Serves local media files directly via the Eel/Bottle bridge.
-    @details Hardened v1.46.042: Explicit MIME mapping and Play-Pulse audit.
+    @details Hardened v1.46.044: Configuration-driven MIME resolution via pipeline registry.
     """
     import bottle as btl
     
@@ -4710,27 +4710,20 @@ def server_file_direct(file_path):
         log.error(f"[PLAY-PULSE] CRITICAL: File not found: {file_path}")
         return btl.HTTPResponse(status=404, body=f"File not found: {file_path}")
 
-    # 2. MIME Type Intelligence (v1.46.042 Explicit)
-    ext = file_path.lower()
+    # 2. Dynamic MIME Resolution (v1.46.044 SSOT)
+    ext = os.path.splitext(file_path)[1].lower()
     mimetype = 'auto'
-    if ext.endswith('.mp3'):
-        mimetype = 'audio/mpeg'
-    elif ext.endswith('.wav'):
-        mimetype = 'audio/wav'
-    elif ext.endswith('.m4a'):
-        mimetype = 'audio/mp4'
-    elif ext.endswith('.flac'):
-        mimetype = 'audio/flac'
-    elif ext.endswith('.ogg') or ext.endswith('.opus'):
-        mimetype = 'audio/ogg'
-    elif ext.endswith('.mp4'):
-        mimetype = 'video/mp4'
-    elif ext.endswith('.mkv'):
-        mimetype = 'video/x-matroska'
-    elif ext.endswith('.webm'):
-        mimetype = 'video/webm'
     
-    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | MIME: {mimetype}")
+    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {})
+    audio_map = reg.get("audio", {}).get("mime_map", {})
+    video_map = reg.get("video", {}).get("mime_map", {})
+    
+    if ext in audio_map:
+        mimetype = audio_map[ext]
+    elif ext in video_map:
+        mimetype = video_map[ext]
+    
+    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | MIME: {mimetype} (Config-Driven)")
     log.debug(f"[PLAY-PULSE-DEBUG] Resolved Path: {file_path}")
         
     return btl.static_file(
