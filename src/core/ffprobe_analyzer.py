@@ -95,8 +95,20 @@ def ffprobe_analyze(file_path: Union[str, Path]) -> Dict[str, Any]:
         is_pal = 24.5 < fps < 25.5 or 49.5 < fps < 50.5
         is_ntsc = 23.5 < fps < 24.5 or 29.5 < fps < 30.5 or 59.5 < fps < 60.5
         
+        # 5. Advanced ISO & 3D Detection (v1.46.045)
+        path_str = str(file_path)
+        is_iso_ext = path_str.lower().endswith('.iso')
+        
+        # Blu-ray detection: BDMV directory or ISO > 20GB + HD/4K
+        has_bdmv = (os.path.isdir(path_str) and os.path.exists(os.path.join(path_str, "BDMV")))
+        is_bluray = has_bdmv or (is_iso_ext and res_tag in ["1080p", "4K"] and format_info.get("size", 0) and int(format_info["size"]) > 20 * 1024 * 1024 * 1024)
+        
+        # 3D detection: stereo_mode or frame-packing (v_stream tags)
+        stereo_mode = v_stream.get("side_data_list", [{}])[0].get("stereo_mode", "") if v_stream.get("side_data_list") else ""
+        is_3d = stereo_mode != "" or "multiview" in str(v_stream.get("tags", {})).lower()
+
         return {
-            "path": str(file_path),
+            "path": path_str,
             "container": format_info.get("format_name", "unknown"),
             "duration": float(format_info.get("duration", 0)),
             "bitrate": int(format_info.get("bit_rate", 0)),
@@ -112,8 +124,10 @@ def ffprobe_analyze(file_path: Union[str, Path]) -> Dict[str, Any]:
             "fps": fps,
             "is_pal": is_pal,
             "is_ntsc": is_ntsc,
-            "is_iso": is_iso,
-            "has_menus": is_iso or (os.path.isdir(str(file_path)) and os.path.exists(os.path.join(str(file_path), "VIDEO_TS")))
+            "is_iso": is_iso_ext,
+            "is_bluray": is_bluray,
+            "is_3d": is_3d,
+            "has_menus": is_iso_ext or has_bdmv or (os.path.isdir(path_str) and os.path.exists(os.path.join(path_str, "VIDEO_TS")))
         }
 
     except Exception as e:
