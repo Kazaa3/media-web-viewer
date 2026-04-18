@@ -144,6 +144,9 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
  * Forces a "Nuclear Reset" of filters and hydration mode to fix visibility black holes.
  */
 async function refreshLibrary() {
+    console.info("[FE-AUDIT] User Reaction: refreshLibrary() triggered.");
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'REFRESH-CLICK', { ts: Date.now() });
+
     if (typeof showToast === 'function') showToast("Bibliothek wird aktualisiert...", "info");
     
     // Recovery Pulse (v1.46.020)
