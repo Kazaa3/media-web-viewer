@@ -14,6 +14,7 @@ log = logging.getLogger("app.integrity")
 
 # --- MANDATORY CONFIGURATION SCHEMA ---
 # These keys MUST exist in GLOBAL_CONFIG for a safe boot.
+# Tuple represents a nested path (e.g. ("ui_settings", "branch_architecture_registry"))
 GOLDEN_SCHEMA = [
     "port",
     "vlc_port",
@@ -23,7 +24,8 @@ GOLDEN_SCHEMA = [
     "ui_evolution_mode",
     "logging_registry",
     "ui_settings",
-    "branch_architecture_registry"
+    ("ui_settings", "branch_architecture_registry"),
+    ("ui_settings", "navigation_orchestrator")
 ]
 
 def run_preflight_audit() -> bool:
@@ -36,7 +38,7 @@ def run_preflight_audit() -> bool:
     config_ok, config_errors = audit_config()
     if not config_ok:
         for err in config_errors:
-            log.error(f"[Audit-Config] MISSING KEY: {err}")
+            log.error(f"[Audit-Config] MISSING KEY PATH: {err}")
         return False
         
     # 2. Logic & Module Audit
@@ -56,13 +58,28 @@ def run_preflight_audit() -> bool:
     log.info("[Audit] SUCCESS: System Integrity Verified. Proceeding to Boot.")
     return True
 
-def audit_config() -> Tuple[bool, List[str]]:
+def audit_config() -> Tuple[bool, List[Any]]:
     """Validates GLOBAL_CONFIG against the Golden Schema."""
     from src.core.config_master import GLOBAL_CONFIG
     errors = []
-    for key in GOLDEN_SCHEMA:
-        if key not in GLOBAL_CONFIG:
-            errors.append(key)
+    
+    for entry in GOLDEN_SCHEMA:
+        if isinstance(entry, str):
+            if entry not in GLOBAL_CONFIG:
+                errors.append(entry)
+        elif isinstance(entry, (tuple, list)):
+            # Nested check
+            curr = GLOBAL_CONFIG
+            found = True
+            for part in entry:
+                if isinstance(curr, dict) and part in curr:
+                    curr = curr[part]
+                else:
+                    found = False
+                    break
+            if not found:
+                errors.append(" -> ".join(entry))
+    
     return (len(errors) == 0, errors)
 
 def audit_logic() -> Tuple[bool, List[str]]:
