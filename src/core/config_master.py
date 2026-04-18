@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
+from pathlib import Path
 
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='requests')
-dict - Config Master (Centralized Config & Flag Orchestrator)
-v1.41.103-SSOT - Unified source of truth for tiered versioning.
-"""
+# --- BOOTSTRAP: PATH & VERSION SSOT (v1.41.00) ---
+_root = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = _root
+
+VERSION_FILE = PROJECT_ROOT / "VERSION"
+if VERSION_FILE.exists():
+    VERSION = VERSION_FILE.read_text().strip()
+else:
+    VERSION = "1.46.077"
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
@@ -240,12 +242,7 @@ def background_version_discovery(config_dict: dict):
 
     threading.Thread(target=worker, daemon=True).start()
 
-# --- VERSION & METADATA CALCULATION (v1.41.00) ---
-VERSION_FILE = PROJECT_ROOT / "VERSION"
-if VERSION_FILE.exists():
-    VERSION = VERSION_FILE.read_text().strip()
-else:
-    VERSION = "1.46.076"
+# VERSION and PROJECT_ROOT logic moved to top for v1.46.077 SSOT.
 
 # --- NETWORK & HOST CALCULATION ---
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))
