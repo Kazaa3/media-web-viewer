@@ -40,27 +40,25 @@ def smart_route(file_path):
     # [v1.46.048] Hardware & Complexity Matrix
     hw_info = GLOBAL_CONFIG.get("hardware_info", {})
     hevc_hw = hw_info.get("hevc_hw_decoding_available", False)
+    # [v1.46.049] Granular Steering Matrix
+    steering_c = flags.get("codec_steering", {})
+    steering_r = flags.get("resolution_steering", {})
+    
+    # Defaults
+    mode = 'hls_fmp4'
+    reason = "Fallback (HLS/fMP4)"
+    
+    # [v1.46.048] Hardware & Complexity Matrix
+    hw_info = GLOBAL_CONFIG.get("hardware_info", {})
+    hevc_hw = hw_info.get("hevc_hw_decoding_available", False)
     subtype = info.get('media_subtype', 'FILE')
     
     is_easy_container = container in ['mp4', 'mkv', 'webm', 'mov', 'ts']
     is_complex_media = subtype.startswith(("DVD", "BD")) or info.get('is_3d')
     
-    # 0. Priority 0: Codec/Resolution Manual Steering (v1.46.049 Override)
-    c_policy = steering_c.get(codec.replace("h265", "hevc"), "auto")
-    r_key = resolution.lower() if resolution in ["720p", "1080p", "2160p"] else "pal" if info.get('is_pal') else "ntsc" if info.get('is_ntsc') else "auto"
-    r_policy = steering_r.get(r_key, "auto")
-
-    if c_policy != "auto":
-        mode = 'direct_play' if c_policy == "direct" else 'mse' if c_policy == "mse" else 'hls_fmp4'
-        reason = f"Manual Codec Steering ({codec} -> {c_policy})"
-    elif r_policy != "auto":
-        mode = 'direct_play' if r_policy == "direct" else 'mse' if r_policy == "mse" else 'mpv_native' if r_policy == "native" else 'hls_fmp4'
-        reason = f"Manual Resolution Steering ({resolution} -> {r_policy})"
-
-    # 1. 4K HEVC Mandatory Hardware Check (Forensic Policy)
-    elif resolution == "4K" and info.get('is_hevc'):
+    # 1. 4K HEVC Mandatory Hardware Check (Forensic Guard)
+    if resolution == "4K" and info.get('is_hevc'):
         if not hevc_hw:
-            # 4K HEVC is too heavy for software transcode. Warn and steer to native if possible or error.
             log.warning(f"[PLAY-PULSE] 4K HEVC Detect: Hardware decoder missing! Forensic error triggered.")
             return {
                 "mode": "error_hardware", 
@@ -71,7 +69,7 @@ def smart_route(file_path):
             reason = "4K HEVC (Hardware Supported)"
             mode = 'direct_play' if bitrate < thresholds.get("direct_play_max_kbps", 20000) else 'mpv_native'
 
-    # 2. Priority: Physical Media & Specialized Steering (COMPLEX)
+    # 2. Priority: Physical Media & Specialized Steering (COMPLEX MASTERS)
     elif is_complex_media:
         if subtype.startswith("DVD"):
             routing = flags.get("dvd_pal_routing" if info.get('is_pal') else "dvd_ntsc_routing", "menu")
@@ -86,14 +84,27 @@ def smart_route(file_path):
             mode = 'vlc_bridge'
             reason = "3D Specialized Routing"
 
-    # 3. HEVC HD Steering Policy (Resolution-Aware)
-    elif resolution in ["1080p", "720p"] and info.get('is_hevc'):
-        if flags.get("hevc_force_transcode_on_hd", True):
-            mode = 'mse' if bitrate < thresholds.get("mse_max_kbps", 15000) else 'hls_fmp4'
-            reason = "HEVC HD Force-Transcode Policy"
-        else:
-            mode = 'direct_play'
-            reason = "HEVC HD Native (Policy: Direct)"
+    # 3. Priority: Manual Codec/Resolution Overrides (v1.46.049 Override Path)
+    else:
+        c_policy = steering_c.get(codec.replace("h265", "hevc"), "auto")
+        r_key = resolution.lower() if resolution in ["720p", "1080p", "2160p"] else "pal" if info.get('is_pal') else "ntsc" if info.get('is_ntsc') else "auto"
+        r_policy = steering_r.get(r_key, "auto")
+
+        if c_policy != "auto":
+            mode = 'direct_play' if c_policy == "direct" else 'mse' if c_policy == "mse" else 'hls_fmp4'
+            reason = f"Manual Codec Steering ({codec} -> {c_policy})"
+        elif r_policy != "auto":
+            mode = 'direct_play' if r_policy == "direct" else 'mse' if r_policy == "mse" else 'mpv_native' if r_policy == "native" else 'hls_fmp4'
+            reason = f"Manual Resolution Steering ({resolution} -> {r_policy})"
+
+        # 4. HEVC HD Steering Policy (Resolution-Aware Backup)
+        elif resolution in ["1080p", "720p"] and info.get('is_hevc'):
+            if flags.get("hevc_force_transcode_on_hd", True):
+                mode = 'mse' if bitrate < thresholds.get("mse_max_kbps", 15000) else 'hls_fmp4'
+                reason = "HEVC HD Force-Transcode Policy"
+            else:
+                mode = 'direct_play'
+                reason = "HEVC HD Native (Policy: Direct)"
 
     # 4. Standard Digital Steering (EASY)
     else:
