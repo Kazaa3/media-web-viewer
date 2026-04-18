@@ -732,40 +732,40 @@ function setHydrationMode(mode) {
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
 
-    // 1. Sync Backend
-    if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
-        console.debug(`[Hydration] Syncing backend...`);
-        eel.set_hydration_mode(mode)(() => {
-            console.info(`[Hydration] Backend ACK received.`);
-        });
-    }
-
     if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
-
     if (typeof showToast === 'function') showToast(`HYDRATION: ${mode.toUpperCase()}`, 1000);
 
     // 3. TRIGGER ATOMIC RE-HYDRATION PULSE (v1.45.105)
-    // [v1.46.025] Refactored to eliminate hydration race condition.
     const runPulse = () => {
         console.info(`>>> [Forensic-Hydration] Pulse Complete. Triggering UI Sync...`);
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         if (typeof renderLibrary === 'function') renderLibrary();
-
-        // Release Guard
         setTimeout(() => { window.__mwv_hydration_in_progress = false; }, 500);
     };
 
-    if (typeof loadLibrary === 'function') {
-        console.debug(`[Hydration] Loading Library (M/R/B Sync)...`);
-        const result = loadLibrary();
-        if (result instanceof Promise) {
-            result.then(runPulse);
+    const triggerLoad = () => {
+        if (typeof loadLibrary === 'function') {
+            console.debug(`[Hydration] Loading Library (M/R/B Sync)...`);
+            const result = loadLibrary();
+            if (result instanceof Promise) {
+                result.then(runPulse);
+            } else {
+                setTimeout(runPulse, 300);
+            }
         } else {
-            // Fallback for non-async implementation
-            setTimeout(runPulse, 300);
+            runPulse();
         }
+    };
+
+    // 1. Sync Backend ALWAYS BEFORE triggerLoad() to prevent race conditions (v1.46.037)
+    if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
+        console.debug(`[Hydration] Syncing backend...`);
+        eel.set_hydration_mode(mode)(() => {
+            console.info(`[Hydration] Backend ACK received. Triggering library fetch.`);
+            triggerLoad();
+        });
     } else {
-        runPulse();
+        triggerLoad();
     }
 }
 
