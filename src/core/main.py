@@ -1448,449 +1448,61 @@ def prune_ghost_items(item_ids):
 
 @eel.expose
 def kill_stalled_ffmpeg_streams():
-    """
-    Forensic Pipeline Recovery: Purges all FFmpeg/mkvmerge processes associated with the project path (v1.37.18).
-    """
-    import psutil
-    import os
-
-    project_fragment = "gui_media_web_viewer"
-    killed_count = 0
-    terminated_pids = []
-
-    try:
-        current_proc = psutil.Process()
-        ancestor_pids = {p.pid for p in current_proc.parents()}
-        ancestor_pids.add(os.getpid())
-
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-            try:
-                pid = proc.info['pid']
-                if pid in ancestor_pids:
-                    continue
-
-                name = (proc.info.get('name') or "").lower()
-                cmdline = proc.info.get('cmdline') or []
-                cmd_str = " ".join(cmdline).lower()
-
-                # Targeted match for media processes in this project
-                if ("ffmpeg" in name or "mkvmerge" in name) and project_fragment in cmd_str:
-                    log.info(f"[Forensic-Kill] Purging process {pid} ({name})")
-                    proc.kill()  # Force kill for immediate recovery
-                    killed_count += 1
-                    terminated_pids.append(pid)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-
-        return {"status": "success", "count": killed_count, "pids": terminated_pids}
-    except Exception as e:
-        log.error(f"[Forensic-Kill] Error during pipeline recovery: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.kill_stalled_ffmpeg_streams()
 
 
 @eel.expose
 def get_playlist_forensics():
-    """
-    Playlist Forensic Audit: Integrity & Repair (v1.37.32).
-    Audits SQLite playlists for relational orphans and physical asset missingness.
-    """
-    from src.core import db
-    import os
-
-    try:
-        playlists = db.get_all_playlists()
-        results = {
-            "status": "ok",
-            "count": len(playlists),
-            "playlists": []
-        }
-
-        for pl in playlists:
-            items = db.get_playlist_items(pl['id'])
-            orphans = db.get_playlist_orphans(pl['id'])
-
-            pl_audit = {
-                "id": pl['id'],
-                "name": pl['name'],
-                "item_count": len(items),
-                "relational_orphans": len(orphans),
-                "physical_missing": 0,
-                "broken_paths": [],
-                "total_duration_sec": 0,
-                "integrity_score": 100
-            }
-
-            for item in items:
-                # Check physical existence
-                if item['path'] and not os.path.exists(item['path']):
-                    pl_audit["physical_missing"] += 1
-                    pl_audit["broken_paths"].append(item['path'])
-
-                # Sum duration if available in metadata tags (from db.get_playlist_items)
-                # Note: get_playlist_items doesn't return full duration_sec yet,
-                # but we can improve it or just audit existence for now.
-                pass
-
-            # Calculate Integrity Score (Relational + Physical impact)
-            total_issues = pl_audit["relational_orphans"] + pl_audit["physical_missing"]
-            if pl_audit["item_count"] > 0:
-                pl_audit["integrity_score"] = max(0, 100 - (total_issues * 100 // pl_audit["item_count"]))
-
-            results["playlists"].append(pl_audit)
-
-        return results
-    except Exception as e:
-        log.error(f"[Forensic-PLY] Playlist Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.get_playlist_forensics()
 
 @eel.expose
 def prune_playlist_orphans(playlist_id):
-    """
-    Surgical Pruning for Playlist Relational Orphans (v1.37.32).
-    """
-    from src.core import db
-    try:
-        count = db.prune_playlist_orphans(playlist_id)
-        log.info(f"[Forensic-PLY] Pruned {count} orphans from playlist {playlist_id}.")
-        return {"status": "success", "count": count}
-    except Exception as e:
-        log.error(f"[Forensic-PLY] Pruning Failed for PL {playlist_id}: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.prune_playlist_orphans(playlist_id)
 
 @eel.expose
 def get_state_forensics():
-    """
-    Forensic State Persistence Audit (v1.37.33).
-    Audits Centralized config vs. expected frontend state keys.
-    """
-    try:
-        from src.core import config_master
-        cfg = config_master.GLOBAL_CONFIG
-
-        # Aggregating critical backend state for frontend parity check
-        state = {
-            "status": "ok",
-            "backend_version": cfg.get("version"),
-            "debug_mode": cfg.get("debug_mode"),
-            "diag_mode": cfg.get("diag_mode"),
-            "raw_mode": cfg.get("raw_mode"),
-            "bypass_db": cfg.get("bypass_db"),
-            "log_level": cfg.get("log_level"),
-            "app_mode": cfg.get("app_mode"),
-            "theme_master": cfg.get("theme", "dark"),
-            "boot_time": cfg.get("build_date"),
-            "registry_keys": list(cfg.keys())
-        }
-        return state
-    except Exception as e:
-        log.error(f"[Forensic-STA] State Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.get_state_forensics()
 
 @eel.expose
 def get_net_ping():
-    """
-    Sub-millisecond bridge ping (v1.37.34).
-    Returns basic timestamp for RTT calculation.
-    """
-    import time
-    return {"status": "ok", "timestamp": time.time()}
+    return api_reporting.get_net_ping()
 
 
 @eel.expose
 def get_process_forensics():
-    """
-    Forensic Child Process Audit (v1.37.35).
-    Maps recursive subprocesses of the main application.
-    """
-    try:
-        import psutil
-        import os
-        parent = psutil.Process(os.getpid())
-        children = parent.children(recursive=True)
-
-        proc_list = []
-        zombie_count = 0
-
-        for p in children:
-            try:
-                with p.oneshot():
-                    status = p.status()
-                    if status == psutil.STATUS_ZOMBIE:
-                        zombie_count += 1
-
-                    proc_list.append({
-                        "pid": p.pid,
-                        "name": p.name(),
-                        "status": status.upper(),
-                        "cpu_percent": p.cpu_percent(),
-                        "memory_percent": p.memory_percent(),
-                        "created": p.create_time()
-                    })
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-
-        return {
-            "status": "ok",
-            "active_workers": len(proc_list),
-            "zombie_count": zombie_count,
-            "processes": proc_list
-        }
-    except Exception as e:
-        log.error(f"[Forensic-PRC] Process Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.get_process_forensics()
 
 @eel.expose
 def terminate_worker_process(pid):
-    """
-    Surgical Termination for Background Workers (v1.37.35).
-    """
-    try:
-        import psutil
-        proc = psutil.Process(int(pid))
-
-        # Security Guard: Only allow killing children of this process
-        parent = psutil.Process(os.getpid())
-        children_pids = [c.pid for c in parent.children(recursive=True)]
-
-        if int(pid) not in children_pids:
-            return {"status": "error", "message": "Access Denied: Cannot kill external process."}
-
-        proc.terminate()
-        log.info(f"[Forensic-PRC] Terminated worker PID {pid}.")
-        return {"status": "success", "pid": pid}
-    except Exception as e:
-        log.error(f"[Forensic-PRC] Termination Failed for PID {pid}: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.terminate_worker_process(pid)
 
 
 @eel.expose
 def get_global_health_audit():
-    """
-    Mission-Critical Global Health Aggregator (v1.37.36).
-    Aggregates all 14 diagnostic layers into a Readiness Score.
-    """
-    try:
-        from src.core import db
-        import psutil
-        import os
-
-        health_report = {
-            "status": "ok",
-            "readiness_score": 0,
-            "level": "DEGRADED",
-            "metrics": {}
-        }
-
-        # 1. DB HEALTH (Weighted 25%)
-        db_stats = db.get_db_stats()
-        health_report["metrics"]["db"] = "SYNC" if db_stats.get("total_items", 0) > 0 else "EMPTY"
-
-        # 2. SYS HEALTH (Weighted 25%)
-        mem = psutil.virtual_memory()
-        health_report["metrics"]["sys"] = "STABLE" if mem.percent < 85 else "HEAVY_LOAD"
-
-        # 3. VOL HEALTH (Weighted 25%)
-        from src.core import config_master
-        media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
-        health_report["metrics"]["vol"] = "MOUNTED" if os.path.exists(media_dir) else "DISCONNECTED"
-
-        # 4. PRC HEALTH (Weighted 16%)
-        parent = psutil.Process(os.getpid())
-        zombies = [c for c in parent.children(recursive=True) if c.status() == psutil.STATUS_ZOMBIE]
-        health_report["metrics"]["prc"] = "CLEAN" if len(zombies) == 0 else "ZOMBIE_DETECTED"
-
-        # 5. DRV HEALTH (Weighted 16%)
-        from src.core import hardware_detector
-        hw_enc = hardware_detector.get_best_hw_encoder()
-        health_report["metrics"]["drv"] = "ACCEL_ACTIVE" if "h264_" in hw_enc and "libx264" not in hw_enc else "SOFTWARE_ONLY"
-
-        # 6. SEC HEALTH (Weighted 20%)
-        db_writable = os.access(db.get_active_db_path(), os.W_OK)
-        health_report["metrics"]["sec"] = "AUTHORITY_VERIFIED" if db_writable else "PERMISSION_LOCKED"
-
-        # 7. API HEALTH (Weighted 14%)
-        health_report["metrics"]["api"] = "DOCUMENTED"
-
-        # 8. ENV HEALTH (Weighted 14%)
-        import shutil
-        health_report["metrics"]["env"] = "STACK_VERIFIED" if shutil.which("ffmpeg") else "FFMPEG_MISSING"
-
-        # Scoring Logic (19-Layer Balanced Model)
-        score = 0
-        if health_report["metrics"]["db"] == "SYNC":
-            score += 12
-        if health_report["metrics"]["sys"] == "STABLE":
-            score += 12
-        if health_report["metrics"]["vol"] == "MOUNTED":
-            score += 12
-        if health_report["metrics"]["prc"] == "CLEAN":
-            score += 12
-        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE":
-            score += 12
-        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED":
-            score += 12
-        if health_report["metrics"]["api"] == "DOCUMENTED":
-            score += 14
-        if health_report["metrics"]["env"] == "STACK_VERIFIED":
-            score += 14
-
-        health_report["readiness_score"] = min(100, score)
-
-        if score >= 95:
-            health_report["level"] = "BATTLE-READY"
-        elif score >= 75:
-            health_report["level"] = "STABILIZED"
-        elif score >= 50:
-            health_report["level"] = "DEGRADED"
-        else:
-            health_report["level"] = "CRITICAL"
-
-        return health_report
-    except Exception as e:
-        log.error(f"[Forensic-HLT] Global Health Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.get_global_health_audit()
 
 
 @eel.expose
 def get_security_forensics():
-    """
-    Forensic Security & Authority Audit (v1.37.38).
-    Maps UID, GID, and Filesystem Authority.
-    """
-    try:
-        import os
-        import platform
-        from src.core import db, config_master
-
-        db_path = db.get_active_db_path()
-        media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
-
-        security_info = {
-            "uid": os.getuid() if hasattr(os, "getuid") else 0,
-            "gid": os.getgid() if hasattr(os, "getgid") else 0,
-            "is_root": os.getuid() == 0 if hasattr(os, "getuid") else False,
-            "db_authority": {
-                "read": os.access(db_path, os.R_OK),
-                "write": os.access(db_path, os.W_OK),
-                "owner": os.stat(db_path).st_uid if os.path.exists(db_path) else 0
-            },
-            "library_authority": {
-                "read": os.access(media_dir, os.R_OK) if os.path.exists(media_dir) else False,
-                "write": os.access(media_dir, os.W_OK) if os.path.exists(media_dir) else False
-            },
-            "platform": platform.platform()
-        }
-
-        return {
-            "status": "ok",
-            "security": security_info
-        }
-    except Exception as e:
-        log.error(f"[Forensic-SEC] Security Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    return api_reporting.get_security_forensics()
 
 @eel.expose
 def get_hardware_forensics():
-    """
-    Forensic Hardware & Driver Audit (v1.37.37).
-    Maps GPU, Codecs, and Storage Bus Heuristics.
-    """
-    try:
-        from src.core import hardware_detector
-        info = hardware_detector.get_hardware_info()
-
-        # Add real-time usage if possible
-        usage = hardware_detector.get_gpu_usage_safe()
-        info["gpu_usage"] = usage
-
-        return {
-            "status": "ok",
-            "hardware": info
-        }
-    except Exception as e:
-        log.error(f"[Forensic-DRV] Hardware Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.get_hardware_forensics()
 
 
 @eel.expose
 def get_api_forensics():
-    """
-    Forensic Internal API Registry & Documentation (v1.37.39).
-    Maps all exposed Eel bridges to their technical docstrings.
-    """
-    try:
-        import eel
-        # Eel stores exposed functions in _exposed_functions or similar
-        # We manually aggregate the mission-critical ones for the registry
-        registry = []
-
-        # We'll use a technical mapping for the highest-fidelity reporting
-        critical_bridges = [
-            "get_global_health_audit", "get_net_ping", "get_process_forensics",
-            "get_hardware_forensics", "get_security_forensics", "get_db_stats",
-            "get_all_media", "sync_library", "terminate_worker_process"
-        ]
-
-        for func_name in critical_bridges:
-            if func_name in globals():
-                func = globals()[func_name]
-                registry.append({
-                    "name": func_name,
-                    "desc": func.__doc__.strip() if func.__doc__ else "No documentation provided.",
-                    "status": "EXPOSED"
-                })
-
-        return {
-            "status": "ok",
-            "registry": registry,
-            "total_endpoints": len(registry)
-        }
-    except Exception as e:
-        log.error(f"[Forensic-API] API Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
+    registry = [
+        {"name": "get_global_health_audit", "status": "EXPOSED"},
+        {"name": "get_all_media", "status": "EXPOSED"},
+        {"name": "get_db_stats", "status": "EXPOSED"}
+    ]
+    return api_reporting.get_api_forensics(registry)
 
 @eel.expose
 def get_environment_forensics():
-    """
-    Forensic Software Stack & Environment Audit (v1.37.40).
-    Maps Python, Eel, and Engine Binaries.
-    """
-    try:
-        import sys
-        import eel
-        import psutil
-        import subprocess
-        import platform
-
-        ffmpeg_version = "NOT FOUND"
-        try:
-            res = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=2)
-            ffmpeg_version = res.stdout.split('\n')[0] if res.stdout else "UNKNOWN"
-        except BaseException:
-            pass
-
-        stack_info = {
-            "python": sys.version.split('\n')[0],
-            "eel": eel.__version__,
-            "psutil": psutil.__version__,
-            "ffmpeg": ffmpeg_version,
-            "os": platform.platform(),
-            "node": platform.node()
-        }
-
-        return {
-            "status": "ok",
-            "stack": stack_info
-        }
-    except Exception as e:
-        log.error(f"[Forensic-ENV] Environment Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
+    return api_reporting.get_environment_forensics()
 
 
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
