@@ -364,32 +364,29 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "prefer_vlc_for_menus": True,   # [v1.46.045] ISO Hardening
                 "enable_3d_detection": True,    # [v1.46.045] 3D Routing
                 
-                # --- [v1.46.049/051] Master Steering Matrix ---
+                # --- [v1.46.052] Ultimate Steering Matrix ---
+                "special_format_steering": {
+                    "3d": "auto"          # Special Case (v1.46.052 Sonderfall)
+                },
                 "frequency_steering": {
                     "pal_50hz": "auto",    # Master Profile for PAL/50Hz content
                     "ntsc_60hz": "auto"     # Master Profile for NTSC/60Hz content
                 },
                 "codec_steering": {
                     "h264": "auto",       # OPTIONS: "auto", "direct", "mse", "hls"
-                    "hevc": "auto",       # H.265 mandatory HEVC guard still applies
-                    "vp9": "auto",        # VP9 (usually WebM)
-                    "av1": "auto"         # AV1 (Modern high-comp)
+                    "hevc": "auto",       # Alias for h.265 (High-Fidelity)
+                    "vp9": "auto",        # VP9 (WebM)
+                    "av1": "auto"         # AV1 (Modern)
                 },
                 "resolution_steering": {
-                    "pal": "auto",        # Standard PAL (50Hz)
-                    "ntsc": "auto",       # Standard NTSC (60Hz)
-                    "720p": "auto",       # HD Ready
-                    "1080p": "auto",      # Full HD
-                    "2160p": "auto"       # Ultra HD / 4K
+                    "sd_pal": "auto",     # SD PAL (576i/p)
+                    "sd_ntsc": "auto",    # SD NTSC (480i/p)
+                    "720p": "auto",       # HD Ready Progressive
+                    "720i": "auto",       # HD Ready Interlaced
+                    "1080p": "auto",      # Full HD Progressive
+                    "1080i": "auto",      # Full HD Interlaced
+                    "2160p": "auto"       # Ultra HD / 4K (High-Fidelity)
                 },
-
-                # --- [v1.46.047] Forensic Media Granularity (RE-INTEGRATED) ---
-                "dvd_ntsc_routing": "menu",      # OPTIONS: "menu", "transcode"
-                "dvd_pal_routing": "menu",       # OPTIONS: "menu", "transcode"
-                "bd_standard_routing": "menu",   # OPTIONS: "menu", "transcode"
-                "bd_3d_routing": "menu",         # OPTIONS: "menu", "transcode"
-                "bd_4k_routing": "menu",         # OPTIONS: "menu", "transcode"
-                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] Resolution-aware steering
                 
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
