@@ -59,7 +59,8 @@ def apply_library_filters(all_media: List[Dict],
 
     for item in all_media:
         item_is_mock = bool(item.get('is_mock', 0))
-        h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
+        h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
+        h_mode = h_registry.get('mode', 'both')
 
         if h_mode == 'real' and item_is_mock:
             dropped_reasons["mock_filtered"] = dropped_reasons.get("mock_filtered", 0) + 1
@@ -163,9 +164,10 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         if ext in ALL_AUDIO_EXTENSIONS: item['category'] = 'audio'
         elif ext in ALL_VIDEO_EXTENSIONS: item['category'] = 'video'
 
-    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, active_branch=active_branch)
+    filtered_media, logic_audit = apply_library_filters(all_media, force_raw=force_raw, active_branch=active_branch)
 
-    h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
+    h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
+    h_mode = h_registry.get('mode', 'both')
     if h_mode == 'real':
         final_media = [item for item in filtered_media if not bool(item.get('is_mock', 0))]
     elif h_mode == 'mock':
@@ -196,8 +198,8 @@ def get_library_audit_summary() -> Dict[str, Any]:
     """Provides a breakdown of item counts at each stage of hydration."""
     all_media = db.get_all_media()
     total = len(all_media)
-    cat_filtered, _ = _apply_library_filters(all_media, force_raw=True)
-    full_filtered, full_audit = _apply_library_filters(all_media, force_raw=False)
+    cat_filtered, _ = apply_library_filters(all_media, force_raw=True)
+    full_filtered, full_audit = apply_library_filters(all_media, force_raw=False)
 
     return {
         "stages": {
@@ -233,7 +235,7 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
                          sort_by: str = "name", force_raw: bool = False, active_branch: str = None) -> Dict[str, Any]:
     """Advanced filtering for the media library."""
     all_media = db.get_all_media()
-    filtered, logic_audit = _apply_library_filters(
+    filtered, logic_audit = apply_library_filters(
         all_media, force_raw=force_raw, search=search, genre=genre, year=year, active_branch=active_branch)
 
     # Sorting

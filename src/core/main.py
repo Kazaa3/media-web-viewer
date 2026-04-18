@@ -470,9 +470,9 @@ def log_gui_event(category, action, details=""):
 @eel.expose
 def set_hydration_mode(mode: str) -> bool:
     """Sets the hydration mode for library retrieval (v1.41.67)."""
-    global HYDRATION_MODE
-    HYDRATION_MODE = mode.lower()
-    log.info(f"[HYDR-TRACE] Hydration mode updated to: {HYDRATION_MODE}")
+    mode_normalized = mode.lower()
+    GLOBAL_CONFIG["forensic_hydration_registry"]["mode"] = mode_normalized
+    log.info(f"[HYDR-TRACE] Centralized Hydration mode updated to: {mode_normalized}")
     return True
 
 
