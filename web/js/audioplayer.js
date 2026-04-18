@@ -666,6 +666,8 @@ function renderPhotoQueue() {
         return;
     }
 
+    function renderAudioQueue() {
+    const renderStart = performance.now();
     const containers = [
         document.getElementById('active-queue-list-render-target-warteschlange'),
         document.getElementById('player-active-queue-list')
