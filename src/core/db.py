@@ -146,31 +146,45 @@ def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[s
     return deleted
 
 
-_RECURSION_DEPTH = 0
-MAX_INIT_RETRIES = 2
+import threading
+_DB_INIT_LOCK = threading.Lock()
+_INIT_IN_PROGRESS = False
 
 def init_db(depth: int = 0):
     """
     Initializes the database and runs migrations if needed.
-    @param depth Recursion depth tracking to prevent infinite stalling (v1.41.00).
+    @param depth Recursion depth tracking to prevent infinite stalling (v1.46.046).
     """
+    global _DB_INITIALIZED, _INIT_IN_PROGRESS
+    
+    # 1. Thread & Recursion Safety (v1.46.046)
+    if _DB_INITIALIZED:
+        return True
+    
     if depth > MAX_INIT_RETRIES:
         log.critical(f"[DB-STALL] Max recursion depth ({MAX_INIT_RETRIES}) exceeded. Aborting init.")
         return False
 
-    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
-    db_path_obj = Path(DB_FILENAME)
-    exists = db_path_obj.exists()
-    size = db_path_obj.stat().st_size if exists else -1
-    if depth == 0:
-        log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
+    with _DB_INIT_LOCK:
+        if _DB_INITIALIZED:
+            return True
+            
+        if _INIT_IN_PROGRESS:
+            log.warning("[DB-WAIT] Database initialization already in progress. Waiting...")
+            return False
+        
+        _INIT_IN_PROGRESS = True
+        try:
+            # 2. Path Forensic Check
+            db_path_obj = Path(DB_FILENAME)
+            exists = db_path_obj.exists()
+            size = db_path_obj.stat().st_size if exists else -1
+            
+            if depth == 0:
+                log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
 
-    # Always ensure the directory exists
-    DB_DIR.mkdir(parents=True, exist_ok=True)
-
-    global _DB_INITIALIZED
-    if _DB_INITIALIZED and exists:
-        return
+            # Always ensure the directory exists
+            DB_DIR.mkdir(parents=True, exist_ok=True)
 
     if depth == 0:
         log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
