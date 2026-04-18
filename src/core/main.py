@@ -639,6 +639,17 @@ def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     if profiler:
         profiler.start_phase("App-Launch-Setup")
+
+    # --- [v1.46.034] MANDATORY PRE-FLIGHT INTEGRITY AUDIT ---
+    from src.core.startup_auditor import run_preflight_audit
+    if profiler: profiler.start_phase("Integrity-Verification")
+    if not run_preflight_audit():
+        log.critical("[Bootstrap] FATAL: System Integrity Audit FAILED. Startup aborted.")
+        sys.exit(1)
+    if profiler:
+        profiler.mark_integrity_verified()
+        profiler.end_phase("Integrity-Verification")
+
     # --- ULTRA-SOLO STARTUP (Zero-Latency) ---
     from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
