@@ -279,7 +279,7 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     transition: width var(--transition-fluid), opacity var(--transition-snappy), transform var(--transition-fluid);
 }
 
@@ -361,7 +361,7 @@ body.mwv-hide-subnav .sub-nav-bar {
     align-items: center;
     padding: 0 20px;
     gap: 8px;
-    overflow-x: auto;
+    overflow: hidden; /* v1.46.089 Avoid scrollbar shift */
     scrollbar-width: none;
 }
 
