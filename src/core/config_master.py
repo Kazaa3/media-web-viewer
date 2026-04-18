@@ -293,6 +293,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "use_ui_accent": True           # If True, overrides accent_color with UI theme color
     },
     
+    # --- [v1.46.026] SSOT: CAPABILITY REGISTRY (Frontend Handshake) ---
+    "audio_extensions": list(AUDIO_EXTENSIONS),
+    "video_extensions": list(VIDEO_EXTENSIONS),
+    "image_extensions": list(PICTURE_EXTENSIONS),
+    
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
     "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
