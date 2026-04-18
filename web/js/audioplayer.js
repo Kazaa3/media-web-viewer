@@ -157,9 +157,13 @@ function playAudio(item, startTime = 0) {
     }
 
     const ext = rawPath.slice(((rawPath.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
-    const proxyUrl = "/media/" + encodeURIComponent(rawPath);
-    const logMsg = `[Audio] Attempting to play: ${item.name || 'Unknown'} | Path: ${rawPath} | Proxy: ${proxyUrl}`;
     
+    // [v1.46.026] Forensic Route Alignment (Fixes 'Play doesn't work')
+    // We must use the backend's direct stream route for absolute local paths.
+    const proxyUrl = "/stream/via/direct/" + encodeURIComponent(rawPath);
+    const logMsg = `[Audio] Attempting to play: ${item.name || 'Unknown'} | Path: ${rawPath}`;
+    
+    console.info(">>> [FE-PLAY] Alignment Check:", { name: item.name, route: proxyUrl });
     mwv_trace('PLAYER-EVENT', 'PLAYBACK-START', { name: item.name, path: rawPath, proxy: proxyUrl });
     if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     

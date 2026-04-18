@@ -4707,21 +4707,32 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         status = "recovery-emergency"
 
     # Add hardcoded realistic mocks only in mock/both mode
-    if h_mode in ['mock', 'both'] and status != "recovery-emergency":
+    # [v1.46.026] ISO STAGE 5: Realistic Mock Injection
+    if audit_stage == 5 and h_mode in ['mock', 'both'] and status != "recovery-emergency":
+        log.info("[BD-AUDIT] STAGE 5: Injecting Realistic Mocks for structural verification.")
         realistic_mocks = [
             {
-                "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
+                "id": "mock-real-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
                 "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
                 "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
             },
             {
-                "id": "mock-2", "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
+                "id": "mock-real-2", "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
                 "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
                 "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
             }
         ]
-        # Only add the hardcoded mocks if they aren't already in final_media
+        # Avoid duplicates
         final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
+    elif audit_stage < 5:
+        log.debug(f"[BD-AUDIT] Skipping Stage 5 Mocks (Current Stage: {audit_stage})")
+
+    # --- STAGE 4: PRODUCTION CLEANUP ---
+    if h_mode == 'real':
+        pre_cleanup_count = len(final_media)
+        final_media = [item for item in final_media if not bool(item.get('is_mock', 0))]
+        if len(final_media) < pre_cleanup_count:
+            log.info(f"[BD-AUDIT] Productive Mode enforced: Stripped {pre_cleanup_count - len(final_media)} mock items.")
 
     # [v1.46.026] Category Distribution Audit (Backend)
     cat_distribution = {}
@@ -5621,14 +5632,6 @@ def get_best_hw_encoder():
 
 
 @eel.btl.route('/stream/via/direct/<file_path:path>')
-def serve_media_raw(file_path):
-    """
-    @brief Serves raw media files with full Range-header support for native browser seeking.
-    """
-    resolved_path = resolve_media_path(file_path)
-    if not os.path.exists(resolved_path):
-        return bottle.HTTPError(404, "File not found")
-
     mimetype = 'auto'
     if resolved_path.lower().endswith('.mkv'):
         mimetype = 'video/x-matroska'
