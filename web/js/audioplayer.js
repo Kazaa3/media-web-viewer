@@ -558,33 +558,27 @@ function renderAudioQueue() {
             }
             list.innerHTML = noMediaHtml;
         } else {
-            console.debug(`[Queue-UI] Rendering ${activeList.length} items to ${list.id}`);
-            // Use fragment for performant multi-injection (v1.46.10)
+            console.debug(`[Queue-UI] Processing ${activeList.length} items for ${list.id}`);
             const fragment = document.createDocumentFragment();
             
+            // [v1.46.026] Forensic RENDER-STEP Loop
             activeList.forEach((item, index) => {
+                if (index % 100 === 0) console.log(`[RENDER-STEP] Item ${index}/${activeList.length}: Processing ${item.name}`);
+                
                 const div = document.createElement('div');
                 div.className = 'legacy-track-item';
                 div.draggable = true;
                 if (index === playlistIndex) div.classList.add('active');
 
-                // [v1.46.001] Forensic Debug Borders
-                if (window.FHB && window.FHB.stage === 1) {
-                    div.style.border = "1px solid #00ffcc44";
-                    div.style.boxShadow = "inset 0 0 5px #00ffcc22";
+                // [v1.46.026] Type Mismatch Guard
+                if (isVideoItem(item)) {
+                    return; // Skip video items in audio renderer
                 }
 
-                const isAvailable = item.available !== false;
-                if (!isAvailable) div.classList.add('offline');
-
-                // [v1.46.021] Forensic Hydration Detectors
+                const tags = item.tags || {};
                 const nameMock = item.name && item.name.startsWith('[MOCK]');
                 const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
-
-                const tags = item.tags || {};
-                const stagePrefix = item.stage ? `[${item.stage}] ` : '';
-                const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Item');
-                const artistDisplay = item.artist || tags.artist || 'Media Workstation';
+                const isAvailable = item.available !== false;
                 
                 div.innerHTML = `
                     <div style="display: flex; align-items: center; width: 100%; pointer-events: none; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
@@ -592,77 +586,17 @@ function renderAudioQueue() {
                         <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
                             <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center;">
                                 <span class="provenance-badge ${mockFlag ? 'mock' : 'real'}">${mockFlag ? '[M]' : '[R]'}</span>
-                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${titleDisplay}</span>
-                                ${!isAvailable ? ' <span style="font-size: 9px; color: #ff5252; font-weight: 900; background: rgba(255,82,82,0.1); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">OFFLINE</span>' : ''}
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${item.name || 'Untitled'}</span>
                             </div>
-                            <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
-                                ${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'Media Library'}</span>
+                            <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary);">
+                                ${item.artist || tags.artist || 'Unknown Artist'} • ${tags.album || 'Unknown Album'}
                             </div>
-                        </div>
-                        <div class="item-actions" style="display: flex; gap: 4px; align-items: center; opacity: 0; transition: opacity 0.2s; pointer-events: all;">
-                            <button onclick="event.stopPropagation(); if(typeof removeItem === 'function') removeItem(${index})" title="Entfernen" style="background:transparent; border:none; padding: 6px; color: #ff5252; cursor:pointer;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                            </button>
                         </div>
                     </div>
                 `;
 
-                div.onmouseenter = () => { const act = div.querySelector('.item-actions'); if(act) act.style.opacity = '1'; };
-                div.onmouseleave = () => { const act = div.querySelector('.item-actions'); if(act) act.style.opacity = '0'; };
-
                 div.onclick = () => {
-                    if (!isAvailable) {
-                        if (typeof showToast === 'function') showToast("Medium ist offline.", "warn");
-                        return;
-                    }
                     if (typeof playMediaObject === 'function') playMediaObject(item, index);
-                    else if (typeof playAudio === 'function') playAudio(item, index);
-                };
-
-                // Internal Sortable DnD (v1.46.10 Refined)
-                div.ondragstart = (e) => {
-                    e.dataTransfer.setData("text/plain", JSON.stringify({ index: index, type: 'reorder' }));
-                    div.style.opacity = '0.4';
-                };
-                div.ondragend = () => { div.style.opacity = '1'; };
-                
-                div.ondragover = (e) => {
-                    e.preventDefault();
-                    div.style.borderTop = '2px solid var(--accent-color)';
-                };
-                div.ondragleave = () => {
-                    div.style.borderTop = 'none';
-                };
-                div.ondrop = (e) => {
-                    e.preventDefault();
-                    div.style.borderTop = 'none';
-                    try {
-                        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-                        if (data && data.type === 'reorder') {
-                            const fromIndex = data.index;
-                            if (fromIndex === index) return;
-                            const movedItem = window.currentPlaylist.splice(fromIndex, 1)[0];
-                            window.currentPlaylist.splice(index, 0, movedItem);
-                            renderAudioQueue();
-                        }
-                    } catch(err) {}
-                };
-                
-                // [v1.46.024] Forensic Categorization Log
-                if (index < 5 || index % 50 === 0) {
-                    console.debug(`[Queue-UI] Item ${index}: ${item.name} | Cat: ${item.category || 'unknown'}`);
-                }
-                
-                // [v1.46.026] Type Mismatch Guard
-                if (isVideoItem(item)) {
-                    console.warn(`[Queue-UI] Mismatch Skip: Item '${item.name}' is VIDEO but in AUDIO renderer.`);
-                    return;
-                }
-                
-                fragment.appendChild(div);
-            });
-            
-            // Atomic Injection
             // [v1.46.024] Atomic Clear is now centrally managed by syncQueueWithLibrary().
             const beforeCount = list.childElementCount;
             list.appendChild(fragment);
