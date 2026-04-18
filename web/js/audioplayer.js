@@ -596,7 +596,15 @@ function renderAudioQueue() {
                 `;
 
                 div.onclick = () => {
-                    if (typeof playMediaObject === 'function') playMediaObject(item, index);
+                    console.log(`[PLAY-PULSE] Item Click: ${item.name} (Index: ${index})`);
+                    if (typeof playMediaObject === 'function') {
+                        playMediaObject(item, index);
+                    } else if (typeof playAudio === 'function') {
+                        console.warn("[PLAY-PULSE] playMediaObject missing, falling back to playAudio.");
+                        playAudio(item, index);
+                    } else {
+                        console.error("[PLAY-PULSE] CRITICAL: No playback engine found (playMediaObject/playAudio missing).");
+                    }
                 };
 
                 fragment.appendChild(div);

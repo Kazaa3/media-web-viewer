@@ -709,7 +709,6 @@ function setHydrationMode(mode) {
     if (!mode) return;
     
     // [v1.46.026] UI Performance Guard (Debouncing)
-    // Prevents "Lag-Spikes" caused by rapid multi-clicking of hydration buttons.
     if (window.__mwv_hydration_in_progress) {
         console.warn("[Hydration] Sync already in progress. Blocking redundant request.");
         if (typeof showToast === 'function') showToast("Synchronisierung läuft...", 500);
@@ -717,21 +716,14 @@ function setHydrationMode(mode) {
     }
     window.__mwv_hydration_in_progress = true;
 
+    // [FE-AUDIT] Technical User Reaction Log
+    console.info(`[FE-AUDIT] Interaction: setHydrationMode -> ${mode.toUpperCase()}`);
+    if (typeof mwv_trace === 'function') mwv_trace('FOOTER-UI', 'HYD-CHANGE', { mode });
+
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
-    refreshForensicLeds();
-                    const sizeMB = ((window.__mwv_last_db_size || 0) / (1024 * 1024)).toFixed(2);
-                    btn.title = `DB Forensic: ${health.toUpperCase()} | Size: ${sizeMB} MB`;
-                } else {
-                    btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
-                    btn.style.background = isActive ? 'rgba(46, 204, 113, 0.15)' : 'transparent';
-                    btn.style.boxShadow = isActive ? '0 0 10px rgba(46, 204, 113, 0.2)' : 'none';
-                }
-                
-                if (isActive) btn.classList.add('active'); else btn.classList.remove('active');
-            }
-        });
-    });
+    
+    if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
 
     if (typeof showToast === 'function') showToast(`HYDRATION: ${mode.toUpperCase()}`, 1000);
     
