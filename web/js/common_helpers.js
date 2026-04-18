@@ -444,17 +444,22 @@ function isVideoItem(item) {
  */
 function isAudioItem(item) {
     if (!item) return false;
-    const cat = (item.category || '').toLowerCase();
-    const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
-    if (audioCategories.includes(cat)) return true;
-    
     const path = item.path || item.relpath || "";
-    const audioExtensions = ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
+    const cat = (item.category || '').toLowerCase();
+    
+    // 1. SSOT: Extension-First Priority (v1.46.026)
+    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
     
-    // [v1.46.026] Extension-First Priority for Real media
-    if (ext && audioExtensions.includes(ext)) return true;
+    if (ext && audioExtensions.includes(ext)) {
+        if (index < 5) console.debug(`[FE-AUDIT] Extension Success: ${item.name} is AUDIO`);
+        return true;
+    }
+    
+    // 2. Category Matching
+    const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
+    if (audioCategories.includes(cat)) return true;
     
     // Forensic signature fallbacks
     if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
