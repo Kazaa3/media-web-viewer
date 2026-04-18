@@ -4370,8 +4370,9 @@ def _apply_library_filters(all_media: List[Dict],
     filtered = []
 
     # [v1.46.026] Centralized Audit Template
-    from src.core.config_master import log_dropped_reasons
+    from src.core.config_master import log_dropped_reasons, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS, ARCHIVE_EXTENSIONS
     dropped_reasons = GLOBAL_CONFIG["audit_registry"]["dropped_reasons_template"].copy()
+    dropped_paths = []
 
     for item in all_media:
         # [MOCK-FILTER] v1.41.00 Unified Hydration Logic
@@ -4396,8 +4397,9 @@ def _apply_library_filters(all_media: List[Dict],
             
             # [Branch Integrity Audit]
             if supported_by_branch and item_cat not in supported_by_branch:
-                if item_cat != 'all': # All is a meta-cat
+                if item_cat != 'all': 
                     dropped_reasons["branch_lock"] += 1
+                    dropped_paths.append(item.get('path', 'unknown'))
                     continue
             cat = str(item.get('category', 'Unbekannt')).lower()
 
@@ -4479,7 +4481,7 @@ def _apply_library_filters(all_media: List[Dict],
     }
 
     # [v1.46.026] Centralized Forensic Logging
-    log_dropped_reasons(dropped_reasons, f"Library Filter ({active_branch or 'ALL'})")
+    log_dropped_reasons(dropped_reasons, f"Library Filter ({active_branch or 'ALL'})", sample_paths=dropped_paths)
 
     if not filtered and all_media:
         log.critical(
@@ -4615,20 +4617,39 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
 
-    # [v1.46.026] Expanded Forensic Category Alignment
-    # Mapping legacy database categories to modern technical shells.
+    # [v1.46.026] Expanded Forensic Category Alignment (Extension-First Override)
+    # Mapping legacy database categories to modern technical shells using technical extensions.
+    from src.core.config_master import ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS, ARCHIVE_EXTENSIONS
+    
     for item in all_media:
-        cat = str(item.get('category', '')).lower()
-        if cat in ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik']:
+        path = str(item.get('path', '')).lower()
+        ext = os.path.splitext(path)[1]
+        cat_legacy = str(item.get('category', '')).lower()
+        
+        # 1. Extension-First Signal (Technical Recovery)
+        if ext in ALL_AUDIO_EXTENSIONS:
             item['category'] = 'audio'
-        elif cat in ['video', 'multimedia', 'film', 'movie', 'serie', 'series', 'documentation', 'doku', 'spiel', 'beigabe', 'supplements']:
+        elif ext in ALL_VIDEO_EXTENSIONS:
             item['category'] = 'video'
-        elif cat in ['bilder', 'images', 'pictures', 'photos']:
+        elif ext in PICTURE_EXTENSIONS:
             item['category'] = 'pictures'
-        elif cat in ['docs', 'nfo', 'documents', 'text', 'pdf']:
+        elif ext in DOCUMENT_EXTENSIONS:
             item['category'] = 'documents'
-        elif cat in ['archives', 'zip', 'rar']:
+        elif ext in ARCHIVE_EXTENSIONS:
             item['category'] = 'archives'
+        
+        # 2. Legacy Fallback (If no extension match, trust the string mapping)
+        else:
+            if cat_legacy in ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik']:
+                item['category'] = 'audio'
+            elif cat_legacy in ['video', 'multimedia', 'film', 'movie', 'serie', 'series', 'documentation', 'doku', 'spiel', 'beigabe', 'supplements']:
+                item['category'] = 'video'
+            elif cat_legacy in ['bilder', 'images', 'pictures', 'photos']:
+                item['category'] = 'pictures'
+            elif cat_legacy in ['docs', 'nfo', 'documents', 'text', 'pdf']:
+                item['category'] = 'documents'
+            elif cat_legacy in ['archives', 'zip', 'rar']:
+                item['category'] = 'archives'
 
     # --- FILTERING & BYPASS (The Motor) ---
     # Apply production filters unless force_raw is requested
