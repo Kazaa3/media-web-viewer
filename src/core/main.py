@@ -4496,13 +4496,16 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                 for filename in files:
                     ext = "." + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
                     if ext not in all_exts:
+                        log.debug(f"[Scan-Trace] SKIPPING (Unsupported Ext '{ext}'): {filename}")
                         continue
                     f_path = os.path.join(root, filename)
                     if f_path in existing_media:
+                        log.debug(f"[Scan-Trace] SKIPPING (Already Indexed): {filename}")
                         continue
 
                     try:
                         cat = ext_to_cat.get(ext, 'Unknown')
+                        log.debug(f"[Scan-Trace] INDEXING: {filename} -> {cat}")
                         collected_items.append({
                             'name': filename, 'path': f_path, 'category': cat,
                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
