@@ -8,7 +8,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "1.46.077"
+    VERSION = "1.46.078"
 
 # --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
@@ -245,6 +245,9 @@ def background_version_discovery(config_dict: dict):
 # VERSION and PROJECT_ROOT logic moved to top for v1.46.077 SSOT.
 
 # --- NETWORK & HOST CALCULATION ---
+DEFAULT_REQUEST_TIMEOUT = 15
+DEFAULT_REQUEST_STREAM = True
+
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))
 APP_HOST = os.environ.get("MWV_HOST", "localhost")
 BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
@@ -279,7 +282,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "host": APP_HOST,
         "port": APP_PORT,
         "bind_address": BIND_ADDR,
-        "api_root": f"http://{BIND_ADDR}:{APP_PORT}"
+        "api_root": f"http://{BIND_ADDR}:{APP_PORT}",
+        "default_timeout": DEFAULT_REQUEST_TIMEOUT,
+        "default_stream": DEFAULT_REQUEST_STREAM
     },
 
     # --- VISUALIZER ORCHESTRATION (v1.46.10) ---
