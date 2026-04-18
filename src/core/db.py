@@ -396,6 +396,18 @@ def insert_media_batch(items: list[dict]):
     cursor = conn.cursor()
     try:
         for item_dict in items:
+            # 4. Forensic Pulse: Detailed Tech Audit (v1.46.047)
+            from src.core.ffprobe_analyzer import ffprobe_analyze
+            filepath = item_dict.get('path')
+            analysis = ffprobe_analyze(filepath)
+            
+            # Extract granular forensic markers
+            subtype = analysis.get("media_subtype", "FILE")
+            codec = analysis.get("codec", "unknown")
+            res = analysis.get("resolution", "SD")
+            fps = analysis.get("fps", 0)
+            interlaced = "I" if analysis.get("is_interlaced") else "P"
+            
             cursor.execute('''
                 INSERT OR REPLACE INTO media (
                     name, path, type, duration, category, 

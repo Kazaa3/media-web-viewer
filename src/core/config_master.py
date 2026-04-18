@@ -363,6 +363,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "force_vlc_for_iso": True,
                 "prefer_vlc_for_menus": True,   # [v1.46.045] ISO Hardening
                 "enable_3d_detection": True,    # [v1.46.045] 3D Routing
+                
+                # --- [v1.46.047] Forensic Media Granularity ---
+                "dvd_ntsc_routing": "menu",      # OPTIONS: "menu", "transcode"
+                "dvd_pal_routing": "menu",       # OPTIONS: "menu", "transcode"
+                "bd_standard_routing": "menu",   # OPTIONS: "menu", "transcode"
+                "bd_3d_routing": "menu",         # OPTIONS: "menu", "transcode"
+                "bd_4k_routing": "menu",         # OPTIONS: "menu", "transcode"
+                "hevc_force_transcode_on_4k": True, # [v1.46.047] Ensure forensic parity
+                
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
                 "mpv_native_threshold_mbps": 50
