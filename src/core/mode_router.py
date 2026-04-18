@@ -52,6 +52,7 @@ def smart_route(file_path):
     if resolution == '4K' and bitrate > 50000:
         mode = 'mpv_native'
 
+    log.info(f"[PLAY-PULSE] smart_route decision: {mode} | Codec: {codec} | Res: {resolution}")
     return {
         "mode": mode,
         "info": info
