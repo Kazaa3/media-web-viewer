@@ -318,12 +318,18 @@ function playMediaObject(item) {
             }, true); // v1.35.65 Force Jump
         }
     } else {
-        console.info("[Play-Routing] Audio detected, switching to Audio Player tab:", item.path);
-        addToQueue(item);
+        console.info("[Play-Routing] Audio detected, ensuring in queue and switching to Player:", item.path);
+        
+        // [v1.46.087] Non-blocking queue injection
+        addToQueue(item, true); // silent=true
+        
         if (typeof switchTab === 'function') {
             switchTab('player', null, () => {
+                console.debug("[Play-Routing] App Context Switched. Executing playAudio...");
                 if (typeof playAudio === 'function') {
                     playAudio(item);
+                } else {
+                    console.error("[Play-Routing] Critical: playAudio() not found in Player context.");
                 }
             }, true); // v1.35.65 Force Jump
         }
@@ -341,21 +347,24 @@ function playMediaObject(item) {
 
 /**
  * Adds an item to the global currentPlaylist.
+ * @param {Object} item - The media item to add.
+ * @param {Boolean} silent - If true, suppresses "Already in queue" toasts (v1.46.087).
  */
-function addToQueue(item) {
+function addToQueue(item, silent = false) {
     if (!item) return;
     
     // Ensure initialization (v1.46.026 Fixed 'const' crash)
     if (!window.currentPlaylist) window.currentPlaylist = [];
     let currentPlaylist = window.currentPlaylist;
 
-    console.log(`[PLAY-TRACE] Adding to queue: ${item.name}`);
+    console.debug(`[QUEUE-PULSE] Analysis: ${item.name} | Silent: ${silent}`);
 
     // Avoid duplicates in the active queue if desired
-    if (!currentPlaylist.find(i => i.path === item.path)) {
+    const existingIndex = currentPlaylist.findIndex(i => i.path === item.path);
+    if (existingIndex === -1) {
         currentPlaylist.push(item);
         if (typeof renderAudioQueue === 'function') renderAudioQueue();
-        if (typeof showToast === 'function') showToast(t('pl_added_to_queue') || "Added to queue");
+        if (!silent && typeof showToast === 'function') showToast(t('pl_added_to_queue') || "Added to queue");
         
         // [v1.46.026] Broadcast State to Backend SSOT
         if (typeof eel !== 'undefined' && typeof eel.sync_playback_state === 'function') {
@@ -366,7 +375,9 @@ function addToQueue(item) {
             })();
         }
     } else {
-        if (typeof showToast === 'function') showToast(t('pl_already_in_queue') || "Already in queue", "info");
+        if (!silent) {
+            if (typeof showToast === 'function') showToast(t('pl_already_in_queue') || "Already in queue", "info");
+        }
     }
 }
 

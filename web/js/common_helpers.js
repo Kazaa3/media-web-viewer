@@ -407,39 +407,37 @@ function showToast(message, duration = 3000) {
 /**
  * Media Type Detection
  */
+/**
+ * Media Type Detection Engine (Hardened v1.46.087)
+ */
 function isVideoItem(item) {
     if (!item) return false;
     const path = item.path || item.relpath || item.name || '';
     const cat = (item.category || '').toLowerCase();
 
-    // 1. SSOT: Extension-First Priority (v1.46.026)
-    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts'];
-    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma'];
-
+    // [v1.46.087] SSOT Extension Recovery
     const extMatch = path.match(/\.([a-z0-9_]+)$/i);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
 
-    // 2. [v1.46.031] AUDIO GUARD: If it looks like audio, it is NEVER video.
+    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts'];
+    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
+
+    // 1. [v1.46.087] AUDIO GUARD: If it matches an audio extension, it is NEVER a video.
+    // This prevents "multimedia" category from misrouting mp3s to the video player.
     if (ext && audioExtensions.includes(ext)) {
-        if (typeof window.__mwv_audit_count === 'undefined') window.__mwv_audit_count = 0;
-        if (window.__mwv_audit_count < 10) {
-            console.debug(`[FILTER-AUDIT] PASS: ${item.name} matches Audio Extension. Guarding classification.`);
-            window.__mwv_audit_count++;
-        }
         return false;
     }
 
-    // 3. Strict Video Extension Match
+    // 2. Strict Video Extension Match
     if (ext && videoExtensions.includes(ext)) return true;
 
-    // 4. Category Fallbacks (Legacy)
+    // 3. Category Fallbacks (Legacy)
     const videoCategories = ['video', 'movie', 'serie', 'sh', 'sz', 'sp', 'sw', 'documentation'];
     if (videoCategories.includes(cat)) return true;
 
-    // 5. Multimedia Ambiguity Resolution
-    if (cat === 'multimedia') {
-        // Since we already passed the Audio Guard above, if we are still here, it might be video
-        // But for safety, we only return true if it's NOT explicitly an audio extension
+    // 4. Multimedia Ambiguity Resolution
+    // Only classify as video if it's explicitly 'multimedia' AND didn't match Audio Guard
+    if (cat === 'multimedia' && !audioExtensions.includes(ext)) {
         return true;
     }
 
