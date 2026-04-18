@@ -27,13 +27,14 @@ class VideoHandler(MediaHandler):
         from src.core.mode_router import smart_route
         import urllib.parse
         
-        # 1. Delegate decision to unified orchestrator (v1.46.043)
+        # 1. Delegate decision to unified orchestrator (v1.46.046)
         route = smart_route(str(self.filepath))
         mode = route.get("mode", "direct_play")
         analysis = route.get("info", {})
-        d_sec = analysis.get("duration_sec", 0)
+        subtype = analysis.get("media_subtype", "FILE")
+        d_sec = analysis.get("duration", 0)
         
-        self.log.info(f"[PLAY-PULSE] VideoHandler delegate: Mode={mode} | Path={self.filepath.name}")
+        self.log.info(f"[PLAY-PULSE] VideoHandler delegate: Mode={mode} | Subtype={subtype} | Path={self.filepath.name}")
 
         # 2. Bridge back to Handshake URL structure
         if mode == 'direct_play':
