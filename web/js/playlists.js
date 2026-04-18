@@ -235,9 +235,16 @@ function startAtomicHydrationWatcher() {
     console.info(">>> [Diagnostic] Starting Atomic Hydration Watcher...");
     setInterval(() => {
         try {
+            const config = window.CONFIG || window.GLOBAL_CONFIG || {};
+            const autoHydrate = config.queue_orchestration?.auto_hydration_enabled !== false;
+
             if (window.currentPlaylist.length === 0 && typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
-                console.warn("[Watcher] Queue is empty. Triggering automatic hydration...");
-                syncQueueWithLibrary();
+                if (autoHydrate) {
+                    console.warn("[Watcher] Queue is empty. Triggering automatic hydration...");
+                    syncQueueWithLibrary();
+                } else {
+                    console.info("[Watcher] Queue is empty, but auto-hydration is DISABLED per config.");
+                }
             }
 
             const initialCount = window.currentPlaylist.length;

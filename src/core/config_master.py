@@ -307,6 +307,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "audit_stage": 0                # Current forensic stage (0=Raw, 1=Mock, 2=Sync)
     },
 
+    # --- [v1.46.039] QUEUE ORCHESTRATION REGISTRY ---
+    "queue_orchestration": {
+        "auto_hydration_enabled": True, # Automatically populate queue from library
+        "max_queue_items": 5000,        # Performance cap
+        "deduplicate": True             # Prevent dual entries
+    },
+
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
     "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis

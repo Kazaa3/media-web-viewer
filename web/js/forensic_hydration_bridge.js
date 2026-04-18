@@ -122,8 +122,16 @@ const ForensicHydrationBridge = {
         // [v1.46.017] Sync SSOT Dual-Variable
         window.__mwv_all_library_items = window.allLibraryItems;
 
-        // Surgical update of the active queue
-        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        // Surgical update of the active queue (Respect v1.46.039 Flag)
+        const config = window.CONFIG || window.GLOBAL_CONFIG || {};
+        const autoHydrate = config.queue_orchestration?.auto_hydration_enabled !== false;
+        
+        if (autoHydrate && typeof syncQueueWithLibrary === 'function') {
+            syncQueueWithLibrary();
+        } else {
+            console.info("[HYDRATION-BRIDGE] Skipping Queue Sync: auto_hydration_enabled is FALSE.");
+        }
+        
         if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof updateLibraryUI === 'function') updateLibraryUI();
         
