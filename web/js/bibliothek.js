@@ -197,16 +197,17 @@ async function renderLibrary() {
     }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.46.012
+    const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+    
     projectedItems = projectedItems.filter(item => {
         // [v1.46.012] Recovery Exemption: Safety items must always show
         if (item.is_recovery || (item.id && String(item.id).startsWith('recovery-'))) return true;
         
-        const hmode = window.__mwv_hydration_mode || 'both'; // Default to both if unsure
         const nameMock = item.name && item.name.startsWith('[MOCK]');
         const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
         
-        if (hmode === 'mock') return mockFlag || !!item.stage;
-        if (hmode === 'real') return !mockFlag && !item.stage;
+        if (hmode === 'mock') return mockFlag;
+        if (hmode === 'real') return !mockFlag;
         return true; // 'both'
     });
 
@@ -269,38 +270,40 @@ async function renderLibrary() {
     if (coverflowItems.length === 0) {
         let noMediaHtml = "";
         
-        if (allLibraryItems.length === 0) {
-            // --- TIER A: TOTAL BLACK HOLE (v1.37.28) ---
+        if (allLibraryItems.length === 0 || (hmode === 'real' && projectedItems.length === 0)) {
+            // --- TIER A: TOTAL BLACK HOLE OR EMPTY REAL SET (v1.46.050 Hardened) ---
+            const isRealEmpty = (hmode === 'real' && projectedItems.length === 0 && allLibraryItems.length > 0);
+            
             noMediaHtml = `
                 <div style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 800px; margin: 40px auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-                    <div style="font-size: 32px; margin-bottom: 20px;">🛡️ Hydration Guard</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #ff3366; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Forensic Error: empty_index_detected</div>
+                    <div style="font-size: 32px; margin-bottom: 20px;">${isRealEmpty ? '🔍 Keine echten Medien gefunden' : '🛡️ Hydration Guard'}</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #ff3366; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">
+                        ${isRealEmpty ? 'DB-STATUS: 0 REAL ITEMS' : 'Forensic Error: empty_index_detected'}
+                    </div>
                     <p style="color: var(--text-secondary); opacity: 0.8; margin-bottom: 30px; line-height: 1.6;">
-                        Deine Medien-Datenbank ist aktuell vollständig leer. <br>
-                        Verwende die folgenden taktischen Werkzeuge, um dein System zu rehydrieren.
+                        ${isRealEmpty ? 
+                            'Deine Datenbank enthält aktuell keine echten Medien. Hast du bereits einen Scan durchgeführt?' : 
+                            'Deine Medien-Datenbank ist aktuell vollständig leer.'}
                     </p>
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                        <button onclick="if(window.triggerMasterScan) window.triggerMasterScan()" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <button onclick="if(window.scan) window.scan()" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
                             <span style="font-size: 18px;">📂</span>
-                            <span style="font-size: 11px;">DIRECT SCAN</span>
+                            <span style="font-size: 11px;">SCAN NOW</span>
                         </button>
-                        <button onclick="if(window.triggerMasterSync) window.triggerMasterSync()" style="padding: 15px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                            <span style="font-size: 18px;">🔄</span>
-                            <span style="font-size: 11px;">ATOMIC SYNC</span>
-                        </button>
-                        <button onclick="if(window.triggerNuclearRecovery) window.triggerNuclearRecovery()" style="padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                            <span style="font-size: 18px;">☢️</span>
-                            <span style="font-size: 11px;">NUCLEAR RECOVERY</span>
+                        <button onclick="if(window.setHydrationMode) window.setHydrationMode('mock')" style="padding: 15px; background: #9b59b6; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <span style="font-size: 18px;">🧪</span>
+                            <span style="font-size: 11px;">SHOW MOCKUPS</span>
                         </button>
                     </div>
 
-                    <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: 'JetBrains Mono', monospace; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                        MWV_WORKSTATION_VERSION_1.37.28 | STATUS: STANDBY
+                    <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: 'JetBrains Mono', monospace; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; display: flex; justify-content: space-between;">
+                        <span>MODE: ${hmode.toUpperCase()}</span>
+                        <span>DB_TOTAL: ${window.__mwv_last_db_count || 0}</span>
                     </div>
                 </div>
             `;
-            if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', 'Total Black Hole Detected: Library is empty.');
+            if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', isRealEmpty ? 'Real set is empty.' : 'Total Black Hole Detected.');
         } else {
             // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
             const dbCount = allLibraryItems.filter(i => !i.is_mock).length;
