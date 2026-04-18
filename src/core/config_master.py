@@ -370,7 +370,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "bd_standard_routing": "menu",   # OPTIONS: "menu", "transcode"
                 "bd_3d_routing": "menu",         # OPTIONS: "menu", "transcode"
                 "bd_4k_routing": "menu",         # OPTIONS: "menu", "transcode"
-                "hevc_force_transcode_on_4k": True, # [v1.46.047] Ensure forensic parity
+                "hevc_force_transcode_on_hd": True, # [v1.46.048-REV2] Resolution-aware steering
                 
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
@@ -394,7 +394,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "debug_mode": get_env_bool("MWV_DEBUG", True),
     "db_filename": str(SELECTED_DB_PATH),
     "docker_mode": get_env_bool("MWV_DOCKER", False),
-    "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
+    "hardware_info": {
+        "type": "Awaiting discovery...", 
+        "encoders": [], 
+        "decoders": [], 
+        "hevc_hw_decoding_available": False 
+    },
     "installed_packages": {},
     "enable_collection_management": True, # GLOBAL: Automatische Ordner-Gruppierung.
     "enable_nfo_parsing": True,          # GLOBAL: XML-Extraktion aus .nfo Dateien.
