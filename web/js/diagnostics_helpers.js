@@ -140,6 +140,19 @@ function syntaxHighlightJSON(json) {
  * Restores the Category Breakdown requested by user.
  */
 /**
+ * loadDiagnosticsSuite() - Entry point for the main Diagnostics Tab (v1.46.062)
+ */
+window.loadDiagnosticsSuite = function() {
+    console.info("[DIAGNOSTICS] Loading Main Suite Fragment...");
+    if (typeof FragmentLoader !== 'undefined') {
+        FragmentLoader.load('diagnostics-suite-container', 'fragments/diagnostics_suite.html', () => {
+            console.log("[DIAGNOSTICS] Main Suite Hydrated.");
+            if (typeof renderDatabaseOverview === 'function') renderDatabaseOverview();
+        });
+    }
+};
+
+/**
  * Modern Database Overview Renderer (v1.41.00 Final Consolidation)
  * Restores the Category Breakdown requested by user.
  */
@@ -740,14 +753,13 @@ window.showStatusNotification = function(msg, type = 'info') {
 };
 
 window.updateForensicHUD = function() {
-    // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16 Pulsar Upgrade)
+    // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16/v1.46.062 Consolidated)
     const hudFe = document.getElementById('hud-fe');
     const hudBe = document.getElementById('hud-be');
     const hudDb = document.getElementById('hud-db');
 
-    const lastSync = new Date().toLocaleTimeString();
-    const pid = window.__mwv_last_pid || '--';
-    const upTime = window.__mwv_last_uptime || '--';
+    const finalGui = (window.allLibraryItems || []).length;
+    const finalDb = window.__mwv_last_db_count || 0;
 
     // Helper: Get high-density trace for tooltip
     const getModuleTrace = (moduleKey) => {
