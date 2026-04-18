@@ -119,7 +119,7 @@ const ForensicHydrationBridge = {
                 const typedItems = stage.items.map(item => ({
                     ...item,
                     is_diag: true,
-                    is_mock: false, // Force real status for diagnostic samples
+                    is_mock: true, // v1.46.097 Restore mock status to avoid labeling as [R]
                     stage_id: stage.id,
                     stage_name: stage.name
                 }));
