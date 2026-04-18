@@ -98,29 +98,47 @@ def get_gpu_info(fast_mode: bool = False) -> Dict[str, Any]:
                     gpu_type = "Intel"
             except: pass
 
-    # 3. Encoder Check (Slow - Skip if fast_mode)
+    # 3. Encoder & Decoder Check (Slow - Skip if fast_mode)
+    decoders = []
     if not fast_mode and shutil.which("ffmpeg"):
         try:
-            res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=1.0)
-            stdout = res.stdout if res.stdout else ""
+            # Encoders
+            res_e = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=1.0)
+            stdout_e = res_e.stdout if res_e.stdout else ""
             
-            if gpu_type == "NVIDIA" and "h264_nvenc" in stdout:
+            if gpu_type == "NVIDIA" and "h264_nvenc" in stdout_e:
                 encoders.append("nvenc")
             
-            if "h264_qsv" in stdout:
+            if "h264_qsv" in stdout_e:
                 encoders.append("qsv")
                 if is_intel: gpu_type = "Intel (QSV)"
             
-            if "h264_vaapi" in stdout:
+            if "h264_vaapi" in stdout_e:
                 encoders.append("vaapi")
                 if is_intel and "qsv" in encoders:
                     gpu_type = "Intel (QSV+VAAPI)"
                 elif is_intel:
                     gpu_type = "Intel (VAAPI)"
+            
+            # Decoders (v1.46.048)
+            res_d = subprocess.run(["ffmpeg", "-decoders"], capture_output=True, text=True, timeout=1.0)
+            stdout_d = res_d.stdout if res_d.stdout else ""
+            
+            hw_dec_markers = ["_qsv", "_vaapi", "_cuvid", "_nvdec", "_v4l2m2m"]
+            for marker in hw_dec_markers:
+                if f"h264{marker}" in stdout_d: decoders.append(f"h264{marker}")
+                if f"hevc{marker}" in stdout_d: decoders.append(f"hevc{marker}")
+                if f"vp9{marker}" in stdout_d: decoders.append(f"vp9{marker}")
+            
         except Exception:
             pass
 
-    return {"type": gpu_type, "encoders": encoders}
+    return {
+        "type": gpu_type, 
+        "encoders": encoders, 
+        "decoders": decoders,
+        "hevc_hw_decoding_available": any("hevc_" in d for d in decoders)
+    }
 
 def get_best_hw_encoder() -> str:
     """
@@ -218,6 +236,10 @@ def get_hardware_info():
     gpu = get_gpu_info()
     info["gpu_type"] = gpu["type"]
     info["encoders"] = gpu["encoders"]
+    info["decoders"] = gpu["decoders"]
+    info["hevc_hw_decoding_available"] = gpu["hevc_hw_decoding_available"]
+    
+    log.info(f"[HW-PULSE] Hardware Audit: GPU={info['gpu_type']} | HEVC-HW={info['hevc_hw_decoding_available']} | Encoders={info['encoders']}")
     
     return info
 
