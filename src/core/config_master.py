@@ -300,11 +300,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     # --- [v1.46.032] SSOT: HYDRATION & FORENSIC STAGE REGISTRY ---
     "forensic_hydration_registry": {
-        "mode": "mock",                 # OPTIONS: "real", "mock", "both"
-        "db_active": False,             # Master DB-Visibility Switch
+        "mode": "both",                 # OPTIONS: "real", "mock", "both"
+        "db_active": True,              # Master DB-Visibility Switch
         "mock_limit": 516,              # Target count for mock assets
         "auto_repair_enabled": True,    # Self-healing flag for hydration stalls
-        "audit_stage": 1                # Current forensic stage (0=Raw, 1=Mock, 2=Sync)
+        "audit_stage": 0                # Current forensic stage (0=Raw, 1=Mock, 2=Sync)
     },
 
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---

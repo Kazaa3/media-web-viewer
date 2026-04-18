@@ -738,6 +738,8 @@ window.showStatusNotification = function(msg, type = 'info') {
         setTimeout(() => pill.remove(), 500);
     }, 3000);
 };
+
+window.updateForensicHUD = function() {
     // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16 Pulsar Upgrade)
     const hudFe = document.getElementById('hud-fe');
     const hudBe = document.getElementById('hud-be');
