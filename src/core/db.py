@@ -422,10 +422,10 @@ def insert_media_batch(items: list[dict]):
                 item_dict.get('duration'), item_dict.get('category', 'Unknown'),
                 item_dict.get('is_transcoded', 0), item_dict.get('transcoded_format'),
                 json.dumps(item_dict.get('tags', {})), item_dict.get('extension'),
-                item_dict.get('container'), item_dict.get('tag_type'), item_dict.get('codec'),
+                item_dict.get('container'), item_dict.get('tag_type'), codec,
                 item_dict.get('has_artwork', 0), item_dict.get('art_path'),
                 json.dumps(item_dict.get('full_tags', {})), item_dict.get('media_type'),
-                item_dict.get('subtype'), item_dict.get('file_type'),
+                subtype, item_dict.get('file_type'),
                 item_dict.get('isbn'), item_dict.get('imdb'), item_dict.get('tmdb'),
                 item_dict.get('discogs'), item_dict.get('amazon_cover'), item_dict.get('parent_id'),
                 item_dict.get('is_mock', 0), item_dict.get('mock_stage', 0)
