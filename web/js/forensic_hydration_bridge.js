@@ -58,16 +58,23 @@ const ForensicHydrationBridge = {
 
         const emergencyMocks = [];
         for (let i = 1; i <= mockCount; i++) {
+            const forensicID = `EX-PULSE-${i.toString().padStart(3, '0')}`;
             emergencyMocks.push({
                 id: `emergency-${i}`,
-                filename: `mock_asset_${i}.wav`,
-                path: `media/mock_asset_${i}.wav`,
-                title: `Forensic Proof-of-Life ${i}`,
+                name: `${forensicID}_DATA_STREAM.wav`,
+                filename: `${forensicID}_DATA_STREAM.wav`,
+                path: `media/${forensicID}_DATA_STREAM.wav`,
+                title: `${forensicID} [Proof-of-Life]`,
                 artist: "System Sentinel",
                 album: "Hydration Guard v1.46.003",
                 category: "audio",
                 is_mock: true,
-                available: true
+                available: true,
+                tags: {
+                    title: `${forensicID} [Proof-of-Life]`,
+                    artist: "System Sentinel",
+                    album: "Hydration Guard v1.46.003"
+                }
             });
         }
 
