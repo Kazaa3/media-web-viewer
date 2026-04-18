@@ -379,26 +379,47 @@
         <!-- System Controls (Right Cluster): Dynamically Managed via orchestrateHeaderUI (v1.46.03) -->
         <div class="nav-cluster secondary-cluster"
             style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
-            <button id="header-btn-r-status" class="nav-item-tiny" title="Technical HUD Toggle" onclick="toggleTechnicalHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-pulse"></use></svg>
+            <button id="header-btn-r-status" class="nav-item-tiny" title="Technical HUD Toggle"
+                onclick="toggleTechnicalHUD()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-pulse"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-auditor" class="nav-item-tiny" title="DOM Auditor Toggle" onclick="toggleDomAuditor()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-shield"></use></svg>
+            <button id="header-btn-r-auditor" class="nav-item-tiny" title="DOM Auditor Toggle"
+                onclick="toggleDomAuditor()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-shield"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-sync" class="nav-item-tiny" title="Sync Anchor Toggle" onclick="toggleSyncAnchor()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-refresh"></use></svg>
+            <button id="header-btn-r-sync" class="nav-item-tiny" title="Sync Anchor Toggle"
+                onclick="toggleSyncAnchor()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-refresh"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-footer_hud" class="nav-item-tiny" title="Footer HUD Toggle" onclick="toggleFooterHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-burger"></use></svg>
+            <button id="header-btn-r-footer_hud" class="nav-item-tiny" title="Footer HUD Toggle"
+                onclick="toggleFooterHUD()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-burger"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-diag" class="nav-item-tiny" title="Diagnostics Overlay Toggle" onclick="toggleDiagnosticsSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-diagnostics"></use></svg>
+            <button id="header-btn-r-diag" class="nav-item-tiny" title="Diagnostics Overlay Toggle"
+                onclick="toggleDiagnosticsSidebar()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-diagnostics"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-db_status" class="nav-item-tiny" title="DB Status Toggle" onclick="toggleFooterDBStatus()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-db"></use></svg>
+            <button id="header-btn-r-db_status" class="nav-item-tiny" title="DB Status Toggle"
+                onclick="toggleFooterDBStatus()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-db"></use>
+                </svg>
             </button>
-            <button id="header-btn-r-sidebar" class="nav-item-tiny" title="Global Sidebar Toggle" onclick="toggleSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;"><use href="#icon-layout"></use></svg>
+            <button id="header-btn-r-sidebar" class="nav-item-tiny" title="Global Sidebar Toggle"
+                onclick="toggleSidebar()">
+                <svg class="icon" style="width: 14px; height: 14px;">
+                    <use href="#icon-layout"></use>
+                </svg>
             </button>
         </div>
     </header>
@@ -978,12 +999,6 @@
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">DB</span>
                     <div class="hud-led"></div>
                 </div>
-                <!-- Action Buttons (v1.46.062) -->
-                <div style="height: 12px; width: 1px; background: rgba(255,255,255,0.05); margin: 0 5px;"></div>
-                <button id="footer-btn-logs" class="hud-btn-tiny" onclick="if(typeof showConsolePopup === 'function') showConsolePopup();" 
-                    style="background: transparent; border: none; color: #f1c40f; font-size: 9px; font-weight: 900; cursor: pointer; padding: 2px 4px;">LOGS</button>
-                <button id="footer-btn-flags" class="hud-btn-tiny" onclick="if(typeof showFlagsModal === 'function') showFlagsModal()"
-                    style="background: transparent; border: none; color: #e91e63; font-size: 9px; font-weight: 900; cursor: pointer; padding: 2px 4px;">FLAGS</button>
             </div>
 
             <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 140px;"></audio>
