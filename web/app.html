@@ -250,10 +250,6 @@
                     el.style.padding = '0';
                     el.style.borderRadius = radius;
                     el.style.cursor = 'pointer';
-                    el.style.display = 'flex';
-                    el.style.alignItems = 'center';
-                    el.style.justifyContent = 'center';
-                    el.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
                     el.style.border = '1px solid rgba(255, 255, 255, 0.1)';
                     el.style.color = color;
 
@@ -295,7 +291,6 @@
 
 
 
-    <!-- [GUI] TOP MENU BAR: Primary Registry & Main Category Switcher (v1.34 Integrated) -->
     <!-- [GUI] TOP MENU BAR: Primary Registry & Main Category Switcher (v1.34 Integrated) -->
     <header id="master-persistent-header"
         style="position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: var(--shadow-soft); user-select: none; transition: background 0.3s ease, height 0.3s ease;">
@@ -1037,8 +1032,8 @@
     <script src="js/ui_test_suite.js?v=1.46.019"></script>
 
     <!-- [v1.45.200] Atomic Stabilization Buffers -->
-    <div id="diagnostics-overlay-container" style="display: none;"></div>
-    <div id="modals-placeholder" style="display: none;"></div>
+    <div id="diagnostics-overlay-container"></div>
+    <div id="modals-placeholder"></div>
     <div id="shadow-stage-buffer" style="display: none !important;"></div>
 </body>
 
