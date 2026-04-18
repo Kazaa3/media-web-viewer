@@ -407,34 +407,25 @@ function showToast(message, duration = 3000) {
  */
 function isVideoItem(item) {
     if (!item) return false;
-    // 1. Check Category (v1.41.00 Standardized)
-    const videoCategories = ['video', 'multimedia', 'film', 'movie', 'serie', 'series', 'documentation', 'doku', 'spiel', 'beigabe', 'supplements', 'disk_images']; 
-    const internalCat = (item.category || '').toLowerCase();
-    if (videoCategories.includes(internalCat)) return true;
-
-    // 2. Check Extension
-    const path = item.path || item.relpath || "";
-    const videoExtensions = [
-        '.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv',
-        '.mp4_pass', '.mp4_transcoded', '.mkv.mp4_pass' // v1.35.64 Diagnostic formats
-    ];
-    const audioExtensions = ['.mp3', '.m4a', '.wav', '.flac', '.ogg'];
+    const path = item.path || item.relpath || item.name || '';
+    const cat = (item.category || '').toLowerCase();
     
+    // 1. SSOT: Extension-First Priority (v1.46.026)
+    const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv'];
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
-    
-    // Explicit Audio Override (v1.41.00 Stability)
-    if (ext && audioExtensions.includes(ext)) {
-        return false; 
-    }
-    
-    // 3. Technical Signature Detection (v1.46.025)
-    // For Real items without explicit category metadata
-    // [v1.46.026] Added extension guard to prevent false positives on unknown files
-    if (ext && videoExtensions.includes(ext)) {
-        if (item.bitrate > 5000 || item.resolution || item.fps) return true;
-        return true; 
-    }
+    if (ext && videoExtensions.includes(ext)) return true;
+
+    // 2. SSOT: Audio Guard (If it looks like audio, it's NOT video)
+    const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg'];
+    if (ext && audioExtensions.includes(ext)) return false;
+
+    // 3. Category Fallbacks (Legacy)
+    const videoCategories = ['video', 'movie', 'serie', 'sh', 'sz', 'sp', 'sw', 'documentation'];
+    if (videoCategories.includes(cat)) return true;
+
+    // 4. Special Case: Multimedia is VIDEO only if no audio ext found
+    if (cat === 'multimedia' && !ext.match(/\.(mp3|m4a|wav|flac|ogg)$/)) return true;
 
     return false;
 }
