@@ -24,7 +24,7 @@ async function syncCoreRegistry() {
                 ]),
                 timeout
             ]);
-            
+
             if (master) {
                 console.info("[FE-AUDIT] STAGE 1.1: Category Master received:", Object.keys(master).length, "keys.");
                 CATEGORY_MAP = master;
@@ -36,10 +36,10 @@ async function syncCoreRegistry() {
             }
             if (config) {
                 console.info("[FE-AUDIT] STAGE 1.3: Global Config received:", config);
-                window.CONFIG = config; 
+                window.CONFIG = config;
                 window.__mwv_raw_mode = config.raw_mode || false;
                 window.__mwv_bypass_db = config.bypass_db || false;
-                
+
                 // Set sidebar default from config (v1.37 Restoration logic)
                 const ui = config.ui_settings || {};
                 if (ui.sidebar_visible !== undefined && localStorage.getItem('mwv_sidebar_visible') === null) {
@@ -48,7 +48,7 @@ async function syncCoreRegistry() {
                     if (typeof applySidebarState === 'function') setTimeout(applySidebarState, 100);
                 }
             }
-            
+
             console.info("[FE-AUDIT] STAGE 1 COMPLETE: Forensic Handshake synchronized.");
             if (typeof renderAudioQueue === 'function') renderAudioQueue();
         } catch (e) {
@@ -62,8 +62,8 @@ async function syncCoreRegistry() {
  */
 async function syncCategoryMaster() { await syncCoreRegistry(); }
 window.syncCategoryMaster = syncCategoryMaster;
-async function syncTechMarkers()    { await syncCoreRegistry(); }
-async function syncGlobalConfig()   { await syncCoreRegistry(); }
+async function syncTechMarkers() { await syncCoreRegistry(); }
+async function syncGlobalConfig() { await syncCoreRegistry(); }
 
 // Global initialization hook
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,12 +81,12 @@ function toggleModal(modalId, forceState) {
         return;
     }
     const newState = (forceState !== undefined) ? forceState : (modal.style.display === 'none' || modal.style.display === '');
-    
+
     // Log the modal change
     if (typeof mwv_trace === 'function') {
         mwv_trace('MODAL', modalId, { newState });
     }
-    
+
     modal.style.display = newState ? 'flex' : 'none';
 }
 
@@ -100,7 +100,7 @@ function appendUiTrace(message) {
 
     // No logic here, just placeholder for clean split
 
-const isErrorOrAlert = message.toLowerCase().includes('js-error') || message.toLowerCase().includes('alert');
+    const isErrorOrAlert = message.toLowerCase().includes('js-error') || message.toLowerCase().includes('alert');
     if (isErrorOrAlert) {
         const errorLog = document.getElementById('startup-error-log');
         if (errorLog) {
@@ -183,7 +183,7 @@ function update_progress(data) {
     const container = document.getElementById('app-progress-bar-container');
     const bar = document.getElementById('app-progress-bar');
     const text = document.getElementById('app-progress-text');
-    
+
     if (!container || !bar) return;
 
     if (typeof data === 'string') {
@@ -195,7 +195,7 @@ function update_progress(data) {
         const p = Math.max(0, Math.min(100, Number(data.progress) || 0));
         bar.style.width = p + '%';
         if (text) text.innerText = `${data.status || 'Verarbeite...'} (${p}%)`;
-        
+
         // Auto-show/hide based on activity
         container.style.display = (p > 0 && p < 100) ? 'block' : 'none';
         if (text) text.style.display = (p > 0 && p < 100) ? 'block' : 'none';
@@ -217,7 +217,7 @@ function showContextMenu(e, item) {
         e.preventDefault();
         e.stopPropagation();
     }
-    
+
     // [v1.41.148] Multi-ID Bridge: Target primary centralized ID
     const menu = document.getElementById('context-menu');
     if (!menu) {
@@ -230,7 +230,7 @@ function showContextMenu(e, item) {
 
     let x = e.clientX;
     let y = e.clientY;
-    
+
     if (x === 0 && y === 0) {
         console.warn("[Context-Menu] Caught zero-coordinate event. Bypassing reveal.");
         return;
@@ -239,21 +239,21 @@ function showContextMenu(e, item) {
     // [v1.41.149] Clean Visibility Reveal
     menu.style.display = 'block';
     menu.style.zIndex = '100005'; // Ensure it survives above HUD and other fragments
-    
+
     // Boundary check for window (v1.35 Hardened)
     const menuWidth = 240;
     const menuHeight = 350; // Increased safety margin for multi-entry menus
-    
+
     if (x + menuWidth > window.innerWidth) x -= menuWidth;
     if (y + menuHeight > window.innerHeight) y -= (menuHeight / 2); // Intelligent lift for bottom clicks
-    
+
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
 
     const isVideo = isVideoItem(item);
-    
+
     const mediaType = getMediaTypeString(item);
-    
+
     // Media Title Header
     const titleHeader = document.createElement('div');
     titleHeader.className = 'context-menu-header';
@@ -276,11 +276,13 @@ function showContextMenu(e, item) {
         options.push({ label: 'Video analysieren (FFprobe)', icon: '🔍', action: () => { if (typeof eel !== "undefined") eel.analyze_media_item(item.path)(); } });
     }
 
-    options.push({ label: 'Metadaten Editieren', icon: '📝', action: () => {
-        if (typeof switchTab === 'function') switchTab('edit');
-        setTimeout(() => { if (typeof openEditForm === 'function') openEditForm(item); }, 200);
-    }});
-    
+    options.push({
+        label: 'Metadaten Editieren', icon: '📝', action: () => {
+            if (typeof switchTab === 'function') switchTab('edit');
+            setTimeout(() => { if (typeof openEditForm === 'function') openEditForm(item); }, 200);
+        }
+    });
+
     options.push({ label: 'Im Dateisystem öffnen', icon: '📁', action: () => { if (typeof eel !== "undefined") eel.open_in_explorer(item.path)(); } });
 
     options.forEach(opt => {
@@ -409,11 +411,11 @@ function isVideoItem(item) {
     if (!item) return false;
     const path = item.path || item.relpath || item.name || '';
     const cat = (item.category || '').toLowerCase();
-    
+
     // 1. SSOT: Extension-First Priority (v1.46.026)
     const videoExtensions = window.CONFIG?.video_extensions || ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ogv', '.ts'];
     const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma'];
-    
+
     const extMatch = path.match(/\.([a-z0-9_]+)$/i);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
 
@@ -438,7 +440,7 @@ function isVideoItem(item) {
     if (cat === 'multimedia') {
         // Since we already passed the Audio Guard above, if we are still here, it might be video
         // But for safety, we only return true if it's NOT explicitly an audio extension
-        return true; 
+        return true;
     }
 
     return false;
@@ -451,42 +453,41 @@ function isAudioItem(item) {
     if (!item) return false;
     const path = item.path || item.relpath || "";
     const cat = (item.category || '').toLowerCase();
-    
+
     // 1. SSOT: Extension-First Priority (v1.46.026)
     const audioExtensions = window.CONFIG?.audio_extensions || ['.mp3', '.m4a', '.wav', '.flac', '.ogg', '.aac', '.m4p', '.wma', '.m4b', '.oga'];
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
-    
-        // [v1.46.026] Forensic Logging
-        if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
-        if (window.__mwv_audio_log_count < 10) {
-            console.debug(`[FE-AUDIT] Extension Match: ${item.name} | Ext: ${ext} | Result: AUDIO`);
-            window.__mwv_audio_log_count++;
-        }
-        return true;
-    }
-    
-    // 2. Category Matching
-    const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
-    if (audioCategories.includes(cat)) {
-        if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
-        if (window.__mwv_audio_log_count < 10) {
-            console.debug(`[FE-AUDIT] Category Match: ${item.name} | Cat: ${cat} | Result: AUDIO`);
-            window.__mwv_audio_log_count++;
-        }
-        return true;
-    }
-    
-    // Forensic signature fallbacks
-    if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
-    if (item.duration && !item.fps && !isPhotoItem(item) && !isVideoItem(item)) return true;
-    
-    // [v1.46.026] Unknown items defaulting to Audio for visibility
-    const isVid = isVideoItem(item);
-    const isPic = isPhotoItem(item);
-    if (!isVid && !isPic && path) return true; 
 
-    return false;
+    // [v1.46.026] Forensic Logging
+    if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
+    if (window.__mwv_audio_log_count < 10) {
+        console.debug(`[FE-AUDIT] Extension Match: ${item.name} | Ext: ${ext} | Result: AUDIO`);
+        window.__mwv_audio_log_count++;
+    }
+    if (extMatch) return true;
+
+// 2. Category Matching
+const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
+if (audioCategories.includes(cat)) {
+    if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
+    if (window.__mwv_audio_log_count < 10) {
+        console.debug(`[FE-AUDIT] Category Match: ${item.name} | Cat: ${cat} | Result: AUDIO`);
+        window.__mwv_audio_log_count++;
+    }
+    return true;
+}
+
+// Forensic signature fallbacks
+if (item.bitrate && !item.resolution && !isPhotoItem(item)) return true;
+if (item.duration && !item.fps && !isPhotoItem(item) && !isVideoItem(item)) return true;
+
+// [v1.46.026] Unknown items defaulting to Audio for visibility
+const isVid = isVideoItem(item);
+const isPic = isPhotoItem(item);
+if (!isVid && !isPic && path) return true;
+
+return false;
 }
 
 /**
@@ -496,7 +497,7 @@ function isPhotoItem(item) {
     if (!item) return false;
     const photoCategories = ['bilder', 'images', 'pictures', 'multimedia'];
     const internalCat = (item.category || '').toLowerCase();
-    
+
     // [v1.46.023] Branch-Aware multimedia check (only if non-audio/video)
     if (photoCategories.includes(internalCat)) {
         if (!isVideoItem(item) && !(item.path || "").match(/\.(mp3|wav|flac|m4a|ogg|mp4|mkv|avi|mov)$/i)) {
@@ -508,7 +509,7 @@ function isPhotoItem(item) {
     const photoExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.svg'];
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
-    
+
     return ext && photoExtensions.includes(ext);
 }
 
@@ -520,7 +521,7 @@ function getMediaTypeString(item) {
     if (!item) return 'Unknown';
     const isVideo = isVideoItem(item);
     const path = (item.path || item.name || '').toLowerCase();
-    
+
     if (isVideo) {
         if (path.includes('.iso') || path.includes('.mp4_transcoded')) return 'video transcoded hd';
         if (path.includes('.mp4_pass')) return 'video native (remux)';
@@ -538,7 +539,7 @@ function getMediaTypeString(item) {
 function getCategoryBadgeHtml(item) {
     if (!item || !item.category) return '';
     const cat = item.category.toLowerCase();
-    
+
     // SVG Sprite mapping (references assets/icons.svg)
     const iconMap = {
         'klassik': '#icon-klassik',
@@ -603,7 +604,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         const isParity = (finalDb !== '--' && finalGui !== '--' && parseInt(finalDb) === parseInt(finalGui));
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
-        
+
         // [v1.46.015] Manual Sync Trigger
         if (!footerAnchor.onclick) {
             footerAnchor.style.cursor = 'pointer';
@@ -619,7 +620,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     const sidebarAnchor = document.getElementById('sb-parity-anchor');
     const sbDbCount = document.getElementById('diag-db-count-sidebar');
     const sbGuiCount = document.getElementById('diag-gui-count-sidebar');
-    
+
     if (sidebarAnchor) {
         sidebarAnchor.innerText = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
         const isParityError = (parseInt(finalDb) !== parseInt(finalGui));
@@ -649,7 +650,7 @@ function setAppModeUI(mode) {
     }
     localStorage.setItem('mwv_app_mode', mode);
     if (typeof showToast === 'function') showToast(`App Mode: ${mode}`, 1500);
-    
+
     // Update Sidebar Buttons if they exist
     document.querySelectorAll('.nav-item').forEach(btn => {
         if (btn.innerText.includes(mode)) btn.classList.add('active');
@@ -669,39 +670,22 @@ function setAppModeUI(mode) {
  * Controls whether the UI shows Mock, Real DB, or Both items.
  * Centralized in common_helpers.js as the SSOT for hydration state.
  */
-function setHydrationMode(mode) {
-    if (!mode) return;
-    console.info(`>>> [Forensic-Hydration] Pulse Change: ${mode.toUpperCase()}`);
-    console.debug(`[Forensic-Hydration] Origin Trace:`, new Error().stack.split('\n')[2].trim());
-    
-    window.__mwv_hydration_mode = mode;
-    localStorage.setItem('mwv_hydration_mode', mode);
-    
-    // 1. Sync Backend
-    if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
-        console.debug(`[Hydration] Syncing backend...`);
-        eel.set_hydration_mode(mode)(() => {
-            console.info(`[Hydration] Backend ACK received. Triggering UI refresh...`);
-            if (typeof loadLibrary === 'function') loadLibrary();
-            if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
-        });
-    }
-    
+function refreshForensicLeds() {
     const mode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
-    
+
     ['M', 'R', 'B', 'DB'].forEach(id => {
         const targetIds = [`hydr-btn-${id}`, `hud-btn-${id}`];
-        
+
         targetIds.forEach(elId => {
             const btn = document.getElementById(elId);
             if (!btn) return;
 
             // Health/Mode Determination
-            const isActive = (mode === 'mock' && id === 'M') || 
-                             (mode === 'real' && id === 'R') || 
-                             (mode === 'both' && id === 'B') ||
-                             (id === 'DB');
-                                 
+            const isActive = (mode === 'mock' && id === 'M') ||
+                (mode === 'real' && id === 'R') ||
+                (mode === 'both' && id === 'B') ||
+                (id === 'DB');
+
             if (id === 'DB') {
                 const health = window.__mwv_last_db_health || 'unknown';
                 let healthColor = '#f1c40f'; // Default: Yellow
@@ -728,11 +712,11 @@ function setHydrationMode(mode) {
 }
 
 /**
- * Legacy wrapper for backward compatibility.
+ * Hydration Mode Controller (v1.45.105)
  */
 function setHydrationMode(mode) {
     if (!mode) return;
-    
+
     // [v1.46.026] UI Performance Guard (Debouncing)
     if (window.__mwv_hydration_in_progress) {
         console.warn("[Hydration] Sync already in progress. Blocking redundant request.");
@@ -747,18 +731,18 @@ function setHydrationMode(mode) {
 
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
-    
+
     if (typeof refreshForensicLeds === 'function') refreshForensicLeds();
 
     if (typeof showToast === 'function') showToast(`HYDRATION: ${mode.toUpperCase()}`, 1000);
-    
+
     // 3. TRIGGER ATOMIC RE-HYDRATION PULSE (v1.45.105)
     // [v1.46.025] Refactored to eliminate hydration race condition.
     const runPulse = () => {
         console.info(`>>> [Forensic-Hydration] Pulse Complete. Triggering UI Sync...`);
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         if (typeof renderLibrary === 'function') renderLibrary();
-        
+
         // Release Guard
         setTimeout(() => { window.__mwv_hydration_in_progress = false; }, 500);
     };
@@ -770,7 +754,7 @@ function setHydrationMode(mode) {
             result.then(runPulse);
         } else {
             // Fallback for non-async implementation
-            setTimeout(runPulse, 300); 
+            setTimeout(runPulse, 300);
         }
     } else {
         runPulse();
@@ -793,7 +777,7 @@ window.setAppModeUI = setAppModeUI;
  */
 async function exitApplication() {
     console.warn("☢️ [APP-EXIT] Triggering Nuclear Shutdown...");
-    
+
     // 1. Immediate Visual Feedback
     const overlay = document.createElement('div');
     overlay.id = 'shutdown-nuclear-overlay';
@@ -859,7 +843,7 @@ function applySystemFlags() {
 
         // Fragments (Sidebars)
         "ui_fragments.player": ["#main-sidebar"],
-        "ui_fragments.video": ["#video-cinema-container"], 
+        "ui_fragments.video": ["#video-cinema-container"],
         "ui_fragments.library": ["#library-container"]
     };
 

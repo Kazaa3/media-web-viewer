@@ -501,9 +501,12 @@ function renderAudioQueue() {
     // 3. Apply active sub-filters (v1.35.61)
     let isRaw = window.__mwv_raw_mode === true;
     if (window.activeQueueFilter !== 'all' && !isRaw) {
-        const catInfo = CATEGORY_MAP[window.activeQueueFilter] || { aliases: [] };
+        const cmap = window.CATEGORY_MAP || {};
+        const catInfo = cmap[window.activeQueueFilter] || { aliases: [] };
         const allowedLower = (catInfo.aliases || []).map(l => l.toLowerCase());
-        const markers = TECH_MAP[window.activeQueueFilter] || [];
+        
+        const tmap = window.TECH_MAP || {};
+        const markers = tmap[window.activeQueueFilter] || [];
 
         filteredItems = filteredItems.filter(item => {
             const rawCat = (item.category || "").toLowerCase();

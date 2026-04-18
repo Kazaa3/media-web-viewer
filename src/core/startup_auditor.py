@@ -48,7 +48,14 @@ def run_preflight_audit() -> bool:
             log.error(f"[Audit-Logic] SYMBOL FAILURE: {err}")
         return False
 
-    # 3. Database Audit
+    # 3. Hydration Stage Audit (No Real Mode Policy)
+    hydr_ok, hydr_errors = audit_hydration_stages()
+    if not hydr_ok:
+        for err in hydr_errors:
+            log.error(f"[Audit-Hydration] POLICY VIOLATION: {err}")
+        return False
+
+    # 4. Database Audit
     db_ok, db_errors = audit_database()
     if not db_ok:
         for err in db_errors:
@@ -80,6 +87,27 @@ def audit_config() -> Tuple[bool, List[Any]]:
             if not found:
                 errors.append(" -> ".join(entry))
     
+    return (len(errors) == 0, errors)
+
+def audit_hydration_stages() -> Tuple[bool, List[str]]:
+    """Strictly monitors hydration stages and prevents Real Mode during active tests."""
+    from src.core.config_master import GLOBAL_CONFIG
+    errors = []
+    
+    registry = GLOBAL_CONFIG.get("forensic_hydration_registry", {})
+    mode = registry.get("mode", "unknown").lower()
+    db_active = registry.get("db_active")
+    stage = registry.get("audit_stage")
+
+    if mode == "real":
+        errors.append("Real Mode is STRICTLY PROHIBITED by Pre-Flight Control.")
+
+    if stage == 1 and db_active is True:
+        errors.append(f"Stage 1 (Mock) cannot be active simultaneously with 'db_active=True'.")
+
+    if mode == "mock" and stage != 1:
+        errors.append(f"Mock Mode configured but audit_stage is '{stage}' (Expected: 1).")
+
     return (len(errors) == 0, errors)
 
 def audit_logic() -> Tuple[bool, List[str]]:

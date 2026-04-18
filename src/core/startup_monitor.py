@@ -73,11 +73,27 @@ class StartupProfiler:
     def get_report(self) -> Dict[str, Any]:
         """Generates a comprehensive JSON-ready report for the UI."""
         total_boot = time.time() - self.start_time
+        
+        # Hydration Metrics
+        hydration_mode = "unknown"
+        audit_stage = -1
+        try:
+            from src.core.config_master import GLOBAL_CONFIG
+            hydr = GLOBAL_CONFIG.get("forensic_hydration_registry", {})
+            hydration_mode = hydr.get("mode", "unknown")
+            audit_stage = hydr.get("audit_stage", -1)
+        except Exception:
+            pass
+
         return {
             "total_boot_sec": round(total_boot, 3),
             "phases": self.phases,
             "checkpoints": self.checkpoints,
             "integrity_verified": hasattr(self, 'integrity_verified') and self.integrity_verified,
+            "hydration": {
+                "mode": hydration_mode,
+                "audit_stage": audit_stage
+            },
             "system_info": {
                 "pid": os.getpid(),
                 "python": sys.version.split()[0],

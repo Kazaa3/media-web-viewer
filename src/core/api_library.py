@@ -128,6 +128,15 @@ def apply_library_filters(all_media: List[Dict],
 def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """Unified library bridge with integrated forensics (v1.35.96)"""
     log.info(f"[BD-AUDIT] Handshake: API-Library get_library triggered.")
+    
+    # [v1.46.032] SSOT Overrides
+    h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
+    if h_registry.get('audit_stage') is not None:
+        # Enforce SSOT if explicitly set in config
+        config_stage = h_registry.get('audit_stage')
+        if config_stage > 0:
+            audit_stage = config_stage
+
     pid = os.getpid()
     db_path = str(Path(db.DB_FILENAME).resolve())
 
