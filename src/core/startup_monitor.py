@@ -77,12 +77,18 @@ class StartupProfiler:
             "total_boot_sec": round(total_boot, 3),
             "phases": self.phases,
             "checkpoints": self.checkpoints,
+            "integrity_verified": hasattr(self, 'integrity_verified') and self.integrity_verified,
             "system_info": {
                 "pid": os.getpid(),
                 "python": sys.version.split()[0],
                 "platform": sys.platform
             }
         }
+
+    def mark_integrity_verified(self):
+        """Signals that the pre-flight audit passed successfully."""
+        self.integrity_verified = True
+        self.log_checkpoint("System Integrity Verified", tag="integrity")
 
 # Global singleton access
 profiler = StartupProfiler()
