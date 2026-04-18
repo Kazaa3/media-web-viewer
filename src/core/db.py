@@ -561,12 +561,17 @@ def get_all_media_items():
     log.info(f"[BD-AUDIT] [get_all_media] Starting query. PID: {pid} | Path: {DB_FILENAME}")
     
     init_db()
-    conn = sqlite3.connect(DB_FILENAME)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM media ORDER BY name")
-    rows = cursor.fetchall()
+    try:
+        # [v1.46.059] Fail-fast for library requests (2s timeout)
+        conn = sqlite3.connect(DB_FILENAME, timeout=2)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM media ORDER BY name")
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError as e:
+        log.warning(f"[DB-LOCKED] Database is busy, returning empty set: {e}")
+        return []
     log.info(f"[BD-AUDIT] [get_all_media] Finished query. Found {len(rows)} raw rows.")
 
     media_list = []
