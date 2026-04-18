@@ -16,7 +16,13 @@ window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 if (typeof window.isVideoItem !== 'function') {
     window.isVideoItem = function(item) {
         if (!item) return false;
+        const path = item.path || item.relpath || "";
         const cat = (item.category || "").toLowerCase();
+        
+        // [v1.46.026] Extension Guard for Multimedia
+        const isAudioExt = path.match(/\.(mp3|m4a|wav|flac|ogg)$/i);
+        if (isAudioExt) return false;
+
         return (cat === 'video' || cat === 'movie' || cat === 'serie' || cat === 'documentation' || cat === 'multimedia');
     };
 }
@@ -570,9 +576,10 @@ function renderAudioQueue() {
                 div.draggable = true;
                 if (index === playlistIndex) div.classList.add('active');
 
-                // [v1.46.026] Type Mismatch Guard
+                // [v1.46.026] Type Mismatch Guard (Extension-First)
                 if (isVideoItem(item)) {
-                    return; // Skip video items in audio renderer
+                    // Item is classified as Video, skip it for Audio renderer
+                    return; 
                 }
 
                 const tags = item.tags || {};
