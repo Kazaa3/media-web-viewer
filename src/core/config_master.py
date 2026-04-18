@@ -352,9 +352,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 ".ts": "video/mp2t",
                 ".m4v": "video/x-m4v"
             },
+            "bitrate_thresholds": {
+                "direct_play_max_kbps": 20000,   # [v1.46.045] Global Bitrate Switch
+                "mse_max_kbps": 15000,
+                "dash_max_kbps": 35000,
+                "mpv_native_min_kbps": 50000
+            },
             "orchestration_flags": {
                 "prefer_mpv_wasm_for_webm": True,
                 "force_vlc_for_iso": True,
+                "prefer_vlc_for_menus": True,   # [v1.46.045] ISO Hardening
+                "enable_3d_detection": True,    # [v1.46.045] 3D Routing
                 "mse_threshold_mbps": 15,
                 "dash_threshold_mbps": 30,
                 "mpv_native_threshold_mbps": 50
