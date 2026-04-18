@@ -11,9 +11,10 @@ def smart_route(file_path):
     @param file_path Path to the media file.
     @return Dictionary with 'mode' and 'info'.
     """
+    log.info(f"[PLAY-PULSE] smart_route analysis started for: {file_path}")
     info = ffprobe_analyze(file_path)
     if "error" in info:
-        log.warning(f"Routing fallback to direct_play due to analysis error: {info['error']}")
+        log.warning(f"[PLAY-PULSE] Routing fallback to direct_play due to analysis error: {info['error']}")
         return {"mode": "direct_play", "info": info}
 
     # Analysis
