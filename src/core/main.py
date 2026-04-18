@@ -4711,6 +4711,10 @@ def server_file_direct(file_path):
 
     # 2. Dynamic MIME Resolution (v1.46.044 SSOT)
     ext = os.path.splitext(file_path)[1].lower()
+    
+    from src.core.ffprobe_analyzer import ffprobe_analyze
+    analysis = ffprobe_analyze(file_path)
+    subtype = analysis.get("media_subtype", "FILE")
     mimetype = 'auto'
     
     reg = GLOBAL_CONFIG.get("media_pipeline_registry", {})
@@ -4722,7 +4726,7 @@ def server_file_direct(file_path):
     elif ext in video_map:
         mimetype = video_map[ext]
     
-    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | MIME: {mimetype} (Config-Driven)")
+    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | Subtype: {subtype} | MIME: {mimetype} (Config-Driven)")
     log.debug(f"[PLAY-PULSE-DEBUG] Resolved Path: {file_path}")
         
     return btl.static_file(
