@@ -711,6 +711,16 @@ function setHydrationMode(mode) {
  */
 function setHydrationMode(mode) {
     if (!mode) return;
+    
+    // [v1.46.026] UI Performance Guard (Debouncing)
+    // Prevents "Lag-Spikes" caused by rapid multi-clicking of hydration buttons.
+    if (window.__mwv_hydration_in_progress) {
+        console.warn("[Hydration] Sync already in progress. Blocking redundant request.");
+        if (typeof showToast === 'function') showToast("Synchronisierung läuft...", 500);
+        return;
+    }
+    window.__mwv_hydration_in_progress = true;
+
     window.__mwv_hydration_mode = mode;
     localStorage.setItem('mwv_hydration_mode', mode);
     refreshForensicLeds();
@@ -735,6 +745,9 @@ function setHydrationMode(mode) {
         console.info(`>>> [Forensic-Hydration] Pulse Complete. Triggering UI Sync...`);
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         if (typeof renderLibrary === 'function') renderLibrary();
+        
+        // Release Guard
+        setTimeout(() => { window.__mwv_hydration_in_progress = false; }, 500);
     };
 
     if (typeof loadLibrary === 'function') {

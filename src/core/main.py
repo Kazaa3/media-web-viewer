@@ -645,13 +645,29 @@ def start_app():
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
 
-    # Singleton Guard
+    # Singleton Guard (v1.46.026 Robust Bootstrap)
     if not pc.acquire_lock():
-        log.warning("[Bootstrap] Lock collision. Retrying once...")
-        time.sleep(0.5)
-        if not pc.acquire_lock():
-            log.error("[Bootstrap] MWV ALREADY RUNNING. Aborting.")
-            sys.exit(1)
+        owner_pid = pc.get_lock_owner()
+        owner_alive = False
+        if owner_pid > 0:
+            try:
+                import psutil
+                owner_alive = psutil.pid_exists(owner_pid)
+            except:
+                pass
+
+        if not owner_alive:
+            log.warning(f"[Bootstrap] STALE LOCK detected (Owner PID {owner_pid} is dead). Overwriting...")
+            pc.cleanup_environment()
+            if not pc.acquire_lock():
+                log.error("[Bootstrap] MWV LOCK PERSISTENCE ERROR. Manual cleanup required.")
+                sys.exit(1)
+        else:
+            log.warning(f"[Bootstrap] Lock collision with ACTIVE process (PID {owner_pid}). Retrying once...")
+            time.sleep(0.5)
+            if not pc.acquire_lock():
+                log.error(f"[Bootstrap] MWV ALREADY RUNNING (PID {owner_pid}). Aborting.")
+                sys.exit(1)
 
     # Port readiness is now handled by fast_port_kill above.
     # Only do a safety check if not in low-latency mode.
