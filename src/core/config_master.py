@@ -245,7 +245,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "1.46.073"
+    VERSION = "1.46.074"
 
 # --- NETWORK & HOST CALCULATION ---
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))

@@ -82,6 +82,10 @@ function applyDiagnosticsSidebarState(isVisible) {
 
     diagnosticsSidebarVisible = !!isVisible;
     if (diagnosticsSidebarVisible) {
+        // [v1.46.074] Force parent container visibility
+        const container = document.getElementById('diagnostics-overlay-container');
+        if (container) container.style.display = 'block';
+        
         sb.style.display = 'flex';
         // Small delay for animation trigger
         setTimeout(() => sb.classList.add('active'), 10);
