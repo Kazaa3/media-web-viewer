@@ -50,21 +50,32 @@ def apply_library_filters(all_media: List[Dict],
     if supported_by_branch:
         log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {str(active_branch).upper() if active_branch else 'NONE'}")
 
+    log.info(f"[DB-SCAN] Filtering through {len(all_media)} candidates. Mode: {active_branch or 'GLOBAL'}")
+    
     filtered = []
     dropped_reasons = GLOBAL_CONFIG["audit_registry"]["dropped_reasons_template"].copy()
     dropped_paths = []
 
+    # Get Hydration Mode once (SSOT)
+    h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
+    h_mode = h_registry.get('mode', 'both')
+
+    real_count_potential = 0
+    mock_count_potential = 0
+
     for item in all_media:
         item_is_mock = bool(item.get('is_mock', 0))
-        h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
-        h_mode = h_registry.get('mode', 'both')
-
+        
+        # 1. Forensic Hydration Guard (Consolidated v1.46.050)
         if h_mode == 'real' and item_is_mock:
             dropped_reasons["mock_filtered"] = dropped_reasons.get("mock_filtered", 0) + 1
             continue
         if h_mode == 'mock' and not item_is_mock:
             dropped_reasons["real_filtered"] = dropped_reasons.get("real_filtered", 0) + 1
             continue
+        
+        if not item_is_mock: real_count_potential += 1
+        else: mock_count_potential += 1
 
         if genre == "all" and "all" in displayed_cats:
             filtered.append(item)
@@ -112,7 +123,12 @@ def apply_library_filters(all_media: List[Dict],
         "kept": len(filtered),
         "dropped_total": sum(dropped_reasons.values()),
         "dropped_reasons": dropped_reasons,
-        "allowed_cats": allowed_internal_cats
+        "allowed_cats": allowed_internal_cats,
+        "hydration_stats": {
+            "mode": h_mode,
+            "real_available": real_count_potential,
+            "mock_available": mock_count_potential
+        }
     }
 
     log_dropped_reasons(dropped_reasons, f"Library Filter ({active_branch or 'ALL'})", sample_paths=dropped_paths)
@@ -172,18 +188,21 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
 
     filtered_media, logic_audit = apply_library_filters(all_media, force_raw=force_raw, active_branch=active_branch)
 
-    h_registry = GLOBAL_CONFIG.get('forensic_hydration_registry', {})
-    h_mode = h_registry.get('mode', 'both')
-    if h_mode == 'real':
-        final_media = [item for item in filtered_media if not bool(item.get('is_mock', 0))]
-    elif h_mode == 'mock':
-        final_media = [item for item in filtered_media if bool(item.get('is_mock', 0))]
-    else:
-        final_media = filtered_media[:]
+    # [v1.46.050] Hardened Fallback Logic
+    # We no longer filter again here, as apply_library_filters handling it.
+    final_media = filtered_media
 
+    # Forensic Check: Mode-Aware Fallback
+    h_mode = logic_audit.get("hydration_stats", {}).get("mode", "both")
+    
     if len(final_media) == 0 and count_total > 0:
-        final_media = all_media[:2] # Minimal safety fallback
-        status = "recovery-emergency"
+        if h_mode == 'real':
+            # DO NOT return mocks if REAL was requested and none found.
+            log.warning(f"[BD-AUDIT] REAL mode requested but 0 items found. Blocking mock fallback.")
+            status = "empty_real_set"
+        else:
+            final_media = all_media[:2] # Fallback for BOTH/MOCK
+            status = "recovery-emergency"
     else:
         status = "synchronized"
 
