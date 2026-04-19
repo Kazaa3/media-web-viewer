@@ -8226,10 +8226,24 @@ def run_gui_tests():
 
 @eel.expose
 def ui_trace(message):
+    """
+    Receives trace messages from the UI and logs them to a centralized file.
+    (v1.46.131 Centralized)
+    """
     try:
         log.info(f"[UI-Trace] {message}")
-    except Exception:
-        pass
+        
+        # Centralized Log Path (Forensic Phase 6)
+        log_registry = GLOBAL_CONFIG.get("logging_registry", {})
+        trace_path_raw = log_registry.get("ui_trace_log_path")
+        
+        if trace_path_raw:
+            trace_path = Path(trace_path_raw)
+            trace_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(trace_path, "a", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+    except Exception as e:
+        log.debug(f"[UI-Trace-Internal] Failed to write to trace log: {e}")
     return {"status": "ok"}
 
 
