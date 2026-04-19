@@ -236,28 +236,34 @@ function showContextMenu(e, item) {
         return;
     }
 
-    // [v1.46.093] Clean Visibility Reveal & Content Reset
-    menu.innerHTML = ''; 
+    window.contextMenuItem = item;
+    
+    // [v1.46.098] Clean Visibility Reveal (Without destroying fragment content)
     menu.style.display = 'block';
     menu.style.zIndex = '100005'; 
 
-    // Boundary check for window (v1.35 Hardened)
+    // Boundary check for window
     const menuWidth = 240;
-    const menuHeight = 350; // Increased safety margin for multi-entry menus
+    const menuHeight = 350; 
 
     if (x + menuWidth > window.innerWidth) x -= menuWidth;
-    if (y + menuHeight > window.innerHeight) y -= (menuHeight / 2); // Intelligent lift for bottom clicks
+    if (y + menuHeight > window.innerHeight) y -= (menuHeight / 2); 
 
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
 
     const isVideo = isVideoItem(item);
-
     const mediaType = getMediaTypeString(item);
 
-    // Media Title Header
-    const titleHeader = document.createElement('div');
-    titleHeader.className = 'context-menu-header';
+    // Update or Insert Dynamic Header
+    let titleHeader = document.getElementById('context-menu-dynamic-header');
+    if (!titleHeader) {
+        titleHeader = document.createElement('div');
+        titleHeader.id = 'context-menu-dynamic-header';
+        titleHeader.className = 'context-menu-header';
+        menu.insertBefore(titleHeader, menu.firstChild);
+    }
+    
     titleHeader.innerHTML = `
         <div style="font-weight: 800; font-size: 11px; color: var(--accent-color); margin-bottom: 4px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
             ${mediaType}
@@ -266,37 +272,14 @@ function showContextMenu(e, item) {
             ${item.name || 'Unknown Item'}
         </div>
     `;
-    menu.appendChild(titleHeader);
 
-    const options = [
-        { label: isVideo ? 'Im Video Player abspielen' : 'Abspielen', icon: '▶️', action: () => { if (typeof playMediaObject === 'function') playMediaObject(item); } },
-        { label: 'Zur Queue hinzufügen', icon: '➕', action: () => { if (typeof addToQueue === 'function') addToQueue(item); } }
-    ];
+    // Only show video options if it's a video
+    const videoSection = document.getElementById('context-menu-section-playback');
+    const externalSection = document.getElementById('context-menu-section-external');
+    if (videoSection) videoSection.style.display = isVideo ? 'block' : 'none';
+    if (externalSection) externalSection.style.display = isVideo ? 'block' : 'none';
 
-    if (isVideo) {
-        options.push({ label: 'Video analysieren (FFprobe)', icon: '🔍', action: () => { if (typeof eel !== "undefined") eel.analyze_media_item(item.path)(); } });
-    }
-
-    options.push({
-        label: 'Metadaten Editieren', icon: '📝', action: () => {
-            if (typeof switchTab === 'function') switchTab('edit');
-            setTimeout(() => { if (typeof openEditForm === 'function') openEditForm(item); }, 200);
-        }
-    });
-
-    options.push({ label: 'Im Dateisystem öffnen', icon: '📁', action: () => { if (typeof eel !== "undefined") eel.open_in_explorer(item.path)(); } });
-
-    options.forEach(opt => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'context-menu-item';
-        itemDiv.innerHTML = `<span style="margin-right:10px;">${opt.icon}</span> ${opt.label}`;
-        itemDiv.onclick = (event) => {
-            event.stopPropagation();
-            opt.action();
-            hideContextMenu();
-        };
-        menu.appendChild(itemDiv);
-    });
+    // Options are natively handled by the context_menu.html fragment and handleContextMenuAction.
 
     // Close on click elsewhere
     document.addEventListener('click', hideContextMenu, { once: true });
