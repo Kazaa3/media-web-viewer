@@ -7631,7 +7631,6 @@ def check_ui_integrity():
 
 
 # Alignment Aliases for test suites (using wrappers to avoid Eel naming conflicts)
-@eel.expose
 def get_benchmark_results(*args, **kwargs):
     return get_playback_benchmarks(*args, **kwargs)
 
