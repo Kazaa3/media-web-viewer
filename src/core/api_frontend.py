@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 from src.core.eel_shell import eel
 from pathlib import Path
 from src.core.config_master import GLOBAL_CONFIG, EEL_SETTINGS, LAUNCH_PROFILE
