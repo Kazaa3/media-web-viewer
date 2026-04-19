@@ -46,6 +46,7 @@ import json
 import time
 import os
 import psutil
+from unittest.mock import MagicMock
 from urllib.parse import unquote
 
 # Verification of Package Root
@@ -116,6 +117,7 @@ except ImportError:
 
 # --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
 # 2. Main Imports
+try:
     # Dependency Shielding (v1.47)
     try:
         import bottle
@@ -146,9 +148,12 @@ except ImportError:
     
     # Initialize Global Managers
     transcode_mgr = TranscoderManager()
+    
 except ImportError as e:
     log.error(f"[Bootstrap] Required module missing: {e}")
-    log_self_diagnostics()
+    # Minimal fallback assignment to avoid NameErrors in subsequent code
+    if 'eel' not in locals() and 'eel' not in globals():
+        from src.core.eel_shell import eel
     sys.exit(1)
 
 
