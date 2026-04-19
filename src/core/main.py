@@ -512,7 +512,10 @@ def ensure_singleton():
     """Manages MWV singleton state using the centralized process_manager."""
     from src.core.process_manager import ProcessController
     pm = ProcessController(PROJECT_ROOT, Path(logger.APP_DATA_DIR))
-\n# --- CORE API EXPOSURE BRIDGE ---\n# All functional logic from lines 515-5599 has been moved to api_legacy_archive.py\n# and specialized domain API modules (api_library, api_playback, etc.)\n# to satisfy the v1.54.022 'Forensic Core Slimming' requirement.\n\n
+# --- CORE API EXPOSURE BRIDGE ---
+# All functional logic from lines 515-5599 has been moved to api_legacy_archive.py
+# and specialized domain API modules (api_library, api_playback, etc.)
+# to satisfy the v1.54.022 'Forensic Core Slimming' requirement.
 if __name__ == "__main__":
     import subprocess
     # 1. Flash Burn (Instant Port Cleanup - v1.46.135 Centralized)
