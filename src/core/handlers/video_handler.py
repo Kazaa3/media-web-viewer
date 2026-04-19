@@ -7,6 +7,10 @@ import urllib.parse
 from .media_handler import MediaHandler
 from .metadata_pipeline import MetadataPipeline
 
+from src.core.logger import get_logger
+
+log = get_logger("video_handler")
+
 class VideoHandler(MediaHandler):
     """
     @brief Specialized handler for video formats.
@@ -14,8 +18,7 @@ class VideoHandler(MediaHandler):
     def __init__(self, filepath: str | Path):
         super().__init__(filepath)
         self.pipeline = MetadataPipeline(self.filepath)
-        from src.core.logger import get_logger
-        self.log = get_logger("video_handler")
+
 
     def extract_metadata(self) -> Dict[str, Any]:
         return self.pipeline.execute()
@@ -34,7 +37,8 @@ class VideoHandler(MediaHandler):
         subtype = analysis.get("media_subtype", "FILE")
         d_sec = analysis.get("duration", 0)
         
-        self.log.info(f"[PLAY-PULSE] VideoHandler delegate: Mode={mode} | Subtype={subtype} | Path={self.filepath.name}")
+        log.info(f"[PLAY-PULSE] VideoHandler delegate: Mode={mode} | Subtype={subtype} | Path={self.filepath.name}")
+
 
         # 2. Bridge back to Handshake URL structure
         if mode == 'direct_play':
