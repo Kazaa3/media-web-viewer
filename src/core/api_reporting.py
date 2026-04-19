@@ -80,24 +80,65 @@ def get_db_stats():
 # --- Forensic Suite ---
 
 def get_storage_forensics():
-    """Storage Forensic Audit: Volume Discovery (v1.37.30)."""
+    """Storage Forensic Audit: Volume Discovery (v1.46.101 Align)."""
     media_path = PROJECT_ROOT / "media"
     if not media_path.exists():
+        log.error(f"[Forensic-STR] Media path missing: {media_path}")
         return {"status": "error", "message": f"Media path not found: {media_path}"}
-    results = {"status": "ok", "total_files": 0, "total_folders": 0, "total_size_bytes": 0, "largest_files": []}
+    
+    scan_settings = GLOBAL_CONFIG.get("scan_settings", {})
+    forensic_settings = GLOBAL_CONFIG.get("forensic_settings", {})
+    
+    enable_ext_skip = scan_settings.get("enable_extension_skipping", True)
+    skip_exts = set(scan_settings.get("skip_extensions", []))
+    enable_size_skip = scan_settings.get("enable_size_skipping", True)
+    min_size = scan_settings.get("min_size_kb", 1) * 1024
+    max_size = scan_settings.get("max_size_mb", 50000) * 1024 * 1024
+    max_report_count = forensic_settings.get("max_largest_files_report", 15)
+
+    results = {
+        "status": "ok", 
+        "total_files": 0, 
+        "total_folders": 0, 
+        "total_size_bytes": 0, 
+        "skipped_files": 0,
+        "largest_files": []
+    }
+    
     all_files = []
+    
     for root, dirs, files in os.walk(str(media_path)):
         results["total_folders"] += 1
         for f in files:
-            results["total_files"] += 1
             f_path = Path(root) / f
+            ext = f_path.suffix.lower()
+            
+            # --- Robustness Filter (Aligned with Scanner) ---
+            if enable_ext_skip and ext in skip_exts:
+                results["skipped_files"] += 1
+                continue
+                
             try:
                 f_size = f_path.stat().st_size
+                
+                if enable_size_skip and (f_size < min_size or f_size > max_size):
+                    results["skipped_files"] += 1
+                    continue
+
+                results["total_files"] += 1
                 results["total_size_bytes"] += f_size
-                all_files.append({"name": f, "size": f_size, "path": str(f_path.relative_to(PROJECT_ROOT))})
-            except Exception: pass
+                all_files.append({
+                    "name": f, 
+                    "size": f_size, 
+                    "path": str(f_path.relative_to(PROJECT_ROOT)),
+                    "ext": ext
+                })
+            except Exception as e:
+                log.warning(f"[Forensic-STR] Failed to stat {f}: {e}")
+                results["skipped_files"] += 1
+                
     all_files.sort(key=lambda x: x["size"], reverse=True)
-    results["largest_files"] = all_files[:10]
+    results["largest_files"] = all_files[:max_report_count]
     return results
 
 def get_process_forensics():

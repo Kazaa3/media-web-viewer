@@ -430,12 +430,20 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "max_depth": 12,
         "batch_commit_size": 250,
         "enable_extension_skipping": True,
-        "skip_extensions": [".txt", ".log", ".tmp", ".bak", ".db", ".ini"],
+        "skip_extensions": [".txt", ".log", ".tmp", ".bak", ".db", ".ini", ".nfo", ".html"],
         "enable_size_skipping": True,
         "min_size_kb": 1,        # Skip empty or 0-byte ghost files
         "max_size_mb": 50000,    # Default Max 50GB file cap
         "log_unsupported_extensions": False,
         "log_compact_errors_only": True
+    },
+
+    # --- FORENSIC & PROCESS REGISTRY (v1.46.101) ---
+    "forensic_settings": {
+        "browser_process_names": ["chrome", "chromium", "electron", "brave", "opera", "msedge"],
+        "stream_worker_names": ["ffmpeg", "mkvmerge", "ffprobe"],
+        "max_largest_files_report": 15,
+        "enable_pid_resolution_logging": True
     },
 
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
