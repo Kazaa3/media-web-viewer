@@ -6676,27 +6676,22 @@ def run_gui_tests():
     @return Info dictionary / Info-Dictionary.
 
     Best Practices:
-      - In Produktion: Integriere Playwright oder Selenium fr Eel-GUIs.
-      - Starte den Dev-Server und teste DOM-Interaktionen via Headless-Browser.
-      - Fr MCP-Agenten: Nutze Inspector-Tool fr Tool-Validierung und Event-Simulation.
-      - Alternativen: WebDriver (Selenium), CDP (Playwright), PyAutoGUI fr Desktop.
-      - Eel expose() ermglicht bidirektionale Python-JS-Calls fr Test-Trigger.
+      - In Produktion: Integriere PyAutoGUI fr Forensic-Screenshots.
+      - Alternativen: Screenshot-Tools (PyAutoGUI).
+      - MCP-Agenten: Nutze Inspector-Tool fr DOM-Validation.
     """
     log.info(
-        "GUI-Tests: Siehe MCP-Agent oder Browser-Subagent fr KlickEvents/DOM.")
+        "GUI-Tests: Siehe MCP-Agent oder Diagnostic Snapshot fr KlickEvents/DOM.")
     return {
         "status": "info",
-        "message": "GUI-Tests mssen ber den MCP-Agenten DOM / Browser Subagent / KlickEvents gestartet werden.",
+        "message": "GUI-Tests mssen ber den MCP-Agenten DOM / Diagnostic Snapshot gestartet werden.",
         "next_steps": [
-            "pip install playwright pytest",
-            "playwright install",
-            "Beispiel: pytest mit page.goto('http://localhost:8000') und page.click()",
-            "Alternativ: selenium, pyautogui, MCP Inspector"],
+            "run_diagnostic_snapshot() aufrufen",
+            "audit_dom_state() zur Validierung nutzen",
+            "PyAutoGUI fr visuelle Beweissicherung verwenden"],
         "protocols": {
-            "WebDriver": "REST/HTTP, Selenium, geeignet fr Eel",
-            "CDP": "WebSocket, Playwright/Selenium4, direkter DOM-Zugriff",
             "Eel expose": "Intern, Python-JS-Bridge, ideal fr Test-Trigger",
-            "PyAutoGUI": "Pixel/Screen, Desktop-Automatisierung",
+            "PyAutoGUI": "Pixel/Screen, Desktop-Automatisierung via api_diagnostics",
             "MCP": "Agenten-basiert, Inspector fr Event-Simulation"}}
 
 
