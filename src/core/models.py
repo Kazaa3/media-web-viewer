@@ -25,7 +25,7 @@ from src.core.config_master import (
     VIDEO_NATIVE, VIDEO_HD_TRANSCODE, VIDEO_PAL_TRANSCODE, VIDEO_NTSC_TRANSCODE,
     ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS,
     EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS, PLAYLIST_EXTENSIONS,
-    ARCHIVE_EXTENSIONS
+    ARCHIVE_EXTENSIONS, GLOBAL_MEDIA_TAXONOMY
 )
 
 # These registries are the absolute source of truth for all media categorization.
@@ -43,147 +43,24 @@ EXTENSION_REGISTRY = {
     "nfo": {".nfo"}
 }
 
-MASTER_CAT_MAP = {
-    "audio": {
-        "internal": "audio",
-        "aliases": ["audio", "musik", "music", "song", "radio"],
-        "extensions": ALL_AUDIO_EXTENSIONS,
-        "native": AUDIO_NATIVE,
-        "transcode": AUDIO_TRANSCODE
-    },
-    "audio_native": {
-        "internal": "audio_native",
-        "aliases": ["audio native", "audio-native"],
-        "extensions": AUDIO_NATIVE,
-        "native": AUDIO_NATIVE
-    },
-    "audio_transcode": {
-        "internal": "audio_transcode",
-        "aliases": ["audio transcode", "audio-transcode", "alac", "wma"],
-        "extensions": AUDIO_TRANSCODE,
-        "transcode": AUDIO_TRANSCODE
-    },
-    "album": {
-        "internal": "audio",
-        "aliases": ["album", "lp", "cd"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "single": {
-        "internal": "audio",
-        "aliases": ["single", "ep", "maxi"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "hörbuch": {
-        "internal": "audio",
-        "aliases": ["hörbuch", "hörspiel", "audiobook"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "sampler": {
-        "internal": "audio",
-        "aliases": ["sampler", "mix", "compilation"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "compilation": {
-        "internal": "audio",
-        "aliases": ["compilation", "various artists", "va"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "podcast": {
-        "internal": "audio",
-        "aliases": ["podcast", "cast", "show"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "mix": {
-        "internal": "audio",
-        "aliases": ["mix", "mixtape", "set", "dj-set"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "soundtrack": {
-        "internal": "audio",
-        "aliases": ["soundtrack", "ost", "score"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "klassik": {
-        "internal": "audio",
-        "aliases": ["klassik", "classical", "opera"],
-        "extensions": ALL_AUDIO_EXTENSIONS
-    },
-    "video": {
-        "internal": "video",
-        "aliases": ["multimedia", "video", "film", "movie", "tv"],
-        "extensions": ALL_VIDEO_EXTENSIONS,
-        "native": VIDEO_NATIVE,
-        "transcode_hd": VIDEO_HD_TRANSCODE,
-        "transcode_pal": VIDEO_PAL_TRANSCODE,
-        "transcode_ntsc": VIDEO_NTSC_TRANSCODE
-    },
-    "video_iso": {
-        "internal": "video_iso",
-        "aliases": ["video iso", "video-iso", "iso-image", "dvd iso", "optical folder"],
-        "extensions": DISK_IMAGE_EXTENSIONS,
-        "transcode": DISK_IMAGE_EXTENSIONS
-    },
-    "series": {
-        "internal": "video",
-        "aliases": ["series", "serie", "tv-show", "staffel"],
-        "extensions": ALL_VIDEO_EXTENSIONS
-    },
-    "documentation": {
-        "internal": "video",
-        "aliases": ["documentation", "dokumentation", "doku", "report"],
-        "extensions": ALL_VIDEO_EXTENSIONS
-    },
-    "spiel": {
-        "internal": "video",
-        "aliases": ["spiel", "game", "games", "exe", "binary"],
-        "extensions": ALL_VIDEO_EXTENSIONS | {".exe", ".bat", ".sh"}
-    },
-    "beigabe": {
-        "internal": "video",
-        "aliases": ["beigabe", "supplements", "supplement", "extra"],
-        "extensions": ALL_VIDEO_EXTENSIONS | ALL_AUDIO_EXTENSIONS
-    },
-    "supplements": {
-        "internal": "video",
-        "aliases": ["supplements", "anhang"],
-        "extensions": ALL_VIDEO_EXTENSIONS
-    },
-    "pictures": {
-        "internal": "pictures",
-        "aliases": ["bilder", "grafik", "foto", "images", "pictures"],
-        "extensions": PICTURE_EXTENSIONS
-    },
-    "bilder": {  # Alias for global category map parity
-        "internal": "pictures",
-        "aliases": ["bilder"],
-        "extensions": PICTURE_EXTENSIONS
-    },
-    "ebooks": {
-        "internal": "ebooks",
-        "aliases": ["e-book", "ebook", "epub", "mobi"],
-        "extensions": EBOOK_EXTENSIONS
-    },
-    "epub": {  # Alias for global category map parity
-        "internal": "ebooks",
-        "aliases": ["epub"],
-        "extensions": EBOOK_EXTENSIONS
-    },
-    "docs": {
-        "internal": "documents",
-        "aliases": ["dokumente", "docs", "pdf", "text"],
-        "extensions": DOCUMENT_EXTENSIONS
-    },
-    "archives": {
-        "internal": "archives",
-        "aliases": ["archiv", "archives", "zip", "rar"],
-        "extensions": ARCHIVE_EXTENSIONS
-    },
-    "nfo": {
-        "internal": "nfo",
-        "aliases": ["nfo", "info", "metadata"],
-        "extensions": {".nfo"}
+# --- [v1.53.001] TAXONOMY BRIDGE ---
+# Deriving the Master Category Map from the Global Taxonomy SSOT.
+MASTER_CAT_MAP = {}
+for key, cfg in GLOBAL_MEDIA_TAXONOMY.items():
+    # Bridge the taxonomy structure to the internal model schema
+    MASTER_CAT_MAP[key] = {
+        "internal": cfg.get("parent", key),
+        "aliases": [key, cfg["label"].lower()] + cfg.get("aliases", []),
+        "extensions": cfg["ext"]
     }
-}
+    # Add Technical metadata for handlers if available
+    if key == "audio":
+        MASTER_CAT_MAP[key]["native"] = AUDIO_NATIVE
+        MASTER_CAT_MAP[key]["transcode"] = AUDIO_TRANSCODE
+    elif key == "video":
+         MASTER_CAT_MAP[key]["native"] = VIDEO_NATIVE
+         MASTER_CAT_MAP[key]["transcode_hd"] = VIDEO_HD_TRANSCODE
+         MASTER_CAT_MAP[key]["transcode_pal"] = VIDEO_PAL_TRANSCODE
 
 # Calculated Logic Extensions (REDUNDANCY CLEANUP v1.37.07)
 # (Constants now imported from config_master.py)
