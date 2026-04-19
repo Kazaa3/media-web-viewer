@@ -50,6 +50,9 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
             
         output = result.stdout
         
+        # Centralized Tag Mappings (Phase 9 SSOT)
+        mkvinfo_map = GLOBAL_CONFIG.get("parser_registry", {}).get("tag_mappings", {}).get("mkvinfo", {})
+
         # Parse Duration: | + Duration: 01:23:45.678 (5025.678s)
         duration_match = re.search(r"Duration: .*?\((\d+\.\d+)s\)", output)
         if duration_match and not tags.get('duration'):
@@ -66,12 +69,12 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         # Muxing App
         muxing_app_match = re.search(r"Multiplexing application: (.*)", output)
         if muxing_app_match:
-            tags['muxing_app'] = muxing_app_match.group(1).strip()
+            tags[mkvinfo_map.get('muxing_app', 'muxing_app')] = muxing_app_match.group(1).strip()
 
         # Writing App
         writing_app_match = re.search(r"Writing application: (.*)", output)
         if writing_app_match:
-            tags['writing_app'] = writing_app_match.group(1).strip()
+            tags[mkvinfo_map.get('writing_app', 'writing_app')] = writing_app_match.group(1).strip()
 
     except subprocess.TimeoutExpired:
         log.warning(f"[MKVInfo-Parser] Timeout expired for {filename}")
@@ -79,4 +82,5 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         log.error(f"[MKVInfo-Parser] Unexpected error for {filename}: {e}", exc_info=True)
 
     return tags
+
 

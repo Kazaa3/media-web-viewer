@@ -11,7 +11,7 @@ def get_capabilities() -> dict[str, Any]:
     return {
         "name": "PyMediaInfo",
         "description": "Python wrapper for MediaInfo library, providing exhaustive stream-level meta. Reliable for track counts and technical metadata.",
-        "supported_tags": ["audio_track_count", "video_track_count", "subtitle_count", "duration", "container", "standard", "frame_rate", "chapters"],
+        "supported_tags": ["audio_track_count", "video_track_count", "subtitle_count", "duration", "container", "artist", "album", "date", "standard", "frame_rate", "chapters"],
         "supported_codecs": ["*"]
     }
 
@@ -34,7 +34,10 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         settings = {}
 
     try:
-        full_scan = settings.get('full_scan', False)
+        profile = settings.get('profile', 'standard')
+        # Profile-driven depth (Phase 12)
+        full_scan = True if profile == 'exhaustive' else settings.get('full_scan', False)
+        
         media_info = MediaInfo.parse(path, full=full_scan)
         general_track = None
         audio_track = None
@@ -71,22 +74,44 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         if sub_langs:
             tags['subtitle_languages'] = ", ".join(sub_langs)
 
+        # SSOT Mapping (Phase 13)
+        mappings = GLOBAL_CONFIG.get("parser_registry", {}).get("tag_mappings", {}).get("pymediainfo", {})
+
         if general_track:
             try:
-                if not tags.get('duration') and hasattr(general_track, 'duration') and general_track.duration:
-                    tags['duration'] = int(general_track.duration / 1000)
-                if not tags.get('container') and hasattr(general_track, 'format') and general_track.format:
-                    tags['container'] = general_track.format.lower()
+                dur_key = mappings.get('duration', 'duration')
+                if not tags.get(dur_key) and hasattr(general_track, 'duration') and general_track.duration:
+                    tags[dur_key] = int(general_track.duration / 1000)
+                
+                cont_key = mappings.get('format', 'container')
+                if not tags.get(cont_key) and hasattr(general_track, 'format') and general_track.format:
+                    tags[cont_key] = general_track.format.lower()
 
                 path_obj = Path(path)
-                if not tags.get('title') or tags.get('title') == path_obj.name:
-                    tags['title'] = getattr(general_track, 'title', None) or tags.get('title')
-                if not tags.get('artist') or tags.get('artist') == 'Unbekannt':
-                    tags['artist'] = getattr(general_track, 'performer', None) or tags.get('artist')
-                if not tags.get('album'):
-                    tags['album'] = getattr(general_track, 'album', '') or ''
-                if not tags.get('year'):
-                    tags['year'] = getattr(general_track, 'recorded_date', '') or ''
+                
+                title_key = mappings.get('title', 'title')
+                if not tags.get(title_key) or tags.get(title_key) == path_obj.name:
+                    tags[title_key] = getattr(general_track, 'title', None) or tags.get(title_key)
+                
+                perf_key = mappings.get('performer', 'artist')
+                if not tags.get(perf_key) or tags.get(perf_key) == 'Unbekannt':
+                    tags[perf_key] = getattr(general_track, 'performer', None) or tags.get(perf_key)
+                
+                alb_key = mappings.get('album', 'album')
+                if not tags.get(alb_key):
+                    tags[alb_key] = getattr(general_track, 'album', '') or ''
+                
+                date_key = mappings.get('recorded_date', 'date')
+                if not tags.get(date_key):
+                    tags[date_key] = getattr(general_track, 'recorded_date', '') or ''
+                
+                track_key = mappings.get('track_position', 'track')
+                if not tags.get(track_key):
+                    tags[track_key] = getattr(general_track, 'track_position', '') or ''
+                
+                disc_key = mappings.get('disc_position', 'disc')
+                if not tags.get(disc_key):
+                    tags[disc_key] = getattr(general_track, 'disc_position', '') or ''
             except Exception as ge:
                 log.debug(f"[Mediainfo-Track] general_track error for {filename}: {ge}")
 

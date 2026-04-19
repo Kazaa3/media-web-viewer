@@ -64,6 +64,9 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         container = data.get('container', {})
         properties = container.get('properties', {})
         
+        # Centralized Tag Mappings (Phase 13 SSOT Expansion)
+        mkv_map = GLOBAL_CONFIG.get("parser_registry", {}).get("tag_mappings", {}).get("mkvmerge", {})
+
         # Duration: reported in nanoseconds
         if not tags.get('duration') and 'duration' in properties:
             try:
@@ -72,14 +75,15 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
                 pass
 
         # Title
-        if not tags.get('title') and 'title' in properties:
-            tags['title'] = properties['title']
+        title_key = mkv_map.get('title', 'title')
+        if not tags.get(title_key) and 'title' in properties:
+            tags[title_key] = properties['title']
 
-        # Apps
+        # Apps (Standardized v1.46.132)
         if 'muxing_application' in properties:
-            tags['muxing_app'] = properties['muxing_application']
+            tags[mkv_map.get('muxing_application', 'read_tag_source_muxing')] = properties['muxing_application']
         if 'writing_application' in properties:
-            tags['writing_app'] = properties['writing_application']
+            tags[mkv_map.get('writing_application', 'read_tag_source_writing')] = properties['writing_application']
 
         # Tracks
         tracks = data.get('tracks', [])
@@ -97,4 +101,5 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         log.error(f"[MKVMerge-Parser] Unexpected error for {filename}: {e}", exc_info=True)
 
     return tags
+
 

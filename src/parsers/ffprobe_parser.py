@@ -40,15 +40,27 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         settings = {}
 
     try:
+        profile = settings.get('profile', 'standard')
         bin_path = GLOBAL_CONFIG.get("program_paths", {}).get("ffprobe", "ffprobe")
         cmd = [
             bin_path,
             "-v", "quiet",
             "-print_format", "json",
             "-show_format",
-            "-show_streams",
-            "-show_chapters"
+            "-show_streams"
         ]
+        
+        # Profile-specific command modifiers (Phase 12)
+        if profile != 'quick':
+            cmd.append("-show_chapters")
+            
+        if profile == 'exhaustive':
+            cmd.extend(["-count_frames", "-show_packets"])
+
+        # Implementation of forced encoding (Phase 11)
+        forced_enc = settings.get('forced_encoding')
+        if forced_enc:
+            cmd.extend(['-metadata_encoding:g', forced_enc])
         
         custom_flags = settings.get('cli_flags', '').split()
         if custom_flags:
@@ -96,16 +108,18 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             except (ValueError, TypeError):
                 pass
         
-        # Extract format tags (metadata)
+        # Extract format tags (metadata) - SSOT Mapping (Phase 13)
         fmt_tags = fmt.get('tags', {})
+        mappings = GLOBAL_CONFIG.get("parser_registry", {}).get("tag_mappings", {}).get("ffprobe", {})
+        
         tag_mapping = {
-            'title': ['title', 'TITLE'],
-            'artist': ['artist', 'ARTIST'],
-            'album': ['album', 'ALBUM'],
-            'date': ['date', 'DATE', 'year', 'YEAR'],
-            'genre': ['genre', 'GENRE'],
-            'track': ['track', 'TRACK'],
-            'disc': ['disc', 'DISC']
+            mappings.get('title', 'title'): ['title', 'TITLE'],
+            mappings.get('artist', 'artist'): ['artist', 'ARTIST'],
+            mappings.get('album', 'album'): ['album', 'ALBUM'],
+            mappings.get('date', 'date'): ['date', 'DATE', 'year', 'YEAR'],
+            mappings.get('genre', 'genre'): ['genre', 'GENRE'],
+            mappings.get('track', 'track'): ['track', 'TRACK'],
+            mappings.get('disc', 'disc'): ['disc', 'DISC']
         }
         
         for tag_key, possible_keys in tag_mapping.items():

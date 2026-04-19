@@ -1,0 +1,43 @@
+This phase evolves the workstation's parsing engine into a high-fidelity forensic orchestrator. "Ultimate Mode" will now force execution of all available parsers, bypass category filtering, and generate timestamped serialized JSON dumps for historical tracking. We also introduce a tri-profile VLC system and a Forensic Integrity Auditor to flag metadata discrepancies.
+
+User Review Required
+IMPORTANT
+
+Storage & History: "Ultimate Mode" will generate additional files in data/forensic_exports/. As requested, these will be timestamped (e.g., filename.20231027_120000.forensic.json) to allow for historical analysis of how metadata changes over time or across different versions.
+
+Forensic Validation: We are introducing a validation layer that compares results between parsers (e.g., VLC vs FFprobe). Any discrepancies in critical fields (duration, codec, bitrate) will be flagged in a new validation_flags field.
+
+Proposed Changes
+[Core] Orchestration & SSOT
+[MODIFY] 
+config_master.py
+Define ULTIMATE_PARSER_CHAIN containing all 20+ parsing steps.
+Add forensic_export_settings:
+enable_separate_storage: True
+export_root: ./data/forensic_exports/
+Rename technical tags in tag_mappings:
+muxing_app -> read_tag_muxing_app (or similar forensic naming).
+writing_app -> read_tag_writing_app.
+[MODIFY] 
+media_parser.py
+Ultimate Chain Swap: If mode == 'ultimate', bypass parser_chain and category filters to run every registered step.
+Forensic Export Engine: Implement a post-processing step that serializes full_tags into a standalone JSON file named {filename}.forensic.json.
+Tri-VLC Integration: Add vlc_quick, vlc_standard, and vlc_deep to the explicit parser_steps registry.
+[Parsers] Multi-Profile Refactoring
+[MODIFY] 
+vlc_parser.py
+Refactor parse to accept a profile setting:
+quick: 1s timeout, basic tags only.
+standard: 5s timeout, standard tags.
+exhaustive: 15s timeout, full deep-parse including track info.
+[Parsers] Discrepancy Highlighting & Validation
+Implement the Forensic Integrity Auditor in media_parser.py:
+Logic to compare specific fields across different parser outputs.
+Addition of a validation_flags metadata field to highlight discrepancies.
+Verification Plan
+Automated Verification
+Trigger a scan in ultimate mode and verify that the forensic_exports/ directory is populated with JSON files.
+Verify that the logs show all three VLC profiles executing with their respective timeouts.
+Manual Verification
+Inspect the generated {filename}.forensic.json to ensure it contains the expanded full_tags object without the main library's constraints.
+Verify the new "Read-Tag" naming in the technical UI panels.

@@ -14,23 +14,38 @@ from src.core.logger import get_logger
 # Specialized logger (v1.46.132 Modernized)
 log = get_logger("parser_mutagen")
 
-def safe_get(audio: Any, key: str, default: Any = '') -> Any:
+def safe_get(audio: Any, key: str, default: Any = '', settings: dict[str, Any] = None) -> Any:
     """
     @brief Safely retrieves a tag value from various Mutagen objects.
     @details Handles the differences between ID3 (text[0]), Vorbis (list[0]), and MP4 (list[0]).
     """
+    if settings is None: settings = {}
+    forced_enc = settings.get('forced_encoding')
+
     try:
         val = audio.get(key)
         if val is None:
             return default
             
+        # Implementation of forced encoding (Phase 11)
+        # If forced_enc is set, we attempt to decode raw bytes if available.
+        # Otherwise, we use Mutagen's pre-decoded text.
+        
         # ID3 frames (e.g., TPE1)
         if hasattr(val, 'text') and isinstance(val.text, list) and len(val.text) > 0:
-            return str(val.text[0])
+            res = str(val.text[0])
+            if forced_enc and hasattr(val, 'data'):
+                try:
+                    res = val.data.decode(forced_enc, errors='replace')
+                except: pass
+            return res
             
         # Standard lists (Vorbis, MP4, etc.)
         if isinstance(val, list) and len(val) > 0:
-            return str(val[0])
+            res = str(val[0])
+            # For Vorbis/FLAC, we could try re-decoding from raw if we keep it, 
+            # but usually Mutagen handles this well unless the header is malformed.
+            return res
             
         return str(val)
     except Exception as e:
@@ -82,19 +97,19 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             audio_for_info = audio_flac
 
             if settings.get('prefer_albumartist', True):
-                tags['artist'] = safe_get(audio_flac, 'ALBUMARTIST') or safe_get(
-                    audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(audio_flac, 'ALBUMARTIST', settings=settings) or safe_get(
+                    audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'), settings=settings)
             else:
-                tags['artist'] = safe_get(audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'), settings=settings)
 
-            tags['title'] = safe_get(audio_flac, 'TITLE', default=tags.get('title', filename))
-            tags['year'] = safe_get(audio_flac, 'DATE')
-            tags['genre'] = safe_get(audio_flac, 'GENRE')
-            tags['track'] = safe_get(audio_flac, 'TRACKNUMBER')
-            tags['totaltracks'] = safe_get(audio_flac, 'TRACKTOTAL') or safe_get(audio_flac, 'TOTALTRACKS')
-            tags['album'] = safe_get(audio_flac, 'ALBUM')
-            tags['albumartist'] = safe_get(audio_flac, 'ALBUMARTIST')
-            tags['disc'] = safe_get(audio_flac, 'DISCNUMBER')
+            tags['title'] = safe_get(audio_flac, 'TITLE', default=tags.get('title', filename), settings=settings)
+            tags['year'] = safe_get(audio_flac, 'DATE', settings=settings)
+            tags['genre'] = safe_get(audio_flac, 'GENRE', settings=settings)
+            tags['track'] = safe_get(audio_flac, 'TRACKNUMBER', settings=settings)
+            tags['totaltracks'] = safe_get(audio_flac, 'TRACKTOTAL', settings=settings) or safe_get(audio_flac, 'TOTALTRACKS', settings=settings)
+            tags['album'] = safe_get(audio_flac, 'ALBUM', settings=settings)
+            tags['albumartist'] = safe_get(audio_flac, 'ALBUMARTIST', settings=settings)
+            tags['disc'] = safe_get(audio_flac, 'DISCNUMBER', settings=settings)
             tags['codec'] = 'flac'
             if hasattr(audio_flac.info, 'bits_per_sample') and audio_flac.info.bits_per_sample:
                 tags['bitdepth'] = f"{audio_flac.info.bits_per_sample} Bit"
@@ -193,16 +208,16 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             audio_for_info = audio_mp4
 
             if settings.get('prefer_albumartist', True):
-                tags['artist'] = safe_get(audio_mp4, 'aART') or safe_get(
-                    audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(audio_mp4, 'aART', settings=settings) or safe_get(
+                    audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'), settings=settings)
             else:
-                tags['artist'] = safe_get(audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'), settings=settings)
 
-            tags['title'] = safe_get(audio_mp4, '\xa9nam', default=tags.get('title', filename))
-            tags['year'] = safe_get(audio_mp4, '\xa9day')
-            tags['genre'] = safe_get(audio_mp4, '\xa9gen')
-            tags['album'] = safe_get(audio_mp4, '\xa9alb')
-            tags['albumartist'] = safe_get(audio_mp4, 'aART')
+            tags['title'] = safe_get(audio_mp4, '\xa9nam', default=tags.get('title', filename), settings=settings)
+            tags['year'] = safe_get(audio_mp4, '\xa9day', settings=settings)
+            tags['genre'] = safe_get(audio_mp4, '\xa9gen', settings=settings)
+            tags['album'] = safe_get(audio_mp4, '\xa9alb', settings=settings)
+            tags['albumartist'] = safe_get(audio_mp4, 'aART', settings=settings)
 
             trkn = audio_mp4.get('trkn')
             if trkn and len(trkn) > 0 and isinstance(trkn[0], tuple):
@@ -211,7 +226,7 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                 if len(trkn[0]) > 1 and int(trkn[0][1]) > 0:
                     tags['totaltracks'] = str(trkn[0][1])
             elif trkn and len(trkn) > 0:
-                tags['track'] = str(trkn[0])
+                tags['track'] = safe_get(audio_mp4, 'trkn', settings=settings)
 
             disk = audio_mp4.get('disk')
             if disk and len(disk) > 0 and isinstance(disk[0], tuple):
@@ -253,14 +268,14 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             audio_for_info = audio_misc
 
             if audio_misc:
-                tags['artist'] = safe_get(audio_misc, 'artist', default=tags.get('artist', 'Unbekannt'))
-                tags['title'] = safe_get(audio_misc, 'title', default=tags.get('title', filename))
-                tags['year'] = safe_get(audio_misc, 'date') or safe_get(audio_misc, 'year')
-                tags['genre'] = safe_get(audio_misc, 'genre')
-                tags['album'] = safe_get(audio_misc, 'album')
-                tags['albumartist'] = safe_get(audio_misc, 'albumartist')
-                tags['track'] = safe_get(audio_misc, 'tracknumber') or safe_get(audio_misc, 'track')
-                tags['disc'] = safe_get(audio_misc, 'discnumber')
+                tags['artist'] = safe_get(audio_misc, 'artist', default=tags.get('artist', 'Unbekannt'), settings=settings)
+                tags['title'] = safe_get(audio_misc, 'title', default=tags.get('title', filename), settings=settings)
+                tags['year'] = safe_get(audio_misc, 'date', settings=settings) or safe_get(audio_misc, 'year', settings=settings)
+                tags['genre'] = safe_get(audio_misc, 'genre', settings=settings)
+                tags['album'] = safe_get(audio_misc, 'album', settings=settings)
+                tags['albumartist'] = safe_get(audio_misc, 'albumartist', settings=settings)
+                tags['track'] = safe_get(audio_misc, 'tracknumber', settings=settings) or safe_get(audio_misc, 'track', settings=settings)
+                tags['disc'] = safe_get(audio_misc, 'discnumber', settings=settings)
 
         # Stream info elements
         if audio_for_info and hasattr(audio_for_info, 'info'):
@@ -280,11 +295,20 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                 from .format_utils import format_bitdepth
                 tags['bitdepth'] = format_bitdepth(info.bits_per_sample, codec=tags.get('codec'), file_type=file_type)
 
-        # Tag types
+        # Tag types & Exhaustive Dump (Phase 12)
         if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
-            if mode == 'full':
+            profile = settings.get('profile', 'standard')
+            if mode == 'full' or profile == 'exhaustive':
+                if 'full_tags' not in tags: tags['full_tags'] = {}
                 for k_full, v_full in audio_for_info.tags.items():
                     tags['full_tags'][f"mutagen_{k_full}"] = str(v_full)
+                
+                # Special Version Preference Audit (Phase 12)
+                ver_pref = settings.get('id3v2_version_policy', 'relaxed')
+                if ver_pref != 'relaxed' and hasattr(audio_for_info.tags, 'version'):
+                    cur_ver = f"v2.{audio_for_info.tags.version[0]}"
+                    if cur_ver not in ver_pref:
+                        log.info(f"⚖️ [Mutagen-Audit] Tag version {cur_ver} does not match preference {ver_pref}")
 
             tag_name = type(audio_for_info.tags).__name__
             if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
@@ -300,12 +324,23 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             else:
                 tags['tagtype'] = tag_name
 
-        # Cover Art
+        # Cover Art (Phase 11 Calibration)
+        art_limit_kb = settings.get('artwork_limit_kb', 2048)
+        max_art_size = art_limit_kb * 1024
+
+        def check_art(data_bytes):
+            if len(data_bytes) > max_art_size:
+                log.info(f"🛡️ [Mutagen-Art] Skipping large artwork ({len(data_bytes)//1024} KB > {art_limit_kb} KB)")
+                return False
+            return True
+
         if audio_for_info:
             if file_type == '.mp3':
-                tags['has_art'] = 'Yes' if any(k_art.startswith('APIC') for k_art in audio_for_info.keys()) else 'No'
+                # APIC frames
+                apic_frames = [f for k, f in audio_for_info.items() if k.startswith('APIC')]
+                tags['has_art'] = 'Yes' if any(check_art(f.data) for f in apic_frames) else 'No'
             elif file_type == '.flac':
-                tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
+                tags['has_art'] = 'Yes' if any(check_art(p.data) for p in audio_for_info.pictures) else 'No'
             elif file_type in {'.m4a', '.alac', '.m4b'}:
                 tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
 

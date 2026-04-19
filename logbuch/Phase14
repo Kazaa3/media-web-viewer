@@ -1,0 +1,35 @@
+Phase 14: Completing Tag Mapping (Track/Disc)
+This phase resolves the missing mappings for track and disc technical identifiers, ensuring even these granular fields are governed by the centralized SSOT registry.
+
+User Review Required
+NOTE
+
+This is a refinement task to ensure that NO technical keys are hardcoded in the parser mapping loops. Every key is now retrieved from GLOBAL_CONFIG.
+
+Proposed Changes
+[Core] Registry Completion
+[MODIFY] 
+config_master.py
+Add track and disc to the tag_mappings for:
+vlc, python_vlc, cvlc.
+pymediainfo.
+ffprobe.
+mkvmerge.
+[Parsers] SSOT Refinement
+[MODIFY] 
+ffprobe_parser.py
+Refactor the mapping dictionary to use mappings.get('track', 'track') and mappings.get('disc', 'disc').
+[MODIFY] 
+pymediainfo_parser.py
+Ensure track/disc assignments use registry lookups.
+[MODIFY] 
+cvlc_parser.py
+ & 
+python_vlc_parser.py
+Synchronize track/disc naming with the vlc mapping entry.
+Verification Plan
+Automated Verification
+Verify that metadata exports contain the mapped keys for track and disc numbers.
+Run py_compile on all modified files.
+Manual Verification
+Verify that changing the mapping in config_master.py (e.g., remapping track to forensic_track_id) is correctly reflected in the output of all parsers.

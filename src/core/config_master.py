@@ -1394,20 +1394,186 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     },
     
     # --- PARSER & UI REGISTRY (v1.41.00 Centralized) ---
+    # --- PARSER & UI REGISTRY (v1.46.132 Expanded SSOT) ---
     "parser_registry": {
+        # --- UI & MODE SETTINGS ---
         "start_page": os.environ.get("MWV_START_PAGE", "player"),
         "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
         "playback_mode": os.environ.get("MWV_PLAYBACK_MODE", "hls"),
         "library_dir": str(PROJECT_ROOT / "media"),
         "displayed_categories": ["all", "audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "multimedia", "unbekannt"],
         "debug_scan": get_env_bool("MWV_DEBUG_SCAN", False),
-        "parser_settings": {
+        
+        # --- FEATURE FLAGS (Centralized v1.46.132) ---
+        "feature_flags": {
+            "extract_chapters": True,
+            "semantic_validation": True,
+            "log_truncation_warnings": True,
+            "auto_repair_enabled": True,
             "use_fast_isoparser": True,
             "extract_tags": True,
-            "artwork_extraction": True
+            "artwork_extraction": True,
+            "deep_ebml_audit": False,   # Ultimate Mode Flag
+            "isbn_lookup": False,       # Forensic Enrichment Flag
+            "enable_forensic_export": True, # Separate JSON dump
+            "forensic_export_timestamped": True,
+            "integrity_auditor": True    # Cross-parser validation
+        },
+
+        # --- TAG MAPPINGS (Centralized v1.46.132) ---
+        "tag_mappings": {
+            "parser_vlc_bridge": {
+                "title": "title", "artist": "artist", "album": "album",
+                "date": "date", "genre": "genre", "track": "track", "disc": "disc"
+            },
+            "python_vlc": {
+                "title": "title", "artist": "artist", "album": "album",
+                "track": "track", "disc": "disc"
+            },
+            "cvlc": {
+                "title": "title", "artist": "artist", "album": "album",
+                "track": "track", "disc": "disc"
+            },
+            "ebml": {
+                "ebml_title": "title",
+                "ebml_duration": "duration",
+                "track_type": "type",
+                "language": "language",
+                "codec_id": "codec_id"
+            },
+            "enzyme": {
+                "enzyme_duration": "duration",
+                "enzyme_tracks": "track_info"
+            },
+            "mkvinfo": {
+                "muxing_app": "read_tag_source_muxing", # Forensic Renaming
+                "writing_app": "read_tag_source_writing"
+            },
+            "mkvmerge": {
+                "muxing_application": "read_tag_source_muxing",
+                "writing_application": "read_tag_source_writing",
+                "title": "title"
+            },
+            "pymediainfo": {
+                "duration": "duration",
+                "format": "container",
+                "performer": "artist",
+                "album": "album",
+                "recorded_date": "date",
+                "track_position": "track",
+                "disc_position": "disc"
+            },
+            "ffprobe": {
+                "title": "title",
+                "artist": "artist",
+                "album": "album",
+                "date": "date",
+                "genre": "genre",
+                "track": "track",
+                "disc": "disc"
+            }
+        },
+        "module_registry": {
+            "filename": "src.parsers.filename_parser",
+            "container": "src.parsers.container_parser",
+            "mutagen": "src.parsers.mutagen_parser",
+            "pymediainfo": "src.parsers.pymediainfo_parser",
+            "ffprobe": "src.parsers.ffprobe_parser",
+            "ffmpeg": "src.parsers.ffmpeg_parser",
+            "mkvmerge": "src.parsers.mkvmerge_parser",
+            "mkvinfo": "src.parsers.mkvinfo_parser",
+            "cvlc": "src.parsers.cvlc_parser",
+            "python_vlc": "src.parsers.python_vlc_parser",
+            "parser_vlc_bridge": "src.parsers.vlc_parser",
+            "isoparser": "src.parsers.isoparser_parser",
+            "ebml": "src.parsers.ebml_parser",
+            "mkvparse": "src.parsers.mkvparse_parser",
+            "enzyme": "src.parsers.enzyme_parser",
+            "pycdlib": "src.parsers.pycdlib_parser",
+            "pymkv": "src.parsers.pymkv_parser",
+            "tinytag": "src.parsers.tinytag_parser",
+            "eyed3": "src.parsers.eyed3_parser",
+            "music_tag": "src.parsers.music_tag_parser"
+        },
+
+        # --- TECHNICAL CHAIN & VFS ---
+        "default_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
+        "ultimate_chain": ["filename", "container", "mutagen", "cvlc", "python_vlc", "parser_vlc_bridge", "vlc_quick", "vlc_standard", "vlc_deep", "pymediainfo", "ffprobe", "mkvmerge", "mkvinfo", "ffmpeg", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
+        "categories": {
+            "audio": ["mutagen", "tinytag", "eyed3", "music_tag"],
+            "video": ["container", "mkvmerge", "mkvinfo", "parser_vlc_bridge", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"],
+            "universal": ["filename", "pymediainfo", "ffprobe", "ffmpeg"]
+        },
+        "magic_signatures": {
+            "mkvmerge": "1a45dfa3", "mkvinfo": "1a45dfa3", "mkvparse": "1a45dfa3", "enzyme": "1a45dfa3", "pymkv": "1a45dfa3", "ebml": "1a45dfa3",
+            "pycdlib": "4344303031", "isoparser": "4344303031", # CD001
+            "dsd": "44534420", "dsf": "44534420", "dff": "46524d38" # DSD, FRM8
+        },
+        "extension_map": {
+            ".mp3":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "eyed3", "music_tag"],
+            ".flac": ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".m4a":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".m4b":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".ogg":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".wav":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".wma":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+            ".mkv":  ["filename", "container", "mkvmerge", "mkvinfo", "parser_vlc_bridge", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
+            ".mp4":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "enzyme"],
+            ".m4v":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".avi":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".mov":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".webm": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".wmv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".mpg":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".mpeg": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".iso":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".bin":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".img":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
+            ".pdf":  ["filename", "pymediainfo", "ffprobe"],
+            ".epub": ["filename", "pymediainfo", "ffprobe"]
+        },
+        "codec_map": {
+            'mpeg audio': 'mp3',
+            'vorbis': 'ogg',
+            'opus': 'opus',
+            'flac': 'flac',
+            'alac': 'alac',
+            'aac': 'aac',
+            'm4a': 'aac'
+        },
+        "container_map": {
+            'matroska': 'mkv',
+            'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
+            'mpeg-4': 'mp4',
+            'quicktime': 'mp4',
+            'asf': 'wma',
+            'ogg': 'ogg',
+            'flac': 'flac',
+            'mp3': 'mp3'
+        },
+        "tag_type_map": {
+            'ID3': 'ID3',
+            'MP4Tags': 'm4tags',
+            'OggVComment': 'OggVComment',
+            'VCFLACDict': 'VCFLACDict',
+            'ASF': 'asf',
+            'APETag': 'APEv2'
         }
     },
     
+    # --- FORENSIC CALIBRATION REGISTRY (v1.46.132 Expanded) ---
+    "calibration_registry": {
+        "forced_encoding": None,          # e.g., 'latin1', 'utf-8', 'cp1252'
+        "forced_id3v2_version": "v2.3",   # Phase 12: v2.3 or v2.4
+        "encoding_fallback_list": ['utf-8', 'latin1', 'cp1252'],
+        "id3v2_version_policy": "relaxed", # 'strict', 'relaxed'
+        "error_simulation_active": False, # Intentionally inject discrepancies for auditor testing
+        "artwork_limit_kb": 2048,          # Skip artwork extraction if > 2MB
+        "deep_audit_intensity": 1,         # 1: Standard, 2: Deep, 3: Exhaustive
+        "exhaustive_deep_packets": True,  # Phase 12: FFprobe deep inspection
+        "vlc_exhaustive_playback_ms": 1000 # Phase 13: Decoupled pulse
+    },
+
     # --- SCRIPT & UTILITY REGISTRY (v1.41.00 Centralized) ---
     "script_registry": {
         "control": {
@@ -1494,70 +1660,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "streaming_engines": ["ffmpeg", "vlc", "mediamtx", "swyh-rs", "pyvidplayer2"],
         "hls_mp4frag_enabled": True
         # playability and native registries moved to src/core/models.py (v1.35.77)
-    },
-    "parser_registry": {
-        "default_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
-        "categories": {
-            "audio": ["mutagen", "tinytag", "eyed3", "music_tag"],
-            "audio": ["audio"],
-            "video": ["container", "mkvmerge", "mkvinfo", "vlc", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"],
-            "universal": ["filename", "pymediainfo", "ffprobe", "ffmpeg"]
-        },
-        "magic_signatures": {
-            "mkvmerge": "1a45dfa3", "mkvinfo": "1a45dfa3", "mkvparse": "1a45dfa3", "enzyme": "1a45dfa3", "pymkv": "1a45dfa3", "ebml": "1a45dfa3",
-            "pycdlib": "4344303031", "isoparser": "4344303031", # CD001
-            "dsd": "44534420", "dsf": "44534420", "dff": "46524d38" # DSD, FRM8
-        },
-        "extension_map": {
-            ".mp3":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "eyed3", "music_tag"],
-            ".flac": ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".m4a":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".m4b":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".ogg":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".wav":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".wma":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-            ".mkv":  ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
-            ".mp4":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "enzyme"],
-            ".m4v":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".avi":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".mov":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".webm": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".wmv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".mpg":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".mpeg": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".iso":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".bin":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".img":  ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-            ".pdf":  ["filename", "pymediainfo", "ffprobe"],
-            ".epub": ["filename", "pymediainfo", "ffprobe"]
-        },
-        "codec_map": {
-            'mpeg audio': 'mp3',
-            'vorbis': 'ogg',
-            'opus': 'opus',
-            'flac': 'flac',
-            'alac': 'alac',
-            'aac': 'aac',
-            'm4a': 'aac'
-        },
-        "container_map": {
-            'matroska': 'mkv',
-            'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
-            'mpeg-4': 'mp4',
-            'quicktime': 'mp4',
-            'asf': 'wma',
-            'ogg': 'ogg',
-            'flac': 'flac',
-            'mp3': 'mp3'
-        },
-        "tag_type_map": {
-            'ID3': 'ID3',
-            'MP4Tags': 'm4tags',
-            'OggVComment': 'OggVComment',
-            'VCFLACDict': 'VCFLACDict',
-            'ASF': 'asf',
-            'APETag': 'APEv2'
-        }
     },
     "streaming_capabilities": [
         {

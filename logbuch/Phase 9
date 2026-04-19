@@ -1,0 +1,46 @@
+hase 9: Forensic Metadata Centralization & Feature-Flag Registry
+This phase focuses on eliminating hardcoded tag mappings and functional toggles across the parsing layer. By moving these into the GLOBAL_CONFIG registry, we establish a Single Source of Truth (SSOT) that allows for granular environment tuning (e.g., "Ultimate Mode" for deep forensic scans vs. "Lightweight" for rapid indexing).
+
+User Review Required
+IMPORTANT
+
+Performance Impact: Centralizing feature flags allows the workstation to disable expensive operations (like chapter extraction or semantic validation) globally. This will significantly improve scan speeds for large libraries.
+
+Registry Evolution: I will be creating a new structure within GLOBAL_CONFIG["parser_registry"] to hold these mappings. This is a non-breaking but significant refactor of the backend orchestration.
+
+Proposed Changes
+[Core] Registry & Orchestration
+[MODIFY] 
+config_master.py
+Expand parser_registry with a feature_flags sub-dictionary.
+Move all parser-specific tag mappings (VLC, Mutagen, ID3, EBML) into the registry.
+Standardize forensic tag names (e.g., writing_app, muxing_app) across all parsers.
+[MODIFY] 
+media_parser.py
+Refactor the orchestration loop to ingest feature_flags from GLOBAL_CONFIG.
+Pass centralized tag maps to sub-parsers instead of relying on internal hardcoded dictionaries.
+[Parsers] Migration to Registry-Driven Logic
+[MODIFY] 
+mutagen_parser.py
+Remove hardcoded ID3/Vorbis mappings.
+Use GLOBAL_CONFIG["parser_registry"]["tag_mappings"]["mutagen"].
+[MODIFY] 
+vlc_parser.py
+Use centralized meta_mapping from the registry.
+[MODIFY] 
+ebml_parser.py
+Move EBML element mappings to the registry.
+Standardize track attribute extraction based on centralized forensic keys.
+[MODIFY] 
+enzyme_parser.py
+Decouple track extraction limits from local settings; use GLOBAL_CONFIG["parser_limits"].
+Open Questions
+Are there any specific "Custom Tags" you frequently use in your forensic work that should be added to the SSOT whitelist?
+Should "Ultimate Mode" enable any specific experimental parsers by default, even if they are significantly slower?
+Verification Plan
+Automated Verification
+Run python3 src/parsers/media_parser.py (if testable) or a standalone scan script to verify that tags are still correctly populated.
+Use grep -r "GLOBAL_CONFIG" src/parsers to ensure all hardcoded maps have been successfully decoupled.
+Manual Verification
+Perform a "Lightweight" scan and verify that expensive flags (like extract_chapters) are correctly ignored.
+Perform an "Ultimate" scan and verify that deep metadata (full tags, EBML segments) is captured and logged correctly.

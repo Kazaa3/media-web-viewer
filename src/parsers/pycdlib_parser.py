@@ -1,6 +1,9 @@
 from pathlib import Path
 from typing import Any
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_pycdlib")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -13,10 +16,8 @@ def get_capabilities() -> dict[str, Any]:
         "supported_codecs": ["iso", "bin", "img"]
     }
 
-
 def get_settings_schema() -> dict[str, Any]:
     return {}
-
 
 def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight', settings: dict[str, Any] | None = None) -> dict[str, Any]:
     """
@@ -25,6 +26,8 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
     if file_type not in [".iso", ".bin", ".img"]:
         return tags
 
+    if filename is None:
+        filename = path_obj.name
     if settings is None:
         settings = {}
 
@@ -51,8 +54,10 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
                     cdate = pvd.volume_creation_date
                     if hasattr(cdate, 'year') and cdate.year > 0:
                         tags['pycdlib_creation_date'] = f"{cdate.year:04d}-{cdate.month:02d}-{cdate.dayofmonth:02d} {cdate.hour:02d}:{cdate.minute:02d}:{cdate.second:02d}"
-                except: pass
-        except: pass
+                except Exception as ce:
+                    log.debug(f"[PyCdlib] Creation date error for {filename}: {ce}")
+        except Exception as pe:
+            log.debug(f"[PyCdlib] PVD error for {filename}: {pe}")
 
         # Structural Info
         tags['pycdlib_has_joliet'] = iso.has_joliet()
@@ -69,12 +74,14 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
                 if 'BDMV' in ident_str: tags['pycdlib_is_bluray'] = True
                 if 'DVD_RTAV' in ident_str: tags['pycdlib_is_dvd_vr'] = True
                 if 'HVDVD_TS' in ident_str: tags['pycdlib_is_hvdvd'] = True
-        except: pass
+        except Exception as le:
+            log.debug(f"[PyCdlib] Child list error for {filename}: {le}")
 
         iso.close()
     except ImportError:
-        pass
-    except Exception:
-        pass
+        log.debug(f"[PyCdlib] Library not installed, skipping.")
+    except Exception as e:
+        log.error(f"[PyCdlib-Parser] Failed for {filename}: {e}", exc_info=True)
 
     return tags
+

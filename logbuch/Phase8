@@ -1,0 +1,46 @@
+Phase 8: Comprehensive Logging Modernization
+This phase implements a system-wide upgrade of the logging infrastructure. Every Python module will be standardized to use the centralized Forensic Logger, significantly improving the depth and traceability of system diagnostics.
+
+User Review Required
+IMPORTANT
+
+This refactor will touch almost every Python file in the src/ directory (~63 files). While the changes are non-destructive (adding imports and standardizing log calls), it is a large-scale modification.
+
+TIP
+
+I will be enabling exc_info=True (full tracebacks) for all critical error blocks. This will increase log file size during failures but provides the exact "Forensic" depth required for troubleshooting.
+
+Proposed Changes
+1. Standardization Pattern
+For every module, I will apply the following pattern:
+
+Import: from src.core.logger import get_logger
+Init: log = get_logger("module_basename")
+Modernization: Replace logging. and print() calls with the module-specific log.
+Tracebacks: Update except Exception as e: blocks to log.error(..., exc_info=True).
+2. Implementation Groups
+Batch 1: Core Foundation (Essential Modules)
+src/core/main.py (Review existing)
+src/core/db.py
+src/core/config_master.py
+src/core/mode_router.py
+src/core/transcoder.py
+src/core/hardware_detector.py
+Batch 2: Handlers & Streaming Layers
+src/core/handlers/*.py (media_handler, metadata_pipeline, etc.)
+src/core/streams/*.py (vlc_bridge, hls_stream, etc.)
+Batch 3: Parser Orchestration
+src/parsers/media_parser.py (Fix defined log orphans)
+src/parsers/format_utils.py
+src/parsers/container_parser.py
+Batch 4: Individual Parser Modules
+All ~20 individual parsers (ffmpeg, ffprobe, mutagen, tinytag, pycdlib, etc.)
+Open Questions
+Log Level for Parsers: Should individual parsers default to DEBUG or INFO for their "Started parsing" messages?
+Recommendation: Use DEBUG for start/end pulses to keep the main console clean, and INFO only for significant events or errors.
+Verification Plan
+Automated Tests
+Mass Syntax Check: find src -name "*.py" -exec python3 -m py_compile {} +
+Import Check: Ensure no circular dependencies are introduced by the get_logger import.
+Manual Verification
+Monitor the UI Log Tab during a library scan to ensure events are popping up from the newly modernized modules

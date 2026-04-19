@@ -40,7 +40,7 @@ if __name__ == "__main__":
 # --- 1. Path Forensics Done ---
 
 # --- 2. Internal Imports ---
-from src.core.config_master import _DOTENV_LOADED
+from src.core.config_master import _DOTENV_LOADED, APP_VERSION_CORE
 from src.core.db import get_active_db_path
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
@@ -58,6 +58,7 @@ import json
 import time
 import os
 import psutil
+from urllib.parse import unquote
 
 # Verification of Package Root
 try:
@@ -137,7 +138,7 @@ try:
     # --- CORE METADATA REGISTRY ---
     from core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem, get_allowed_internal_cats
     from core.config_master import (
-        GLOBAL_CONFIG, APP_VERSION, BACKEND_VERSION, FRONTEND_VERSION,
+        GLOBAL_CONFIG, APP_VERSION, APP_VERSION_CORE, APP_VERSION_FULL, BACKEND_VERSION, FRONTEND_VERSION,
         VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
     )
     from src.core.transcoder import TranscoderManager

@@ -3,25 +3,8 @@ import copy
 import subprocess
 from typing import Any
 from pathlib import Path
-from . import filename_parser
-from . import mutagen_parser
-from . import pymediainfo_parser
-from . import ffprobe_parser
-from . import ffmpeg_parser
-from . import container_parser
-from . import mkvinfo_parser
-from . import mkvmerge_parser
-from . import vlc_parser
-from . import isoparser_parser
-from . import ebml_parser
-from . import mkvparse_parser
-from . import enzyme_parser
-from . import pycdlib_parser
-from . import pymkv_parser
-from . import tinytag_parser
-from . import eyed3_parser
-from . import music_tag_parser
 import multiprocessing
+import importlib
 from src.core.config_master import GLOBAL_CONFIG
 from src.core.logger import get_logger
 
@@ -137,26 +120,17 @@ def get_parser_info() -> dict[str, Any]:
     """
     @brief Aggregates info about all available parsers, their capabilities and settings schemas.
     """
-    parsers = {
-        "mutagen": mutagen_parser,
-        "pymediainfo": pymediainfo_parser,
-        "ffprobe": ffprobe_parser,
-        "ffmpeg": ffmpeg_parser,
-        "mkvmerge": mkvmerge_parser,
-        "mkvinfo": mkvinfo_parser,
-        "vlc": vlc_parser,
-        "filename": filename_parser,
-        "container": container_parser,
-        "isoparser": isoparser_parser,
-        "ebml": ebml_parser,
-        "mkvparse": mkvparse_parser,
-        "enzyme": enzyme_parser,
-        "pycdlib": pycdlib_parser,
-        "pymkv": pymkv_parser,
-        "tinytag": tinytag_parser,
-        "eyed3": eyed3_parser,
-        "music_tag": music_tag_parser
-    }
+    registry = GLOBAL_CONFIG.get("parser_registry", {})
+    module_reg = registry.get("module_registry", {})
+    
+    parsers = {}
+    for p_id, mod_path in module_reg.items():
+        try:
+            # Dynamic Import (Phase 12 Centralization)
+            mod = importlib.import_module(mod_path)
+            parsers[p_id] = mod
+        except Exception as e:
+            log.warning(f"[Parser-Registry] Failed to import {p_id} ({mod_path}): {e}")
     
     info = {}
     for p_id, p_mod in parsers.items():
@@ -206,9 +180,9 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
     """
     @brief Core extraction logic shared by branches.
     """
-    logging.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode}, Category: {category})")
+    log.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode}, Category: {category})")
     if mode in ('full', 'ultimate'):
-        logging.info(f"[Parser-Trace] 🚀 {mode.capitalize()} Mode aktiviert für '{filename}' – sammle ALLE Tags!")
+        log.info(f"[Parser-Trace] 🚀 {mode.capitalize()} Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
@@ -232,51 +206,75 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
     duration = 0
     parser_times = {}
 
-    from typing import cast
-    parser_chain = cast(list[str], PARSER_CONFIG.get(
-        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"]))
-    log.debug(f"DEBUG: PARSER_CONFIG['parser_chain']: {parser_chain}")
+    registry = GLOBAL_CONFIG.get("parser_registry", {})
+    module_reg = registry.get("module_registry", {})
 
-    parser_steps = [
-        ("filename", filename_parser.parse),
-        ("container", container_parser.parse),
-        ("mutagen", mutagen_parser.parse),
-        ("pymediainfo", pymediainfo_parser.parse),
-        ("ffprobe", ffprobe_parser.parse),
-        ("mkvmerge", mkvmerge_parser.parse),
-        ("mkvinfo", mkvinfo_parser.parse),
-        ("vlc", vlc_parser.parse),
-        ("ffmpeg", ffmpeg_parser.parse),
-        ("isoparser", isoparser_parser.parse),
-        ("ebml", ebml_parser.parse),
-        ("mkvparse", mkvparse_parser.parse),
-        ("enzyme", enzyme_parser.parse),
-        ("pycdlib", pycdlib_parser.parse),
-        ("pymkv", pymkv_parser.parse),
-        ("tinytag", tinytag_parser.parse),
-        ("eyed3", eyed3_parser.parse),
-        ("music_tag", music_tag_parser.parse),
-    ]
+    def vlc_dispatch(profile):
+        def _vlc_wrapper(path, file_type, tags, filename=None, mode='lightweight', settings=None):
+            if settings is None: settings = {}
+            settings['profile'] = profile
+            # Resolve vlc_parser dynamically
+            try:
+                vlc_mod = importlib.import_module(module_reg.get('parser_vlc_bridge', 'src.parsers.vlc_parser'))
+                return vlc_mod.parse(path, file_type, tags, filename, mode, settings)
+            except Exception as e:
+                log.error(f"[VLC-Dispatch] Failed: {e}")
+                return tags
+        return _vlc_wrapper
 
-    MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
+    # 3. Mode-based Chain Selection (Phase 10 Ultimate Expansion)
+    is_audio = category == 'audio'
+    if mode == 'ultimate':
+        parser_chain = registry.get("ultimate_chain", [])
+        log.info(f"🚀 [Ultimate-Mode] Overriding chain: {parser_chain}")
+    else:
+        parser_chain = cast(list[str], PARSER_CONFIG.get(
+            "parser_chain", registry.get("default_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"])))
 
+    # 4. Resolve Active Steps Dynamically (Centralized v1.46.132)
     active_steps = []
     for p_id in parser_chain:
-        step = next((s for s in parser_steps if s[0] == p_id), None)
-        if step:
-            active_steps.append(step)
+        if p_id.startswith('vlc_'):
+            # Virtual VLC profile steps
+            profile = p_id.replace('vlc_', '')
+            if profile == 'exhaustive': profile = 'exhaustive' 
+            active_steps.append((p_id, vlc_dispatch(profile)))
+            continue
 
-    from src.parsers.format_utils import PARSER_CONFIG
+        mod_path = module_reg.get(p_id)
+        if mod_path:
+            try:
+                mod = importlib.import_module(mod_path)
+                if hasattr(mod, 'parse'):
+                    active_steps.append((p_id, mod.parse))
+                else:
+                    log.warning(f"[Parser-Chain] Module {p_id} missing parse() function")
+            except Exception as e:
+                log.error(f"[Parser-Chain] Failed to load {p_id} from {mod_path}: {e}")
+        else:
+            log.warning(f"[Parser-Chain] No module registered for ID: {p_id}")
+
     from src.core.models import SLOW_PARSERS
-
     error_shortcircuit = False
     
-    # Branch-based chain filtering:
-    # We skip parsers that don't belong to the file's primary category (audio vs multimedia)
-    # unless they are universal.
-    is_audio = category == 'audio'
+    # Calibration Settings (Phase 11)
+    cal_cfg = registry.get("calibration_registry", {})
     
     for step_name, step_func in active_steps:
+        # Ultimate Mode bypasses branch isolation (Phase 10)
+        if mode != 'ultimate':
+            if is_audio and step_name in VIDEO_PARSER_IDS:
+                log.debug(f"🔇 [Audio-Branch] Skipping multimedia parser '{step_name}'")
+                continue
+            if not is_audio and step_name in AUDIO_PARSER_IDS:
+                log.debug(f"🔇 [Multimedia-Branch] Skipping audio parser '{step_name}'")
+                continue
+        
+        # Inject Calibration into Parser Settings
+        p_settings = copy.deepcopy(settings)
+        p_settings.update(cal_cfg)
+        
+        is_slow = step_name in SLOW_PARSERS
         if error_shortcircuit:
             log.debug(f"Shortcircuit: Skipping remaining parsers for '{filename}' due to prior error.")
             break
@@ -347,10 +345,23 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
                         continue
 
                 if step_func:
-                    current_tags = cast(dict[str, Any], step_func(
-                        path_obj, file_type, current_tags, filename, 
+                    new_tags = cast(dict[str, Any], step_func(
+                        path_obj, file_type, current_tags.copy(), filename, 
                         mode=('full' if mode == 'ultimate' else mode),
                         settings=p_settings))
+                    
+                    # 5. Intelligent Metadata Merging (v1.46.132)
+                    # We only overwrite Artist/Album/Title if the new value is meaningful.
+                    for core_field in ['artist', 'album', 'title']:
+                        new_val = new_tags.get(core_field)
+                        if new_val and str(new_val).lower() not in ('', 'unknown', 'unbekannt', 'none'):
+                            current_tags[core_field] = new_val
+                    
+                    # Update other tags as usual but preserve full_tags
+                    for k, v in new_tags.items():
+                        if k not in ['artist', 'album', 'title']:
+                            current_tags[k] = v
+
                     current_tags = sanitize_metadata(current_tags)
                     parser_times[step_name] = time.time() - t0
                     success = True
@@ -402,15 +413,21 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         tags['container'] = format_container(tags['container'], file_type)
     tags['tagtype'] = format_tagtype(tags.get('tagtype'))
     
-    # Semantic Cross-Validation (Flaggable v1.46.132)
-    feature_flags = GLOBAL_CONFIG.get("parser_registry", {}).get("feature_flags", {})
-    if feature_flags.get("semantic_validation", True):
-        validate_semantic_consistency(tags, filename)
-    
-    # Final sanitization pass
+    # 🧪 Forensic Integrity Auditor (Phase 10 Validation)
+    if feature_flags.get("integrity_auditor", True):
+        discrepancies = perform_forensic_validation(tags, parser_times)
+        if discrepancies:
+            tags['validation_flags'] = discrepancies
+            log.warning(f"⚖️ [Forensic-Audit] Metadata discrepancies found for '{filename}': {discrepancies}")
+
+    # 🛡️ Final sanitization pass (Centralized Limits)
     tags = sanitize_metadata(tags)
 
-    # Final Chapter Sort (Flaggable v1.46.132)
+    # 💾 Forensic Export (Phase 10 Separate Storage)
+    if mode == 'ultimate' or feature_flags.get("enable_forensic_export", False):
+        store_forensic_export(path_obj, tags)
+
+    # 📑 Final Chapter Sort (Centralized v1.46.132)
     if feature_flags.get("extract_chapters", True) and tags.get('chapters') and isinstance(tags['chapters'], list):
         from .format_utils import natural_sort_key
         # Detect chapter variants
@@ -423,18 +440,82 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
             'Apple-Variante' if apple_variant else
             'Unbekannte Variante'
         )
-        log.info(f"Chapter variant detected: {variant_str} for '{filename}'")
+        log.info(f"[Parser-Chapters] Variant detected: {variant_str} for '{filename}'")
+        
         # Priority: 1. Natural Title, 2. Start Time
         tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
             natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
-        if log.isEnabledFor(logging.DEBUG):
+            
+        if log.isEnabledFor(10): # DEBUG level
             first_chaps = [c.get('title') for c in tags['chapters'][:5]]
-            log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
+            log.debug(f"[Parser-Chapters] Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     total_time = sum(parser_times.values())
     timing_report = ", ".join([f"{p}: {t:.3f}s" for p, t in parser_times.items() if t > 0.001])
-    logging.info(f"[Parser-Trace] Metadata extraction complete for {filename} in {total_time:.3f}s.")
+    log.info(f"[Parser-Trace] Metadata extraction complete for {filename} in {total_time:.3f}s.")
     if timing_report:
-        logging.info(f"[Parser-Trace] ⏱️ Detailed Timings: {timing_report}")
-    # Backwards-compat: return (tags, parser_times) as older tests expect tags first
+        log.info(f"[Parser-Trace] ⏱️ Detailed Timings: {timing_report}")
+        
     return cast(dict[str, Any], tags), parser_times
+
+def perform_forensic_validation(tags: dict[str, Any], parser_results: dict[str, float]) -> list[str]:
+    """
+    @brief Compares results from different parsers to identify discrepancies (Phase 10).
+    """
+    # 1. Audit Simulation (Phase 11)
+    cal_cfg = GLOBAL_CONFIG.get("calibration_registry", {})
+    flags: list[str] = []
+    if cal_cfg.get("error_simulation_active", False):
+        flags.append("Audit-Simulation: Discrepancy Injected for Validation Testing")
+        # Mutate a random value to trigger discrepancies if needed
+        if 'duration' in tags:
+            tags['full_tags']['simulated_error_duration'] = float(tags['duration']) + 60.0
+
+    # 1. Duration Validation (Critical)
+    durations = {}
+    for k, v in tags.get('full_tags', {}).items():
+        if 'duration' in k.lower() or 'ebml_duration' in k.lower():
+            try:
+                durations[k] = float(v)
+            except (ValueError, TypeError):
+                continue
+    
+    if len(durations) > 1:
+        vals = durations.values()
+        if max(vals) - min(vals) > 5.0:
+            flags.append(f"Duration Discrepancy: {min(vals)}s to {max(vals)}s across {len(durations)} engines")
+            
+    # 2. Codec Validation
+    # (Future: compare vlc_codec vs ffprobe_codec)
+    
+    return flags
+
+def store_forensic_export(path_obj: Path, tags: dict[str, Any]):
+    """
+    @brief Serializes full_tags to a timestamped JSON file (Phase 10).
+    """
+    try:
+        import json
+        from datetime import datetime
+        
+        export_root = Path(GLOBAL_CONFIG.get("project_root", ".")) / "data" / "forensic_exports"
+        export_root.mkdir(parents=True, exist_ok=True)
+        
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        export_name = f"{path_obj.name}.{ts}.forensic.json"
+        export_path = export_root / export_name
+        
+        # Deep copy to avoid mutating original tags during serialization
+        export_data = {
+            "source_file": str(path_obj),
+            "timestamp": ts,
+            "metadata": tags
+        }
+        
+        with export_path.open('w', encoding='utf-8') as f:
+            json.dump(export_data, f, indent=4, default=str)
+            
+        log.info(f"💾 [Forensic-Export] Full tags archived to {export_path.name}")
+    except Exception as e:
+        log.error(f"❌ [Forensic-Export] Failed to save archive for {path_obj.name}: {e}")
+
