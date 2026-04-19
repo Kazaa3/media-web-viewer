@@ -287,28 +287,6 @@ def get_library_forensics():
         ext_stats[ext] = ext_stats.get(ext, 0) + 1
     return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
 
-def get_playlist_forensics():
-    """Playlist Forensic Audit: Integrity & Repair."""
-    playlists = db.get_all_playlists()
-    results = {"status": "ok", "playlists": []}
-    for pl in playlists:
-        items = db.get_playlist_items(pl['id'])
-        orphans = db.get_playlist_orphans(pl['id'])
-        missing = sum(1 for i in items if i.get('path') and not os.path.exists(i['path']))
-        results["playlists"].append({
-            "id": pl['id'], "name": pl['name'], "item_count": len(items),
-            "relational_orphans": len(orphans), "physical_missing": missing
-        })
-    return results
-
-def prune_playlist_orphans(playlist_id):
-    """Surgical Pruning for Playlist Relational Orphans."""
-    try:
-        count = db.prune_playlist_orphans(playlist_id)
-        return {"status": "success", "count": count}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 def get_state_forensics():
     """Forensic State Persistence Audit."""
     return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
