@@ -85,27 +85,52 @@ try:
 except ImportError:
     _DOTENV_LOADED = False
 
-# --- PROJECT PATH CALCULATION ---
+# --- SSOT: PROJECT PATH REGISTRY (v1.46.132 Centralized) ---
+# config_master.py is located at: PROJECT_ROOT/src/core/config_master.py
+# This is the only place in the codebase that calculates the project root.
+# All other scripts MUST import PROJECT_ROOT from here.
 MAIN_FILE = Path(__file__).resolve()
-PROJECT_ROOT = MAIN_FILE.parent.parent.parent
-APP_DATA_DIR = str(PROJECT_ROOT) # Standardizing on Project Root as primary data hub
+PROJECT_ROOT = MAIN_FILE.parent.parent.parent  # src/core -> src -> PROJECT_ROOT
+APP_DATA_DIR = str(PROJECT_ROOT)
 
-# Ensure project root and scripts are in sys.path (Centralized v1.35.98)
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
-
-# --- TOOLS & BINARIES SSOT (v1.46.132) ---
-TOOLS_DIR = PROJECT_ROOT / "tools"
+# --- SSOT: KEY DIRECTORY REGISTRY (v1.46.132) ---
+DATA_DIR      = PROJECT_ROOT / "data"
+LOGS_DIR      = PROJECT_ROOT / "logs"
+MEDIA_DIR     = PROJECT_ROOT / "media"
+SCRIPTS_DIR   = PROJECT_ROOT / "scripts"
+TOOLS_DIR     = PROJECT_ROOT / "tools"
 TOOLS_BIN_DIR = TOOLS_DIR / "bin"
-if str(TOOLS_DIR) not in sys.path:
-    sys.path.insert(0, str(TOOLS_DIR))
+TEST_DIR      = PROJECT_ROOT / "tests"
+
+# --- SSOT: DATABASE PATHS (v1.46.132) ---
+# Priority: MWV_DB env var > user-home dir > project data dir
+_db_env   = os.environ.get("MWV_DB")
+_db_user  = Path.home() / ".media-web-viewer" / "database.db"
+_db_proj  = DATA_DIR / "database.db"
+
+if _db_env:
+    DB_FILENAME = Path(_db_env)
+elif _db_user.exists():
+    DB_FILENAME = _db_user
+else:
+    DB_FILENAME = _db_proj
+
+# Enforce absolute path (portability guard)
+if not DB_FILENAME.is_absolute():
+    DB_FILENAME = (PROJECT_ROOT / DB_FILENAME).resolve()
+else:
+    DB_FILENAME = DB_FILENAME.resolve()
+
+# Legacy alias for code that already references SELECTED_DB_PATH
+SELECTED_DB_PATH = str(DB_FILENAME)
+
+# Ensure project root is in sys.path for direct imports
+for _p in (PROJECT_ROOT, SCRIPTS_DIR, TOOLS_DIR):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 # Path Discovery
-SCAN_MEDIA_DIR = str(PROJECT_ROOT / "media")
+SCAN_MEDIA_DIR = str(MEDIA_DIR)
 BROWSER_DEFAULT_DIR = str(Path.home())
 
 # Load local environment overrides if available
@@ -262,33 +287,8 @@ def background_version_discovery(config_dict: dict):
 
 # VERSION and PROJECT_ROOT logic moved to top for v1.46.077 SSOT.
 
+
 # --- NETWORK & HOST CALCULATION ---
-DEFAULT_REQUEST_TIMEOUT = 15
-DEFAULT_REQUEST_STREAM = True
-
-APP_PORT = int(os.environ.get("MWV_PORT", 8345))
-APP_HOST = os.environ.get("MWV_HOST", "localhost")
-BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
-
-# --- DATABASE PATH RESOLUTION (v1.35.96 Dual-Path logic) ---
-DEFAULT_DB_USER = Path.home() / ".media-web-viewer" / "database.db"
-DEFAULT_DB_PROJ = PROJECT_ROOT / "data" / "database.db"
-
-if os.environ.get("MWV_DB"):
-    SELECTED_DB_PATH = str(Path(os.environ["MWV_DB"]))
-elif DEFAULT_DB_USER.exists():
-    SELECTED_DB_PATH = str(DEFAULT_DB_USER)
-else:
-    SELECTED_DB_PATH = str(DEFAULT_DB_PROJ)
-
-# Final Path Enforcement (v1.46.132 Absolute Path Safety)
-_selected_path = Path(SELECTED_DB_PATH)
-if not _selected_path.is_absolute():
-    # Relative to PROJECT_ROOT by default for portability
-    SELECTED_DB_PATH = str((PROJECT_ROOT / _selected_path).resolve())
-else:
-    SELECTED_DB_PATH = str(_selected_path.resolve())
-
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime
