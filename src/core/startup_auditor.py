@@ -3,7 +3,7 @@ import sys
 import re
 from pathlib import Path
 
-def audit_workspace():
+def run_audit():
     core_dir = Path("src/core")
     if not core_dir.exists():
         print("src/core not found!")
@@ -29,6 +29,8 @@ def audit_workspace():
         print(f"\n[{filename}] - {len(funcs)} endpoints")
         for i, func in enumerate(sorted(funcs), 1):
             print(f"  {i:03d}: {func}")
+            
+    return True
 
 if __name__ == "__main__":
-    audit_workspace()
+    run_audit()
