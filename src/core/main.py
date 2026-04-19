@@ -50,7 +50,8 @@ from src.core.db import get_active_db_path
 from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
     api_logbuch, api_testing, api_diagnostics, api_audit,
-    api_config, api_core_app, api_library, api_reporting
+    api_config, api_core_app, api_library, api_reporting,
+    api_tools
 )
 from src.core.object_discovery import ObjectDiscoveryEngine
 from src.core.objects import create_forensic_object
