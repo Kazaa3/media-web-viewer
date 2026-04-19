@@ -23,6 +23,9 @@ from . import eyed3_parser
 from . import music_tag_parser
 import multiprocessing
 from src.core.config_master import GLOBAL_CONFIG
+from src.core.logger import get_logger
+
+log = get_logger("media_parser")
 
 # Parser Categories (Centralized v1.41.00)
 AUDIO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["audio"])
@@ -36,7 +39,10 @@ def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
     limits = GLOBAL_CONFIG.get("parser_limits", {})
     max_len = limits.get("max_tag_length", 1024)
     max_chaps = limits.get("max_chapters", 500)
-    enable_log = limits.get("log_truncation_warnings", True)
+    
+    # Use centralized feature flag (v1.46.132)
+    feat_cfg = GLOBAL_CONFIG.get("parser_registry", {}).get("feature_flags", {})
+    enable_log = feat_cfg.get("log_truncation_warnings", True)
 
     for key, value in tags.items():
         if isinstance(value, str) and len(value) > max_len:
@@ -208,15 +214,16 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
     file_type = path_obj.suffix.lower()
     from src.parsers.format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
-    tags: dict[str, Any] = {
-        'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
-        'codec': '', 'size': '', 'tagtype': '', 'container': '',
-        'has_art': 'No', 'title': '', 'artist': '', 'album': '',
-        'date': '', 'genre': '', 'track': '', 'totaltracks': '',
-        'disc': '', 'totaldiscs': '',
+    # 2. Initialize Tags from Centralized Registry (Phase 9)
+    registry = GLOBAL_CONFIG.get("parser_registry", {})
+    default_tags = registry.get("default_tags", {})
+    
+    tags: dict[str, Any] = copy.deepcopy(default_tags)
+    tags.update({
         'name': filename,
-        'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing',
-    }
+        'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing'
+    })
+
     # Initialize full_tags for high-fidelity modes (Centralized v1.46.131)
     parser_cfg = GLOBAL_CONFIG.get("parser_modes", {})
     if (mode in ('full', 'ultimate') or parser_cfg.get("enable_full_tags", False)) and 'full_tags' not in tags:
@@ -395,14 +402,16 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         tags['container'] = format_container(tags['container'], file_type)
     tags['tagtype'] = format_tagtype(tags.get('tagtype'))
     
-    # Semantic Cross-Validation
-    validate_semantic_consistency(tags, filename)
+    # Semantic Cross-Validation (Flaggable v1.46.132)
+    feature_flags = GLOBAL_CONFIG.get("parser_registry", {}).get("feature_flags", {})
+    if feature_flags.get("semantic_validation", True):
+        validate_semantic_consistency(tags, filename)
     
     # Final sanitization pass
     tags = sanitize_metadata(tags)
 
-    # Final Chapter Sort (Natural & Chronological)
-    if tags.get('chapters') and isinstance(tags['chapters'], list):
+    # Final Chapter Sort (Flaggable v1.46.132)
+    if feature_flags.get("extract_chapters", True) and tags.get('chapters') and isinstance(tags['chapters'], list):
         from .format_utils import natural_sort_key
         # Detect chapter variants
         nero_variant = any('chapter' in c and 'start_time' in c for c in tags['chapters'])
