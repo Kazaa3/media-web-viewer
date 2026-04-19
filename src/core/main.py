@@ -119,7 +119,7 @@ except ImportError:
 try:
     import psutil
     import bottle
-    import eel
+    from src.core.eel_shell import eel
     from eel import chrome
     log.info("[Bootstrap] Eel loaded successfully")
 

@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-import eel
+from src.core.eel_shell import eel
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT
 from src.core import db
 
