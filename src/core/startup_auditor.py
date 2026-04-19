@@ -136,7 +136,8 @@ def audit_config() -> Tuple[bool, List[Any]]:
 def audit_hydration_stages() -> Tuple[bool, List[str]]:
     """Strictly monitors hydration stages and prevents Real Mode during active tests."""
     from src.core.config_master import GLOBAL_CONFIG
-    errors = [] registry = GLOBAL_CONFIG.get("forensic_hydration_registry", {})
+    errors = []
+    registry = GLOBAL_CONFIG.get("forensic_hydration_registry", {})
     mode = registry.get("mode", "unknown").lower()
     db_active = registry.get("db_active")
     stage = registry.get("audit_stage")
