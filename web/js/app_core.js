@@ -262,7 +262,7 @@ window.hydrateCategoryDropdown = function (branchId) {
     // 3. Apply Hierarchical Labels (↳)
     const processed = filtered.map(item => {
         let label = item.label;
-        if (currentMode === 'category' && hierarchy) {
+        if (['category', 'objects'].includes(currentMode) && hierarchy) {
             for (const [parent, children] of Object.entries(hierarchy)) {
                 if (children.includes(item.id)) {
                     label = `↳ ${label}`;
@@ -301,15 +301,18 @@ window.hydrateCategoryDropdown = function (branchId) {
 };
 
 /**
- * [v1.53.001] toggleLibraryFilterMode
- * Switches the active filter lens between 'route' (Technical) 
- * and 'category' (Contextual/Metadata) globally.
+ * [v1.53.003] toggleLibraryFilterMode
+ * Switches the active filter lens between FIVE forensic modes globally: 
+ * route, category, items, objects, context.
  */
 window.activeLibraryFilterMode = window.activeLibraryFilterMode || 'route';
 window.toggleLibraryFilterMode = function() {
-    window.activeLibraryFilterMode = (window.activeLibraryFilterMode === 'category') ? 'route' : 'category';
+    const modes = ['route', 'category', 'items', 'objects', 'context'];
+    let idx = modes.indexOf(window.activeLibraryFilterMode);
+    idx = (idx + 1) % modes.length;
+    window.activeLibraryFilterMode = modes[idx];
     
-    console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()}`);
+    console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()} (Cycle ${idx+1}/5)`);
     
     if (typeof window.hydrateCategoryDropdown === 'function') {
         const branchId = window.CONFIG?.active_branch || 'media';

@@ -175,7 +175,7 @@ PLAYLIST_EXTENSIONS = {'.m3u', '.m3u8'}
 # Use uppercase as per architectural standard.
 ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}
 
-# --- [v1.53.001] GLOBAL MEDIA TAXONOMY (The Master SSOT) ---
+# --- [v1.53.003] GLOBAL MEDIA TAXONOMY (The Master SSOT) ---
 # Centralized registry for all media classification, handling, and UI labeling.
 GLOBAL_MEDIA_TAXONOMY = {
     # --- TECHNICAL ROUTES (Focus: Handling & Pipeline) ---
