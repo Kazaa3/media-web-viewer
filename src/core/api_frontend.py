@@ -3,7 +3,7 @@ import shutil
 import os
 import eel
 from pathlib import Path
-from src.core.config_master import GLOBAL_CONFIG, FRONTEND_SETTINGS, WINDOW_SIZE, LAUNCH_PROFILE
+from src.core.config_master import GLOBAL_CONFIG, EEL_SETTINGS, LAUNCH_PROFILE
 from src.core.logger import get_logger
 
 log = get_logger("api_frontend")
@@ -41,14 +41,14 @@ def get_eel_mode():
         log.warning("[Frontend] No compatible browser found for 'chrome' mode. Falling back to default.")
         return None
     
-    return FRONTEND_SETTINGS.get("mode", "chrome")
+    return EEL_SETTINGS.get("mode", "chrome")
 
 @eel.expose
 def get_frontend_settings():
     """Exposes window size and resolution settings to the UI."""
     return {
-        "window_size": WINDOW_SIZE,
-        "settings": FRONTEND_SETTINGS,
+        "window_size": EEL_SETTINGS["size"],
+        "settings": EEL_SETTINGS,
         "launch_profile": LAUNCH_PROFILE
     }
 

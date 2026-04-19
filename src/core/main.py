@@ -381,23 +381,29 @@ with StatusBar("Loading Core Components", total=100) as sb:
         sb.update(80, "Core modules registered")
         sb.update(80, "Core modules loaded")
 
-        # Fast Data Count (v1.38.07) - Replaces heavy get_all_media() during bootstrap
+def bootstrap_core_settings():
+    """Initializes the core runtime settings (v1.46.136)."""
+    global port, eel_kwargs
+    try:
+        # Fast Data Count (v1.38.07)
         media_count = db.get_media_count()
         log.info(f"[Startup-Trace] DB Initialized: {media_count} records found.")
-        if profiler:
-            profiler.end_phase("Core-Modules-Init")
+        
+        # Centralized settings handshake
+        port = EEL_SETTINGS["port"]
+        eel_kwargs = {
+            'host': EEL_SETTINGS["host"], 
+            'size': EEL_SETTINGS["size"]
+        }
+        
+        return True
     except Exception as e:
-        log.critical(f"Resource load failure: {e}")
-        log.error(traceback.format_exc())
-        sys.exit(1)
+        log.critical(f"Resource bootstrap failure: {e}")
+        return False
 
-    sb.update(90, "Setting UI State")
-    global port, eel_kwargs
-    port = GLOBAL_CONFIG.get("port", 8345)
-    eel_kwargs = {'host': 'localhost', 'size': (1280, 800)}
-    sb.update(100, "Initial State OK")
-    if profiler:
-        profiler.end_phase("Bootstrap-Imports")
+# Initialize settings only if running as main, or explicitly called
+if __name__ == "__main__":
+    bootstrap_core_settings()
 
 # --- Eel Communication & Lifecycle ---
 spawn_event = threading.Event()
@@ -639,14 +645,15 @@ def start_app():
         start_page = 'shell_master.html' if evolution_mode in ['rebuild', 'bridge', 'test_ref'] else 'app.html'
 
         print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
-        # Use centralized FRONTEND_SETTINGS, WINDOW_SIZE and api_frontend
+        # Use centralized EEL_SETTINGS and api_frontend
         eel.start(
             start_page, 
             block=False, 
             port=port, 
             mode=eel_mode, 
-            size=WINDOW_SIZE,
-            cmdline_args=FRONTEND_SETTINGS["cmdline_args"]
+            size=EEL_SETTINGS["size"],
+            host=EEL_SETTINGS["host"],
+            cmdline_args=EEL_SETTINGS["cmdline_args"]
         )
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
 

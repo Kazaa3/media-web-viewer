@@ -16,8 +16,13 @@ WINDOW_SIZE          = (1440, 900)
 FRONTEND_SETTINGS    = {
     "port": 8345,
     "mode": "chrome",
+    "host": "localhost",
+    "size": (1280, 800),
     "cmdline_args": ["--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required"]
 }
+
+EEL_SETTINGS = FRONTEND_SETTINGS # Alias for semantic clarity (v1.46.136)
+WINDOW_SIZE  = FRONTEND_SETTINGS["size"]
 
 # [v1.46.136] LAUNCH & ENVIRONMENT MODES
 LAUNCH_PROFILE = {
@@ -268,29 +273,42 @@ def get_env_list(name: str, default: list) -> list:
         return default
     return [item.strip() for item in val.split(",")]
 
+def is_in_container() -> bool:
+    """Detects if the application is running inside a Docker/Podman container."""
+    return Path("/.dockerenv").exists() or any("docker" in line or "kubepods" in line for line in Path("/proc/self/cgroup").read_text().splitlines() if Path("/proc/self/cgroup").exists())
+
+def get_binary_version(path: str) -> str:
+    """Attempts to retrieve the version of a binary at the specified path."""
+    if not path or not os.path.exists(path): return "N/A"
+    try:
+        name = os.path.basename(path).lower()
+        cmd = [path, "--version"]
+        if "ffmpeg" in name or "ffprobe" in name: cmd = [path, "-version"]
+        elif "vlc" in name or "cvlc" in name: cmd = [path, "--version"]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1.0)
+        output = result.stdout or result.stderr
+        match = re.search(r"version\s+([0-9.]+)", output, re.I)
+        if match: return match.group(1)
+        # Fallback to first line if no pattern match
+        return output.splitlines()[0].strip() if output else "Unknown"
+    except:
+        return "Unknown"
+
 def discover_binary(name: str, fallback: str = "") -> str:
     """
     Safely discover a binary path on the current system with platform awareness.
-    Priority: [CONTAINER /usr/bin] -> tools/[platform]/bin -> tools/bin -> system PATH
+    Tiers: [0: CONTAINER] -> [1: LOCAL] -> [2: PLATFORM] -> [3: SYSTEM]
     """
     platform = "windows" if sys.platform == "win32" else "linux"
     
-    # 0. Container/System-V Forensic Priority (v1.46.136)
+    # --- Tier 0: Container Standard (/usr/bin) ---
     if platform == "linux":
         container_path = Path("/usr/bin") / name
         if container_path.exists():
             return str(container_path)
 
-    # 1. Platform-Specific Tools (Forensic Priority v1.46.132)
-    platform_bin = TOOLS_DIR / platform / "bin" / name
-    if platform_bin.exists():
-        return str(platform_bin)
-    
-    platform_bin_exe = TOOLS_DIR / platform / "bin" / f"{name}.exe"
-    if platform_bin_exe.exists():
-        return str(platform_bin_exe)
-
-    # 2. General Tools Bin
+    # --- Tier 1: Project Local (v1.46.136 Middle Mode) ---
     local_path = TOOLS_BIN_DIR / name
     if local_path.exists():
         return str(local_path)
@@ -299,14 +317,31 @@ def discover_binary(name: str, fallback: str = "") -> str:
     if local_exe_path.exists():
         return str(local_exe_path)
 
-    # 3. Handle Special Aliases
-    if name == "vlc":
-        return shutil.which("vlc") or shutil.which("cvlc") or ("/usr/bin/vlc" if platform == "linux" else "")
-    if name == "cvlc":
-        return shutil.which("cvlc") or ("/usr/bin/cvlc" if platform == "linux" else "")
+    # --- Tier 2: Platform-Specific Local ---
+    platform_bin = TOOLS_DIR / platform / "bin" / name
+    if platform_bin.exists():
+        return str(platform_bin)
     
-    # 4. System PATH & Environment Overrides
-    return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
+    platform_bin_exe = TOOLS_DIR / platform / "bin" / f"{name}.exe"
+    if platform_bin_exe.exists():
+        return str(platform_bin_exe)
+
+    # --- Tier 3: System PATH Registry ---
+    # Handle Special Aliases
+    if name == "vlc":
+        path = shutil.which("vlc") or shutil.which("cvlc")
+        if path: return path
+    if name == "cvlc":
+        path = shutil.which("cvlc")
+        if path: return path
+    
+    # Standard PATH Discovery
+    found = shutil.which(name)
+    if found:
+        return found
+        
+    # Final Fallback to Environment or Default
+    return os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
 # --- BROWSER REGISTRY (v1.46.132) ---
 # Supports multiple channels and forensic-grade web engine discovery
@@ -325,6 +360,24 @@ BROWSER_REGISTRY = {
         "dev":    discover_binary("firefox-developer-edition", "firefox-developer-edition"),
     }
 }
+
+def get_tool_metadata(name: str) -> Dict[str, Any]:
+    """Provides detailed forensic metadata about a tool from the PROGRAM_REGISTRY."""
+    path = PROGRAM_REGISTRY.get(name, "")
+    source = "UNKNOWN"
+    
+    if path:
+        if "/usr/bin" in path: source = "CONTAINER"
+        elif str(TOOLS_DIR) in path: source = "LOCAL"
+        else: source = "SYSTEM"
+        
+    return {
+        "name": name,
+        "path": path,
+        "version": get_binary_version(path),
+        "source": source,
+        "healthy": os.path.exists(path) if path else False
+    }
 
 # --- PROGRAM REGISTRY (v1.46.132 Professional Suite) ---
 # Centralized SSOT for all forensic and playback tools

@@ -7,7 +7,7 @@ import subprocess
 import threading
 import eel
 from pathlib import Path
-from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT
+from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT, FORENSIC_TOOLS_LIST, get_tool_metadata
 from src.core.logger import get_logger
 
 log = get_logger("api_testing")
