@@ -5083,7 +5083,7 @@ def log_process_stderr(process, name):
             log_dir.mkdir(parents=True, exist_ok=True)
             log_file = get_timestamped_log_path(log_dir, name)
             log_handle = open(log_file, "a", encoding="utf-8")
-            log_handle.write(f"\n--- Process Log Start [{name}]: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+            log_handle.write(f"\n--- Process Log Start [{name}]: {time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT)} ---\n")
         except Exception as e:
             log.debug(f"[Log-Process-Internal] Failed to setup specialized log for {name}: {e}")
 
@@ -5096,13 +5096,13 @@ def log_process_stderr(process, name):
                     log.info(f" [{name}] {decoded_line}")
                     # 2. Granular Log File
                     if log_handle:
-                        log_handle.write(f"{time.strftime('%H:%M:%S')} - {decoded_line}\n")
+                        log_handle.write(f"{time.strftime(DEFAULT_TIME_FORMAT)} - {decoded_line}\n")
                 except Exception:
                     pass
         finally:
             if log_handle:
                 try:
-                    log_handle.write(f"--- Process Log End [{name}]: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                    log_handle.write(f"--- Process Log End [{name}]: {time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT)} ---\n")
                     log_handle.close()
                 except Exception:
                     pass
@@ -7419,7 +7419,7 @@ def list_logbook_entries():
                     "pinned": pinned,
                     "source": "logbuch",
                     "modified_ts": f.stat().st_mtime,
-                    "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(f.stat().st_mtime)),
+                    "modified_iso": time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT, time.localtime(f.stat().st_mtime)),
                 })
         except Exception:
             entries.append({
@@ -7500,7 +7500,7 @@ def list_feature_modal_items():
             "summary_de": summary,
             "summary_en": summary,
             "modified_ts": mtime,
-            "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mtime)),
+            "modified_iso": time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT, time.localtime(mtime)),
         })
         items.append(entry)
 
@@ -7804,7 +7804,7 @@ def ui_trace(message):
             trace_path = Path(trace_path_raw)
             trace_path.parent.mkdir(parents=True, exist_ok=True)
             with open(trace_path, "a", encoding="utf-8") as f:
-                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+                f.write(f"{time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT)} - {message}\n")
     except Exception as e:
         log.debug(f"[UI-Trace-Internal] Failed to write to trace log: {e}")
     return {"status": "ok"}
