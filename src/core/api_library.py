@@ -77,6 +77,14 @@ def apply_library_filters(all_media: List[Dict],
         if not item_is_mock: real_count_potential += 1
         else: mock_count_potential += 1
 
+        # 0. Object-Centric Grouping Guard (v1.54)
+        # Hide children (items with a parent) from the main library view 
+        # unless they are the 'OBJECT' containers themselves.
+        # This enforces the "Grouped Object" standard requested by the user.
+        if not force_raw and item.get('parent_id') is not None and item.get('type') != 'object':
+            dropped_reasons["child_filtered"] = dropped_reasons.get("child_filtered", 0) + 1
+            continue
+
         if genre == "all" and "all" in displayed_cats:
             filtered.append(item)
             continue

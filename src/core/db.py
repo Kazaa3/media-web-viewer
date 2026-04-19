@@ -26,7 +26,7 @@ log = get_logger("db")
 log.info(f"[DB-INIT] Initializing DB module. PID: {os.getpid()}")
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Dict, Any, Optional
 
 from src.core.config_master import GLOBAL_CONFIG
 
@@ -798,6 +798,46 @@ def update_media_tags(name, tags_dict):
 
 
 def rename_media(old_name, new_name):
+    # ... existing ...
+    pass
+
+# --- [v1.54.001] OBJECT-CENTRIC EXTENSIONS ---
+
+def set_item_parent(item_id: int, parent_id: int) -> bool:
+    """
+    Establishes a parent-child relationship between two media records.
+    (Used for grouping files into Film/Album Objects).
+    """
+    db_timeout = GLOBAL_CONFIG.get("forensic_hydration_registry", {}).get("db_timeout", 10.0)
+    conn = sqlite3.connect(DB_FILENAME, timeout=db_timeout)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE media SET parent_id = ? WHERE id = ?", (parent_id, item_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        log.error(f"[DB-HIERARCHY] Failed to set parent {parent_id} for item {item_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
+def insert_media_object(obj_dict: Dict[str, Any]) -> Optional[int]:
+    """
+    Inserts a virtual 'Object' record (Film/Album container) into the DB.
+    """
+    # Map the object dict to the media table schema
+    media_dict = {
+        'name': obj_dict.get('name'),
+        'path': obj_dict.get('path'),
+        'type': 'object',
+        'category': obj_dict.get('category', 'unknown'),
+        'subtype': obj_dict.get('subtype', 'OBJECT'),
+        'duration': '',
+        'is_transcoded': 0,
+        'tags': json.dumps(obj_dict.get('metadata', {})),
+        'full_tags': json.dumps(obj_dict.get('metadata', {})),
+    }
+    return insert_media(media_dict)
     """
     @brief Renames a media item in the database.
     @details Benennt ein Medium in der DB um.

@@ -41,6 +41,8 @@ from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
     api_logbuch, api_testing, api_diagnostics, api_audit
 )
+from src.core.object_discovery import ObjectDiscoveryEngine
+from src.core.objects import create_forensic_object
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
 import ast
@@ -4367,6 +4369,29 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         if collected_items:
             log.info(f"[DB-SCAN] Finalizing batch of {len(collected_items)} items...")
             db.insert_media_batch(collected_items)
+
+        # --- [v1.54.001] OBJECT-CENTRIC GROUPING PHASE ---
+        log.info("[DB-SCAN] Starting Object-Centric Grouping Phase (v1.54)...")
+        all_items = db.get_all_media_items()
+        engine = ObjectDiscoveryEngine()
+        discovered_objects = engine.discover_groups(all_items)
+        
+        objects_inserted = 0
+        for obj in discovered_objects:
+            # 1. Insert the parent object record
+            parent_id = db.insert_media_object(obj.to_dict())
+            if parent_id:
+                objects_inserted += 1
+                # 2. Link all child items to the new parent
+                for item_id in obj.items:
+                    db.set_item_parent(item_id, parent_id)
+                # 3. Link sidecars (using path as lookup)
+                for sidecar_path in obj.sidecars.values():
+                    sidecar_item = next((it for it in all_items if it['path'] == sidecar_path), None)
+                    if sidecar_item:
+                        db.set_item_parent(sidecar_item['id'], parent_id)
+
+        log.info(f"[DB-SCAN] Object Grouping Complete. Created {objects_inserted} high-density objects.")
 
         # 10. Round 5.6 - Final Sync & Availability Check (v1.35.98)
         if not clear_db:
