@@ -271,10 +271,16 @@ def get_env_list(name: str, default: list) -> list:
 def discover_binary(name: str, fallback: str = "") -> str:
     """
     Safely discover a binary path on the current system with platform awareness.
-    Priority: tools/[platform]/bin -> tools/bin -> system PATH
+    Priority: [CONTAINER /usr/bin] -> tools/[platform]/bin -> tools/bin -> system PATH
     """
     platform = "windows" if sys.platform == "win32" else "linux"
     
+    # 0. Container/System-V Forensic Priority (v1.46.136)
+    if platform == "linux":
+        container_path = Path("/usr/bin") / name
+        if container_path.exists():
+            return str(container_path)
+
     # 1. Platform-Specific Tools (Forensic Priority v1.46.132)
     platform_bin = TOOLS_DIR / platform / "bin" / name
     if platform_bin.exists():

@@ -9,9 +9,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 print("--- [Verification] Forensic Workstation v1.46 Architecture Audit ---")
 
 try:
-    from src.core.config_master import GLOBAL_CONFIG, LOGGING_REGISTRY, FORENSIC_TOOLS_LIST, LAUNCH_PROFILE
+    from src.core.config_master import GLOBAL_CONFIG, LOGGING_REGISTRY, FORENSIC_TOOLS_LIST, LAUNCH_PROFILE, PROGRAM_REGISTRY
     print("[OK] config_master: Primary registries found.")
     print(f"     FORENSIC_TOOLS: {len(FORENSIC_TOOLS_LIST)} items registered.")
+    print(f"     FFMPEG_PATH: {PROGRAM_REGISTRY.get('ffmpeg')}")
+    print(f"     VLC_PATH:    {PROGRAM_REGISTRY.get('vlc')}")
     print(f"     LAUNCH_MODE: Connectionless={LAUNCH_PROFILE['connectionless']}")
 except ImportError as e:
     print(f"[FAIL] config_master: {e}")

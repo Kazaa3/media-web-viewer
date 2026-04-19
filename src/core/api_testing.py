@@ -101,3 +101,28 @@ def get_benchmark_results():
         try: return json.loads(bench_file.read_text(encoding='utf-8'))
         except: pass
     return {"status": "no_data", "message": "No benchmarks found."}
+@eel.expose
+def get_environment_inventory():
+    """
+    Forensic Environment Inventory (v1.46.136).
+    Returns a comprehensive list of all installed Python packages and their versions.
+    """
+    try:
+        from importlib.metadata import distributions
+        packages = []
+        for d in distributions():
+            try:
+                name = d.metadata["Name"]
+                version = d.version
+                packages.append({"name": name, "version": version})
+            except (KeyError, AttributeError):
+                continue
+        
+        # Sort by name for professional readability
+        packages.sort(key=lambda x: x["name"].lower())
+        
+        log.info(f"[Inventory] Aggregated {len(packages)} environment packages for diagnostic audit.")
+        return {"status": "ok", "packages": packages, "count": len(packages)}
+    except Exception as e:
+        log.error(f"[Inventory] Failed to aggregate environment: {e}")
+        return {"error": str(e)}
