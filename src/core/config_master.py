@@ -1123,6 +1123,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     } for i in range(1, 101)
                 ]
             },
+            "queues": {
+                "audio": { "label": "Audio Only", "filter": "audio", "icon": "music" },
+                "video": { "label": "Video Only", "filter": "video", "icon": "video" },
+                "photo": { "label": "Photos Only", "filter": "photo", "icon": "image" },
+                "all":   { "label": "All Formats", "filter": "all",   "icon": "all" }
+            },
             "watchdog": {
                 "tick_ms": 500,
                 "max_ticks": 12,
@@ -2483,7 +2489,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" },
                 { "id": "albums", "label": "Alben-Galerie", "action": "switchMediaSubView('albums')" },
                 { "id": "audiobooks", "label": "Hörbuch-Sektor", "action": "switchMediaSubView('audiobooks')" },
-                { "id": "playlist-mgr", "label": "Playlist-Profi", "action": "switchMediaSubView('playlist-mgr')" }
+                { "id": "playlist-mgr", "label": "Playlist-Profi", "action": "switchMediaSubView('playlist-mgr')" },
+                { "id": "all-formats", "label": "All Formats [Discovery]", "action": "switchQueueFilter('all')" }
             ],
             "library": [
                 { "id": "lib-visual", "label": "Visual Explorer", "action": "switchLibrarySubView('visual')" },
