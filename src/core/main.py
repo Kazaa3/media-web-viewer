@@ -49,7 +49,8 @@ from src.core.config_master import (
 from src.core.db import get_active_db_path
 from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
-    api_logbuch, api_testing, api_diagnostics, api_audit
+    api_logbuch, api_testing, api_diagnostics, api_audit,
+    api_config, api_core_app, api_library, api_reporting
 )
 from src.core.object_discovery import ObjectDiscoveryEngine
 from src.core.objects import create_forensic_object
@@ -180,31 +181,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-@eel.expose
-def shutdown_backend():
-    """Nuclear Shutdown Sequence (Delegated to api_core_app)."""
-    api_core_app.shutdown_application()
-
-
-@eel.expose
-def get_category_master():
-    """Returns the centralized category mapping (v1.35.76 SSOT)."""
-    log.info("[BD-AUDIT] Handshake: get_category_master requested.")
-    return MASTER_CAT_MAP
-
-
-@eel.expose
-def get_global_config():
-    """Returns the full centralized configuration (v1.41.00)."""
-    log.info("[BD-AUDIT] Handshake: get_global_config requested.")
-    return GLOBAL_CONFIG
-
-
-@eel.expose
-def get_tech_markers():
-    """Returns the centralized transcoding tech markers (v1.35.76 SSOT)."""
-    log.info("[BD-AUDIT] Handshake: get_tech_markers requested.")
-    return TECH_MARKERS
+# [v1.46.090] Note: get_startup_info consolidated to enhanced version at bottom.
 
 
 # [v1.46.090] Note: get_startup_info consolidated to enhanced version at bottom.
@@ -216,41 +193,13 @@ def get_system_forensics():
     return api_testing.get_environment_inventory()
 
 
-@eel.expose
-def heartbeat():
-    """Explicit heartbeat for window health monitoring (v1.41.00)."""
-    GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
-    return {"status": "ok", "timestamp": time.time()}
-
-
-@eel.expose
-def log_spawn_event(component_id, status):
-    """Logs the instantiation/hydration of a UI component (v1.46.03)."""
-    log.info(f"🚀 [SPAWN-LOG] {component_id.upper()} -> {status}")
-    return True
+# [v1.54.018] Heartbeat & Events migrated to api_core_app and api_frontend.
 
 
 # (audit_dom_state moved to api_diagnostics)
 
 
-@eel.expose
-def kill_stale_and_restart():
-    """
-    Kills all project-related processes (v1.35.98 Integrated) and restarts.
-    """
-    from src.core.process_manager import ProcessController
-    from pathlib import Path
-
-    log.info(f"[RESTART] Using ProcessController for emergency cleanup. Root: {PROJECT_ROOT}")
-    pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
-
-    # 1. Forceful cleanup of all project-related processes (including children & ffmpeg)
-    pc.kill_stale_instances(current_pid=os.getpid())
-
-    # 2. Restart current process
-    log.warning("[RESTART] Executing os.execl...")
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
+# [v1.54.018] Emergency Recovery migrated to api_diagnostics.
 
 # (Path calculation and sys.path injection moved to config_master.py)
 
@@ -410,123 +359,13 @@ if __name__ == "__main__":
 spawn_event = threading.Event()
 
 
-@eel.expose
-def report_spawn():
-    if not spawn_event.is_set():
-        spawn_event.set()
+# [v1.54.018] Hydration & Event Bridge migrated to api_frontend and api_config.
 
 
-@eel.expose
-def log_gui_event(category, action, details=""):
-    """General purpose GUI event logging for forensic analysis."""
-    log.info(f"[JS-NAV] [{category}] {action} | {details}")
+# [v1.54.018] UI & Footer Orchestration migrated to api_config and api_frontend.
 
 
-@eel.expose
-def set_hydration_mode(mode: str) -> bool:
-    """Sets the hydration mode for library retrieval (v1.41.67)."""
-    mode_normalized = mode.lower()
-    GLOBAL_CONFIG["forensic_hydration_registry"]["mode"] = mode_normalized
-    log.info(f"[HYDR-TRACE] Centralized Hydration mode updated to: {mode_normalized}")
-    return True
-
-
-@eel.expose
-def set_ui_config_value(key: str, value: Any):
-    """
-    Sets a configuration value in GLOBAL_CONFIG (v1.38.05).
-    Special handling for nested ui_fragments and functional modules.
-    """
-    from core.config_master import set_config_value as master_set
-
-    log.info(f"[CONFIG] UI Request: {key} -> {value}")
-
-    # Check if it's a nested ui_fragment toggle
-    if key.startswith("ui_fragments."):
-        frag_key = key.split(".")[1]
-        if "ui_settings" in GLOBAL_CONFIG and "ui_fragments" in GLOBAL_CONFIG["ui_settings"]:
-            GLOBAL_CONFIG["ui_settings"]["ui_fragments"][frag_key] = value
-            log.info(f"[CONFIG] Fragment {frag_key} toggled: {value}")
-            return True
-
-    # Check if it's a nested footer_settings toggle (v1.41.158 Extension)
-    if key.startswith("footer_settings."):
-        feat_key = key.split(".")[1]
-        if "ui_settings" in GLOBAL_CONFIG and "footer_settings" in GLOBAL_CONFIG["ui_settings"]:
-            GLOBAL_CONFIG["ui_settings"]["footer_settings"][feat_key] = value
-            log.info(f"[CONFIG] Granular Footer Feature {feat_key} toggled: {value}")
-            return True
-
-    # Generic set
-    return master_set(key, value)
-
-
-# --- UI & Footer Orchestration API (v1.41.156) ---
-
-@eel.expose
-def get_footer_registry():
-    """ Returns a merged dict of primary flat flags and granular footer sub-settings. """
-    settings = GLOBAL_CONFIG.get("ui_settings", {})
-
-    # 1. Primary Flat Flags
-    flat_keys = [
-        "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
-        "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
-        "enable_footer_db_status"
-    ]
-    resp = {k: settings.get(k, False) for k in flat_keys}
-
-    # 2. Nested Granular Settings (v1.41.158)
-    resp.update(settings.get("footer_settings", {}))
-    return resp
-
-
-@eel.expose
-def set_footer_element_state(element_key: str, is_active: bool):
-    """
-    Dedicated high-level bridge to toggle footer components and persist state.
-    Example element_key: 'enable_sync_anchor'
-    """
-    log.info(f"[UI-ORCHESTRATION] Requesting state change for footer component: {element_key} -> {is_active}")
-
-    # Validation
-    valid_keys = [
-        "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
-        "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
-        "enable_footer_db_status"
-    ]
-
-    if element_key not in valid_keys:
-        log.warning(f"[UI-ORCHESTRATION] REJECTED: Invalid footer component key: {element_key}")
-        return False
-
-    return set_ui_config_value(element_key, is_active)
-
-
-@eel.expose
-def report_items_spawned(count, source="frontend"):
-    """
-    Formal DOM test reporting. Called when the frontend confirms
-    that key UI elements are rendered.
-    """
-    if count > 0:
-        msg = f"[DOM-TEST] [SUCCESS] Items in DOM: {count} (Source: {source})"
-    else:
-        msg = f"[DOM-TEST] [EMPTY] No items in DOM (Source: {source})."
-
-    log.info(msg)
-    return {"status": "counts_logged", "timestamp": time.time()}
-
-
-@eel.expose
-def report_playback_state(is_playing, item_name, current_time):
-    """
-    Reports the current playback state from the frontend.
-    Used for automated verification of playability.
-    """
-    msg = f"[DOM-TEST] [PLAYBACK] {'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {current_time:.1f}s"
-    log.info(msg)
-    return {"status": "playback_logged"}
+# [v1.54.018] DOM Auditing migrated to api_frontend and api_diagnostics.
 
 
 def run_app_audit_detached(session_port):
@@ -569,25 +408,7 @@ def run_app_audit_detached(session_port):
     threading.Thread(target=audit_trigger, daemon=True).start()
 
 
-@eel.expose
-def trigger_factory_reset():
-    """
-    Exposed wrapper to perform a database reset from the UI.
-    """
-    log.warning("[System] Factory reset triggered via Eel.")
-    from src.core.db import factory_reset
-    return factory_reset()
-
-
-@eel.expose
-def trigger_db_reconnect():
-    """
-    Exposed wrapper to re-initialize the database connection (v1.36.02).
-    """
-    log.warning("[System] Database Reconnect triggered via Eel.")
-    from src.core.db import init_db
-    init_db()
-    return True
+# [v1.54.018] DB Recovery migrated to api_diagnostics.
 
 
 def start_app():
