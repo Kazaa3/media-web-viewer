@@ -4332,36 +4332,49 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
 def _parse_nfo_file(nfo_path: Path) -> dict:
     """
-    Parses a Kodi/Plex style .nfo XML file (v1.45.130).
+    Parses a Kodi/Plex style .nfo XML file (Centralized v1.46.131).
     """
     metadata = {}
+    nfo_cfg = GLOBAL_CONFIG.get("nfo_settings", {})
+    if not nfo_cfg.get("enable_parsing", True):
+        return {}
+
     try:
         import xml.etree.ElementTree as ET
         if not nfo_path.exists(): return {}
-        tree = ET.parse(nfo_path)
-        root = tree.getroot()
         
-        # Mapping: XML Tag -> Metadata Key
-        mappings = {
-            'title': 'title',
-            'year': 'year',
-            'genre': 'genre',
-            'artist': 'artist',
-            'album': 'album',
-            'plot': 'plot'
-        }
+        # Use centralized encoding if provided (default utf-8)
+        encoding = nfo_cfg.get("encoding", "utf-8")
+        with nfo_path.open("r", encoding=encoding, errors="replace") as f:
+            content = f.read()
+            # Basic sanity check for XML
+            if not content.strip().startswith("<"):
+                return {}
+            
+            # Reset pointer or parse from string
+            root = ET.fromstring(content)
+        
+        # Mapping: XML Tag -> Metadata Key (Centralized)
+        mappings = nfo_cfg.get("mapping", {
+            'title': 'title', 'year': 'year', 'genre': 'genre',
+            'artist': 'artist', 'album': 'album', 'plot': 'plot'
+        })
         
         for xml_tag, meta_key in mappings.items():
             el = root.find(xml_tag)
             if el is not None and el.text:
                 metadata[meta_key] = el.text.strip()
                 
-        # Handle multiple genres
+        # Handle multiple genres (Kodi standard)
         genres = [g.text for g in root.findall('genre') if g.text]
-        if genres: metadata['genre'] = ", ".join(genres)
+        if genres: 
+            metadata['genre'] = ", ".join(genres)
             
-    except Exception:
-        pass
+    except Exception as e:
+        # Respect the global compact logging flag
+        exc = None if GLOBAL_CONFIG["logging_registry"].get("log_compact_errors_only", True) else True
+        log.error(f"[NFO-Parser-Error] Failed to parse {nfo_path.name}: {e}", exc_info=exc)
+        
     return metadata
 
 

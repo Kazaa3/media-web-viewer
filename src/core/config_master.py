@@ -435,7 +435,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "min_size_kb": 1,        # Skip empty or 0-byte ghost files
         "max_size_mb": 50000,    # Default Max 50GB file cap
         "log_unsupported_extensions": False,
-        "log_compact_errors_only": True
+        "log_compact_errors_only": False
     },
 
     # --- FORENSIC & PROCESS REGISTRY (v1.46.101) ---
@@ -464,6 +464,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
         "encoding": "utf-8",
         "fallback_to_filename": True
+    },
+
+    # --- BARCODE CODE SCANNER (v1.46.131) ---
+    "barcode_scanner_settings": {
+        "enable_scanner": False,
+        "supported_codes": ["EAN13", "UPC-A", "QR"],
+        "min_quality_score": 0.8,
+        "ocr_fallback": False
     },
 
     # --- ARTWORK & COVER EXTRACTION (v1.46.131) ---

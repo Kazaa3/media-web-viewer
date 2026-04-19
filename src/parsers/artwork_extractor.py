@@ -24,21 +24,25 @@ class ArtworkExtractor:
     """
 
     def __init__(self):
-        self.cache_dir = Path.home() / '.cache' / 'gui_media_web_viewer' / 'art'
+        art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
+        cache_raw = art_cfg.get("cache_root", "~/.cache/gui_media_web_viewer/art")
+        self.cache_dir = Path(os.path.expanduser(cache_raw))
+        
         try:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
         except FileExistsError:
             if not self.cache_dir.is_dir():
-                log.error(f"Cache path {self.cache_dir} exists but is not a directory!")
+                log.error(f"[Artwork-Init] Cache path {self.cache_dir} exists but is not a directory!")
         except Exception as e:
-            log.error(f"Failed to create cache directory {self.cache_dir}: {e}")
+            log.error(f"[Artwork-Init] Failed to create cache directory {self.cache_dir}: {e}")
 
     def extract(self, path: Path, tags: Dict[str, Any], logical_type: str) -> Optional[str]:
         """
         @brief Main entry point for extraction.
         """
+        art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
         log.debug(f"🖼️ [Artwork] Extracting for {path.name} ({logical_type})")
-        if PARSER_CONFIG.get('ffmpeg_extract_thumbnails') is False:
+        if not art_cfg.get("enable_extraction", True):
             return None
 
         if not path.exists():
@@ -151,11 +155,15 @@ class ArtworkExtractor:
         Create a thumbnail from a video frame.
         """
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
+        offset = art_cfg.get("thumbnail_offset_sec", 7)
+        res = art_cfg.get("thumbnail_resolution", "480:480")
+        
         return self._run_ffmpeg([
             ffmpeg_bin, "-i", str(path),
-            "-ss", "00:00:07",
+            "-ss", f"{offset:02d}", # Formatted offset
             "-vframes", "1",
-            "-vf", "scale=w=480:h=480:force_original_aspect_ratio=decrease",
+            "-vf", f"scale=w={res.split(':')[0]}:h={res.split(':')[1]}:force_original_aspect_ratio=decrease",
             "-y", str(out_path)
         ], timeout=8)
 

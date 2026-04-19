@@ -166,12 +166,13 @@ def get_parser_info() -> dict[str, Any]:
     return info
 
 
-def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwargs):
+def extract_metadata(path, filename, mode=None, file_type=None, **kwargs):
     """
-    @brief Orchestrates the metadata extraction process using a sequential parser chain.
-    @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
-    @return Tuple (duration, tags) / Tupel (Dauer, Tags).
+    @brief Orchestrates the metadata extraction process using a sequential parser chain (Centralized v1.46.131).
     """
+    if mode is None:
+        mode = GLOBAL_CONFIG.get("parser_modes", {}).get("default", "lightweight")
+        
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
     from src.core.config_master import ALL_AUDIO_EXTENSIONS
@@ -216,8 +217,9 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         'name': filename,
         'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing',
     }
-    # Initialize full_tags for high-fidelity modes (v1.41.00 Centralized)
-    if mode in ('full', 'ultimate') and 'full_tags' not in tags:
+    # Initialize full_tags for high-fidelity modes (Centralized v1.46.131)
+    parser_cfg = GLOBAL_CONFIG.get("parser_modes", {})
+    if (mode in ('full', 'ultimate') or parser_cfg.get("enable_full_tags", False)) and 'full_tags' not in tags:
         tags['full_tags'] = {}
 
     duration = 0
