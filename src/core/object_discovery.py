@@ -9,8 +9,9 @@ import os
 import re
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
-from src.core.logger import get_logger
-from src.core.objects import FilmObject, AlbumObject, create_forensic_object
+from src.core.objects import (
+    FilmObject, AudioObject, AudiobookObject, SequenceObject, create_forensic_object
+)
 from src.parsers.format_utils import natural_sort_key
 
 log = get_logger("object_discovery")
@@ -98,7 +99,7 @@ class ObjectDiscoveryEngine:
                     self._enrich_film_sidecars(obj, items)
                     discovered.append(obj)
                     
-        # --- B. Audiobook & Album Detection ---
+        # --- B. Audiobook & Audio Discovery ---
         if audios and not videos:
             # 1. Detect M4B (Single-file Audiobook)
             m4b_items = [i for i in audios if str(i['path']).lower().endswith('.m4b')]
@@ -111,7 +112,7 @@ class ObjectDiscoveryEngine:
                 audios = [i for i in audios if not str(i['path']).lower().endswith('.m4b')]
 
             if audios:
-                # 2. Heuristic: Audiobook Folder vs Album
+                # 2. Heuristic: Audiobook Folder vs Audio Collection
                 is_likely_audiobook = any(k in folder_name.lower() for k in ["hörbuch", "audiobook", "book", "lesung"])
                 is_likely_album = any(i.get('tags', {}).get('album') for i in audios)
 
@@ -119,15 +120,15 @@ class ObjectDiscoveryEngine:
                     obj = create_forensic_object("audiobook", name=folder_name, path=folder_path)
                 else:
                     album_title = audios[0].get('tags', {}).get('album', folder_name)
-                    obj = create_forensic_object("album", name=album_title, path=folder_path)
+                    obj = create_forensic_object("audio", name=album_title, path=folder_path)
                 
                 obj.items = [i['id'] for i in audios]
-                self._enrich_album_sidecars(obj, items)
+                self._enrich_audio_sidecars(obj, items)
                 discovered.append(obj)
 
-        # --- C. Playlist Discovery ---
+        # --- C. Sequence Discovery ---
         for pl in playlists:
-            obj = create_forensic_object("playlist", name=pl['name'], path=pl['path'])
+            obj = create_forensic_object("sequence", name=pl['name'], path=pl['path'])
             obj.items = [pl['id']]
             discovered.append(obj)
             
@@ -165,8 +166,8 @@ class ObjectDiscoveryEngine:
             elif ext in SIDECAR_EXTENSIONS["covers"]:
                 obj.covers.append(item['path'])
 
-    def _enrich_album_sidecars(self, obj: AlbumObject, all_items: List[Dict[str, Any]]):
-        """Identifies CUE, Log, and Playlists for Albums."""
+    def _enrich_audio_sidecars(self, obj: AudioObject, all_items: List[Dict[str, Any]]):
+        """Identifies CUE, Log, and Playlists for Audio Collections."""
         for item in all_items:
             ext = str(item.get('extension', '')).lower()
             if ext == ".cue":

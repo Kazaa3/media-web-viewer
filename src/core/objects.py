@@ -57,7 +57,7 @@ class MediaChapter:
     title: str = ""
 
 @dataclass
-class ObjectAsset:
+class MediaObject:
     """
     Base class for virtual grouping entities (Forensic SSOT).
     Represents a collection of files (versions, sidecars) that form a single logical asset.
@@ -108,12 +108,12 @@ class FilmObject(MediaObject):
         self.category = "video"
 
 @dataclass
-class AlbumObject(MediaObject):
+class AudioObject(MediaObject):
     """
-    Specialized entity for Music collections.
+    Specialized entity for Music collections (Albums, Singles, OST, etc.).
     Supports multiple releases (CD, Digital, SACD), CUE files, and EAC logs.
     """
-    subtype: str = "ALBUM_OBJECT"
+    subtype: str = "AUDIO_OBJECT"
     is_gapless: bool = False
     has_cue: bool = False
     has_log: bool = False
@@ -137,11 +137,11 @@ class AudiobookObject(MediaObject):
         self.category = "audio"
 
 @dataclass
-class PlaylistObject(MediaObject):
+class SequenceObject(MediaObject):
     """
     Specialized entity for ordered sequences of media items.
     """
-    subtype: str = "PLAYLIST_OBJECT"
+    subtype: str = "SEQUENCE_OBJECT"
     ordered_items: List[int] = field(default_factory=list) # Member IDs in sequence
     loop_mode: str = "none" # none, all, single
     
@@ -152,10 +152,10 @@ def create_forensic_object(obj_type: str, **kwargs) -> MediaObject:
     """Factory function for creating specialized objects."""
     if obj_type.lower() == "film":
         return FilmObject(**kwargs)
-    elif obj_type.lower() == "album":
-        return AlbumObject(**kwargs)
+    elif obj_type.lower() == "audio":
+        return AudioObject(**kwargs)
     elif obj_type.lower() == "audiobook":
         return AudiobookObject(**kwargs)
-    elif obj_type.lower() == "playlist":
-        return PlaylistObject(**kwargs)
+    elif obj_type.lower() == "sequence":
+        return SequenceObject(**kwargs)
     return MediaObject(**kwargs)

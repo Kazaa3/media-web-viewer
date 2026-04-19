@@ -96,7 +96,7 @@ DEPENDENCY_REGISTRY = {
         "skip_updates":            "--no-update" in sys.argv,
         "force_updates":           "--force-update" in sys.argv,
         "update_on_version_change": True,
-        "last_updated_version":    "v1.54.002" 
+        "last_updated_version":    "v1.54.003" 
     }
 }
 
@@ -230,12 +230,14 @@ GLOBAL_MEDIA_TAXONOMY = {
     "podcast":         {"label": "Podcast",             "desc": "Digital talk series",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "mix":             {"label": "Mix / DJ-Set",        "desc": "Continuous audio performance",    "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "single":          {"label": "Single / 7\"",        "desc": "Single song release",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "maxi":            {"label": "Maxi / 12\"",        "desc": "Extended single release",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
 
-    # --- LITERARY & ORDERED MEDIA (v1.54.003) ---
+    # --- LITERARY & ORDERED MEDIA (v1.54.004) ---
     "audiobook":       {"label": "Hörbuch / Audiobook",  "desc": "Literary spoken word",           "ext": ALL_AUDIO_EXTENSIONS|{".m4b"}, "type": "category", "parent": "audio"},
     "podcast":         {"label": "Podcast",             "desc": "Serial digital talk",            "ext": ALL_AUDIO_EXTENSIONS, "type": "category", "parent": "audio"},
     "playlist":        {"label": "Playlist / Mix",      "desc": "Ordered forensic sequence",      "ext": PLAYLIST_EXTENSIONS,  "type": "category"},
