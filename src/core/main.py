@@ -15,6 +15,13 @@ if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
 # --- 1. Path Forensics Done ---
+if sys.platform != "win32":
+    # [v1.53.003-R3] Adaptive Environment Bootstrap: Force project-local .venv
+    _venv_py = _root / ".venv" / "bin" / "python3"
+    if _venv_py.exists() and str(_venv_py) != sys.executable:
+        print(f"STDOUT: [Bootstrap] Wrong Venv detected. Switching to {_venv_py}...", flush=True)
+        os.execv(str(_venv_py), [str(_venv_py)] + sys.argv)
+
 from src.core import startup_auditor
 try:
     # [v1.53.003] Absolute Boot Priority: Fix environment BEFORE imports

@@ -221,10 +221,13 @@ def audit_database() -> Tuple[bool, List[str]]:
     elif not os.access(db_path, os.R_OK | os.W_OK): errors.append(f"DB File Permission Denied: {db_path}")
     return (len(errors) == 0, errors)
 
+# [v1.53.003-R3] High-Priority Alias for main.py bootstrap
+run_audit = run_preflight_audit
+
 if __name__ == "__main__":
     _current = os.path.dirname(os.path.abspath(__file__))
     _proot = os.path.dirname(os.path.dirname(_current))
     if _proot not in sys.path: sys.path.insert(0, _proot)
     logging.basicConfig(level=logging.INFO)
-    if run_preflight_audit(): log.info("AUDIT SUCCESS"); sys.exit(0)
+    if run_audit(): log.info("AUDIT SUCCESS"); sys.exit(0)
     else: log.error("AUDIT FAILURE"); sys.exit(1)
