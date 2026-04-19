@@ -214,8 +214,12 @@ window.triggerModuleHydration = async function (name) {
  * based on the ARCHITECTURE of the active branch.
  */
 window.hydrateCategoryDropdown = function (branchId) {
-    const select = document.getElementById('queue-type-filter');
-    if (!select) return;
+    const selects = [
+        document.getElementById('queue-type-filter'),          // Header Mount
+        document.getElementById('queue-type-filter-sidebar')  // Side Menu Mount
+    ].filter(el => el !== null);
+
+    if (selects.length === 0) return;
 
     const ui = window.CONFIG?.ui_settings;
     const allCategories = ui?.library_category_map;
@@ -224,7 +228,13 @@ window.hydrateCategoryDropdown = function (branchId) {
     const hierarchy = ui?.library_category_hierarchy;
 
     const currentMode = window.activeLibraryFilterMode || 'route';
-    console.log(`[HYDRATION] Hydrating dropdown. Branch: ${branchId} | Mode: ${currentMode.toUpperCase()}`);
+    console.log(`[HYDRATION] Synchronizing ${selects.length} dropdown mounts. Mode: ${currentMode.toUpperCase()}`);
+
+    // [v1.53.001] Synchronize Toggle Button Labels
+    document.querySelectorAll('.lib-filter-mode-toggle-btn').forEach(btn => {
+        btn.innerText = currentMode.toUpperCase();
+        btn.classList.toggle('active', currentMode === 'category');
+    });
 
     // 1. Resolve supported IDs for this branch
     let targetBranch = branchId.toLowerCase();
@@ -239,21 +249,19 @@ window.hydrateCategoryDropdown = function (branchId) {
         return;
     }
 
-    // 2. Filter by Branch Architecture STRETCH THEN by Mode Registry
+    // 2. Filter by Branch Architecture THEN by Mode Registry
     let filtered = supportedIds
         ? allCategories.filter(cat => supportedIds.includes(cat.id))
         : allCategories;
 
-    // Filter by Current Mode (v1.53)
     if (modeRegistry && modeRegistry[currentMode]) {
         const modeIds = modeRegistry[currentMode];
         filtered = filtered.filter(cat => modeIds.includes(cat.id));
     }
 
-    // 3. Apply Hierarchical Labels (v1.53)
+    // 3. Apply Hierarchical Labels (↳)
     const processed = filtered.map(item => {
         let label = item.label;
-        // Check if this item is a sub-category in any parent
         if (currentMode === 'category' && hierarchy) {
             for (const [parent, children] of Object.entries(hierarchy)) {
                 if (children.includes(item.id)) {
@@ -265,24 +273,33 @@ window.hydrateCategoryDropdown = function (branchId) {
         return { ...item, displayLabel: label };
     });
 
-    // Preserve existing selection if possible
-    const currentVal = select.value;
-
-    // 4. Render Options
-    select.innerHTML = processed.map(item => `
+    // 4. Render Options to all mounts
+    const optionsHtml = processed.map(item => `
         <option value="${item.id}">${item.displayLabel}</option>
     `).join('');
 
-    if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
-        select.value = currentVal;
-    }
+    selects.forEach(select => {
+         const lastVal = select.value;
+         select.innerHTML = optionsHtml;
+         
+         // Preserve selection if possible
+         if (lastVal && select.querySelector(`option[value="${lastVal}"]`)) {
+             select.value = lastVal;
+         }
 
-    // [v1.46.019] Attach Filter Pulse Listener
-    select.onchange = (e) => {
-        window.activeQueueFilter = e.target.value;
-        console.info(`[UI-NAV] Filter Change Detected: ${window.activeQueueFilter}. Triggering Sync Pulse...`);
-        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-    };
+         // [v1.46.019] Attach Filter Pulse Listener
+         select.onchange = (e) => {
+             const newFilter = e.target.value;
+             window.activeQueueFilter = newFilter;
+             
+             // Synchronize other mount points
+             selects.forEach(s => { if(s !== select) s.value = newFilter; });
+
+             console.info(`[UI-NAV] Filter Change: ${newFilter}. Triggering Pulse...`);
+             if (typeof setLibraryFilter === 'function') setLibraryFilter(newFilter);
+             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+         };
+    });
 };
 
 /**
