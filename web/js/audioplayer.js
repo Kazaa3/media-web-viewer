@@ -9,6 +9,24 @@ let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
 window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 
+/**
+ * switchQueueFilter (v1.54.016)
+ * Centralized trigger for changing the active media view for the unified queue.
+ */
+window.switchQueueFilter = function(filterId) {
+    console.info(`[Queue] Switching discovery filter: ${filterId}`);
+    window.activeQueueFilter = filterId;
+    
+    // Sync dropdown if it exists
+    const select = document.getElementById('queue-type-filter');
+    if (select) select.value = filterId;
+    
+    // Trigger aggressive hydration pulse
+    if (typeof renderAudioQueue === 'function') renderAudioQueue();
+    if (typeof renderVideoQueue === 'function') renderVideoQueue();
+    if (typeof showToast === 'function') showToast(`Filter: ${filterId.toUpperCase()}`, 1000);
+};
+
 // window.currentPlaylist is now initialized in app_core.js (SSOT v1.46.026)
 // playlistIndex is accessed directly via window.playlistIndex to ensure SSOT.
 
@@ -95,6 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const nDot = document.getElementById('diag-native-dot');
     if (nLabel && isForced) nLabel.style.color = 'var(--accent-color)';
     if (nDot && isForced) nDot.style.left = '11px';
+
+    // [v1.54.016] Hydrate Centralized Queue Filters
+    const qFilterSelect = document.getElementById('queue-type-filter');
+    if (qFilterSelect && window.CONFIG && window.CONFIG.technical_orchestrator && window.CONFIG.technical_orchestrator.queues) {
+        const queues = window.CONFIG.technical_orchestrator.queues;
+        console.info("[Queue] Hydrating filter registry from Centralized Orchestrator.");
+        qFilterSelect.innerHTML = Object.entries(queues).map(([id, cfg]) => 
+            `<option value="${id}">${cfg.label}</option>`
+        ).join('');
+        qFilterSelect.value = window.activeQueueFilter || 'all';
+        qFilterSelect.onchange = (e) => window.switchQueueFilter(e.target.value);
+    }
 });
 
 // --- Playback Controllers ---
