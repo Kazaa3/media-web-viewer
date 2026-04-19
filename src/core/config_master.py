@@ -455,6 +455,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "log_truncation_warnings": True
     },
 
+    # --- NFO SCANNER SETTINGS (v1.46.131) ---
+    "nfo_settings": {
+        "enable_parsing": True,
+        "mapping": {
+            "title": "title", "year": "year", "genre": "genre",
+            "artist": "artist", "album": "album", "plot": "plot"
+        },
+        "encoding": "utf-8",
+        "fallback_to_filename": True
+    },
+
+    # --- ARTWORK & COVER EXTRACTION (v1.46.131) ---
+    "artwork_settings": {
+        "enable_extraction": True,
+        "thumbnail_offset_sec": 7,
+        "thumbnail_resolution": "480:480",
+        "cache_root": "~/.cache/gui_media_web_viewer/art",
+        "search_priority": ["local", "mutagen", "streams", "thumbnail"]
+    },
+
+    # --- PARSER MODES & MODE REGISTRY (v1.46.131) ---
+    "parser_modes": {
+        "default": "lightweight",  # "lightweight", "full", "ultimate"
+        "enable_full_tags": False,
+        "full_tag_whitelist": ["comment", "lyrics", "composer", "encoded_by"]
+    },
+
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
