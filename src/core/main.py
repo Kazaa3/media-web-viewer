@@ -6952,34 +6952,10 @@ def test_pyautogui():
         return {"status": "error", "message": str(e)}
 
 
-@eel.expose
-def run_diagnostic_snapshot():
-    """Triggers a forensic screenshot of the workstation using PyAutoGUI."""
-    return api_audit.run_pyautogui_proof()
 
-@eel.expose
-def run_unified_audit():
-    """Consolidates PyAutoGUI, Selenium, and Playwright forensics into a single report."""
-    return api_audit.generate_unified_audit_report()
-
-@eel.expose
-def run_extended_forensic_audit():
-    """Nuclear multi-phase audit (Connectivity -> DOM -> Screenshot -> Automation)."""
-    return api_audit.run_extended_forensic_audit()
-
-@eel.expose
-def perform_granular_dom_audit():
-    """Step-by-step structural verification of UI elements."""
-    return api_audit.perform_granular_dom_audit()
-
-@eel.expose
-def run_automation_audit(engine="playwright"):
-    """Triggers a specialized automation audit (Playwright/Selenium)."""
-    if engine == "playwright":
-        return api_audit.run_playwright_audit()
-    elif engine == "selenium":
-        return api_audit.run_selenium_session_audit()
-    return {"status": "error", "message": f"Engine {engine} not supported."}
+# --- FORENSIC AUDIT ENDPOINTS (Consolidated to api_audit.py) ---
+# All technical diagnostics (PyAutoGUI, Selenium, Playwright) are now
+# exposed directly via 'from src.core import api_audit'.
 
 
 @eel.expose
