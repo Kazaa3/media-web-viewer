@@ -155,6 +155,9 @@ def apply_library_filters(all_media: List[Dict],
 
     return filtered, audit_meta
 
+    return filtered, audit_meta
+
+@eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """Unified library bridge with integrated forensics (v1.35.96)"""
     log.info(f"[BD-AUDIT] Handshake: API-Library get_library triggered.")
@@ -300,3 +303,67 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
         "db_count": len(all_media),
         "status": "ready"
     }
+
+# --- Library Sync & Parser Orchestration (Migrated from main.py v1.54.018) ---
+
+@eel.expose
+def run_direct_scan():
+    """ Triggers a full re-index of the media library. """
+    log.warning("[Diagnostic] Manual DIRECT SCAN triggered. Clearing DB...")
+    try:
+        from src.core.main import _scan_media_execution
+        _scan_media_execution(clear_db=True)
+        stats = db.get_db_stats()
+        return {"status": "success", "items_found": stats.get('total_items', 0)}
+    except Exception as e:
+        log.error(f"[Diagnostic] Direct Scan failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def sync_library_atomic():
+    """ Forces a fresh read of the entire library from SQLite. """
+    log.info("[Diagnostic] ATOMIC SYNC triggered.")
+    try:
+        items = db.get_all_media()
+        return {"status": "success", "count": len(items), "items": items}
+    except Exception as e:
+        log.error(f"[Diagnostic] Atomic Sync failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def process_any_file(file_path: str) -> str:
+    """ Forensic metadata extraction wrapper (v1.54.021). """
+    import json
+    try:
+        from src.parsers.media_parser import extract_metadata
+        filename = os.path.basename(file_path)
+        tags, parser_times = extract_metadata(file_path, filename, mode='ultimate')
+        duration = float(tags.get('duration', 0) or 0)
+        return json.dumps({"success": True, "duration": duration, "tags": tags, "parser_times": parser_times})
+    except Exception as e:
+        log.error(f"[Tool-Pulse] Extraction failed for {file_path}: {e}")
+        return json.dumps({"error": str(e)})
+
+@eel.expose
+def get_parser_registry():
+    """ Returns all available parsers and their capabilities. """
+    from src.parsers import media_parser
+    return media_parser.get_parser_info()
+
+@eel.expose
+def update_parser_setting(parser_id, key, value):
+    """ Updates a specific parser setting in GLOBAL_CONFIG. """
+    if "parser_settings" not in GLOBAL_CONFIG:
+        GLOBAL_CONFIG["parser_settings"] = {}
+    if parser_id not in GLOBAL_CONFIG["parser_settings"]:
+        GLOBAL_CONFIG["parser_settings"][parser_id] = {}
+        
+    GLOBAL_CONFIG["parser_settings"][parser_id][key] = value
+    log.info(f"[Config] Updated parser '{parser_id}' setting '{key}' to '{value}'")
+    return True
+
+@eel.expose
+def get_forensic_thresholds():
+    """ Returns centralized bitrate quality thresholds. """
+    from src.core.config_master import BITRATE_QUALITY_THRESHOLDS
+    return BITRATE_QUALITY_THRESHOLDS

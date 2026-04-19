@@ -627,409 +627,21 @@ def get_playback_stats():
 
 # Perform singleton check immediately
 # _SINGLETON_LOCK already initialized above
+# --- Forensic API Registry & Bootstrap (Modernized v1.54.021) ---
+# All functions previously residing here have been migrated to specialized API modules:
+# - api_reporting.py, api_diagnostics.py, api_library.py, api_core_app.py, api_tools.py
+# Reference the import grid at the top of main.py for Eel registration.
 
 
-def _detect_python_environment():
-    """
-    Detect current Python environment: system, venv, or conda.
-    Returns tuple: (env_type, env_name, env_path, python_version, python_executable)
-    """
-    python_version = platform.python_version()
-    python_executable = sys.executable
 
-    # Check for venv
-    in_venv = sys.prefix != sys.base_prefix
-    venv_env = os.environ.get('VIRTUAL_ENV')
+# --- Forensic API Registry & Bootstrap (Modernized v1.54.021) ---
+# All functions previously residing here have been migrated to specialized API modules.
 
-    if in_venv or venv_env:
-        env_path = venv_env or sys.prefix
-        env_name = Path(env_path).name if env_path else 'venv'
-        return ('venv', env_name, env_path, python_version, python_executable)
 
-    # Check for conda
-    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
-    conda_prefix = os.environ.get('CONDA_PREFIX')
 
-    if conda_env and conda_prefix:
-        return (
-            'conda',
-            conda_env,
-            conda_prefix,
-            python_version,
-            python_executable)
 
-    # System Python
-    return ('system', None, sys.prefix, python_version, python_executable)
 
 
-def sanitize_json_utf8(data):
-    """
-    Utility for UTF-8 sanitization of JSON data.
-    Ensures all strings in nested dicts/lists are valid UTF-8.
-    """
-    if isinstance(data, dict):
-        return {sanitize_json_utf8(k): sanitize_json_utf8(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [sanitize_json_utf8(i) for i in data]
-    elif isinstance(data, str):
-        try:
-            return data.encode('utf-8', errors='replace').decode('utf-8')
-        except Exception:
-            return "[Invalid UTF-8]"
-    else:
-        return data
-
-
-@eel.expose
-def rtt_ping(data):
-    """
-    @brief Multi-stage RTT Ping for verification.
-    @details Logs receipt of specialized data structures.
-    Supports 'heartbeat' mode for window health monitoring.
-    """
-    size = len(json.dumps(data))
-    is_heartbeat = isinstance(data, dict) and data.get("type") == "heartbeat"
-
-    if is_heartbeat:
-        # Silently log pulse for watchdog health
-        GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
-    else:
-        log.info(f"[RTT] Ping received ({size} bytes). Data types: {type(data).__name__}")
-        if isinstance(data, dict):
-            log.info(f"[RTT] Stage 1 (Dict): {list(data.keys())}")
-
-    return sanitize_json_utf8({
-        "status": "pong",
-        "timestamp": time.time(),
-        "received_size": size,
-        "echo": data,
-        "is_heartbeat": is_heartbeat
-    })
-
-
-@eel.expose
-def log_js_error(error_data):
-    """
-    Logs JavaScript errors OR toast messages from the frontend to the backend logger.
-    """
-    if error_data.get('type') == 'TOAST':
-        log.info(f"[JS-TOAST] {error_data.get('message')}")
-    else:
-        log.error(f"[JS-ERROR] {json.dumps(error_data)}")
-    return {"status": "error_logged"}
-
-
-@eel.expose
-def rtt_item_test(data):
-    """Echoes complex media-item-like data back for RTT and integrity testing."""
-    log.info(f"[RTT] Item Test received: {type(data).__name__}")
-    return {
-        "status": "success",
-        "timestamp": time.time(),
-        "item_echo": data
-    }
-
-
-@eel.expose
-def run_video_transcode_diagnostic(file_path=None):
-    """
-    Executes a real-time probe of the video transcoding/remuxing pipelines.
-    Returns results compatible with the Diagnostics Suite UI.
-    """
-    from src.core import db
-    import requests
-
-    # 1. Target selection
-    target_path = file_path
-    if not target_path:
-        items = db.get_library()
-        if items:
-            target_path = items[0]['path']
-        else:
-            return {"status": "error", "error": "No media found in library to test."}
-
-    log.info(f"[Diagnostic] Testing video pipeline for: {target_path}")
-    results = []
-
-    # Endpoints to test (SSOT v1.35.93)
-    base_url = GLOBAL_CONFIG['network_settings'].get(
-        'api_root', f"http://{GLOBAL_CONFIG['network_settings']['host']}:{GLOBAL_CONFIG['network_settings']['port']}")
-    encoded_path = requests.utils.quote(target_path)
-    endpoints = [
-        {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
-        {"name": "Transcode (Safe)", "url": f"{base_url}/stream/via/transcode/{encoded_path}"}
-    ]
-
-    atom_cfg = GLOBAL_CONFIG.get("atom_detection", {"atoms": ["ftyp", "moof", "mdat", "moov"], "header_limit": 4096})
-
-    for ep in endpoints:
-        ep_result = {"name": ep['name'], "status": "unknown", "details": ""}
-        try:
-            r = requests.get(ep['url'], stream=True, timeout=15)
-            if r.status_code == 200:
-                # Read 512KB to check for atoms
-                chunk = next(r.iter_content(chunk_size=GLOBAL_CONFIG["perf_settings"]["chunk_size"]), b'')
-                atoms = [a.encode() if isinstance(a, str) else a for a in atom_cfg["atoms"]]
-                limit = atom_cfg["header_limit"]
-                found = [a.decode() if isinstance(a, bytes) else a for a in atoms if a in chunk[:limit]]
-
-                if found:
-                    ep_result["status"] = "success"
-                    ep_result["details"] = f"Valid MP4 atoms found: {', '.join(found)}"
-                else:
-                    ep_result["status"] = "failed"
-                    ep_result["details"] = f"No valid MP4 atoms in start of stream (checked {limit} bytes)."
-            else:
-                ep_result["status"] = "failed"
-                ep_result["details"] = f"HTTP Error {r.status_code}"
-            r.close()
-        except Exception as e:
-            ep_result["status"] = "error"
-            ep_result["details"] = str(e)
-        results.append(ep_result)
-
-    return {"status": "complete", "results": results, "target": target_path}
-
-
-@eel.expose
-def rtt_stress_ping(index, total):
-    """Rapid-fire ping for stress testing."""
-    # Minimize logging for stress test to avoid I/O bottleneck
-    if index % 10 == 0 or index == total - 1:
-        log.info(f"[RTT-Stress] Ping {index + 1}/{total}")
-    return {"status": "ok", "index": index}
-
-
-@eel.expose
-def get_gevent_status():
-    """Returns the status of gevent patching and version info."""
-    try:
-        import gevent
-        from gevent import monkey
-        import greenlet
-        import threading
-
-        # Check if threading is actually monkey-patched
-        # (Standard threading.current_thread() is replaced by gevent's version)
-        is_patched = monkey.is_module_patched("socket")
-
-        return {
-            "active": True,
-            "version": gevent.__version__,
-            "greenlet": greenlet.__version__,
-            "patched": {
-                "socket": monkey.is_module_patched("socket"),
-                "thread": monkey.is_module_patched("thread"),
-                "time": monkey.is_module_patched("time"),
-                "sys": monkey.is_module_patched("sys"),
-                "threading": monkey.is_module_patched("threading")
-            }
-        }
-    except ImportError:
-        return {"active": False, "error": "gevent not installed"}
-
-
-@eel.expose
-def confirm_receipt(event_name):
-    """
-    @brief Simple confirmation from frontend to backend.
-    """
-    log.info(f"[Sync] Frontend confirmed receipt of: {event_name}")
-    return {"status": "log_noted"}
-
-
-@eel.expose
-def set_log_level(level):
-    """
-    Dynamically updates the application log level and persists it.
-    """
-    import logging
-    valid_levels = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL
-    }
-
-    if level in valid_levels:
-        new_lvl = valid_levels[level]
-        logging.getLogger().setLevel(new_lvl)
-
-        # Update all active handlers
-        for handler in logging.getLogger().handlers:
-            handler.setLevel(new_lvl)
-
-        # Persist to config
-        PARSER_CONFIG["log_level"] = level
-        save_parser_config()
-
-        log.warning(f"[System] Log level changed to {level} and persisted.")
-        return {"status": "success", "level": level}
-
-    return {"status": "error", "message": f"Invalid level: {level}"}
-
-
-@eel.expose
-def run_direct_scan():
-    """
-    Triggers a full re-index from the Diagnostic Hub.
-    """
-    log.warning("[Diagnostic] Manual DIRECT SCAN triggered from Hub. Clearing DB...")
-    try:
-        _scan_media_execution(clear_db=True)
-        stats = db.get_db_stats()
-        return {"status": "success", "items_found": stats.get('total_items', 0)}
-    except Exception as e:
-        log.error(f"[Diagnostic] Direct Scan failed: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@eel.expose
-def sync_library_atomic():
-    """
-    Forces a fresh read of the entire library from SQLite and pushes to UI.
-    """
-    log.info("[Diagnostic] ATOMIC SYNC triggered from Hub.")
-    try:
-        items = db.get_all_media()
-        return {"status": "success", "count": len(items), "items": items}
-    except Exception as e:
-        log.error(f"[Diagnostic] Atomic Sync failed: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@eel.expose
-def get_hydration_stats():
-    """
-    Forensic Hydration Sync (v1.37.22): Returns raw counts for DB Index vs Backend Cache.
-    """
-    from src.core import db
-    import sqlite3
-
-    results = {
-        "db_index": 0,
-        "backend_cache": 0,
-        "status": "ok"
-    }
-
-    try:
-        # 1. RAW SQLite Count
-        conn = sqlite3.connect(db.DB_FILENAME)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM media")
-        results["db_index"] = cursor.fetchone()[0]
-        conn.close()
-
-        # 2. Backend Memory Cache Count
-        # We access the module-level library to see what's loaded
-        items = db.get_library()
-        results["backend_cache"] = len(items)
-
-        return results
-    except Exception as e:
-        log.error(f"[Forensic-DBI] Audit failed: {e}")
-        return {"status": "error", "error": str(e)}
-
-
-@eel.expose
-def get_active_video_workers():
-    """
-    Video Health: Live Worker Audit (v1.37.25).
-    Identifies active FFmpeg/MKVMerge processes associated with the workspace.
-    """
-    import subprocess
-    import os
-
-    workers = []
-    try:
-        # We use 'ps' to get process details for the current user
-        # comm= (command name), args= (full command line)
-        output = subprocess.check_output(['ps', '-u', str(os.getlogin()), '-o', 'pid,comm,args'], encoding='utf-8')
-        lines = output.splitlines()[1:]  # Skip header
-
-        cwd = os.getcwd()
-
-        for line in lines:
-            parts = line.strip().split(None, 2)
-            if len(parts) < 3:
-                continue
-
-            pid, comm, args = parts[0], parts[1], parts[2]
-
-            # Filter for our key workers
-            comm_lower = comm.lower()
-            if 'ffmpeg' in comm_lower or 'mkvmerge' in comm_lower:
-                # Forensic Check: Is it in our CWD?
-                # This prevents accidentally listing system-level ffmpeg processes not from our app
-                is_workspace = cwd in args
-
-                workers.append({
-                    "pid": pid,
-                    "name": comm,
-                    "command": args[:100] + "..." if len(args) > 100 else args,
-                    "is_workspace": is_workspace
-                })
-
-        return {"status": "ok", "workers": workers}
-    except Exception as e:
-        log.error(f"[Forensic-VID] Worker Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@eel.expose
-def get_system_environment():
-    """
-    Environment Forensic Audit (v1.37.29).
-    Provides real-time resource telemetry and environmental metadata.
-    """
-    import psutil
-    import socket
-    import platform
-    import time
-
-    try:
-        process = psutil.Process()
-
-        # 1. Resource Telemetry
-        cpu_percent = process.cpu_percent(interval=None)  # Non-blocking
-        mem_info = process.memory_info()
-        mem_rss_mb = mem_info.rss / (1024 * 1024)
-
-        # 2. Uptime calculation
-        uptime = time.time() - APP_START_TIME
-
-        # 3. Port Health Audit
-        port = 8345
-        port_status = "error"
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                # If we catch an error, it means we can bind, which means it's NOT bound yet.
-                # Since we ARE running, it SHOULD be bound.
-                # Checking if OUR process has it would be better, but this is a quick check.
-                res = s.connect_ex(('127.0.0.1', port))
-                port_status = "active" if res == 0 else "inactive"
-        except BaseException:
-            pass
-
-        return {
-            "status": "ok",
-            "telemetry": {
-                "cpu": f"{cpu_percent:.1f}%",
-                "ram": f"{mem_rss_mb:.1f} MB",
-                "uptime": f"{int(uptime)}s",
-                "port_8345": port_status
-            },
-            "platform": {
-                "python": platform.python_version(),
-                "os": platform.system() + " " + platform.release(),
-                "eel": "0.16.0"  # Current Baseline
-            },
-            "pid": os.getpid()
-        }
-    except Exception as e:
-        log.error(f"[Forensic-ENV] Environment Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
 
 
 @eel.expose
@@ -1085,58 +697,7 @@ def kill_stalled_ffmpeg_streams():
     return api_reporting.kill_stalled_ffmpeg_streams()
 
 
-@eel.expose
-def get_playlist_forensics():
-    return api_reporting.get_playlist_forensics()
 
-@eel.expose
-def prune_playlist_orphans(playlist_id):
-    return api_reporting.prune_playlist_orphans(playlist_id)
-
-@eel.expose
-def get_state_forensics():
-    return api_reporting.get_state_forensics()
-
-@eel.expose
-def get_net_ping():
-    return api_reporting.get_net_ping()
-
-
-@eel.expose
-def get_process_forensics():
-    return api_reporting.get_process_forensics()
-
-@eel.expose
-def terminate_worker_process(pid):
-    return api_reporting.terminate_worker_process(pid)
-
-
-@eel.expose
-def get_global_health_audit():
-    return api_reporting.get_global_health_audit()
-
-
-@eel.expose
-def get_security_forensics():
-    return api_reporting.get_security_forensics()
-
-@eel.expose
-def get_hardware_forensics():
-    return api_reporting.get_hardware_forensics()
-
-
-@eel.expose
-def get_api_forensics():
-    registry = [
-        {"name": "get_global_health_audit", "status": "EXPOSED"},
-        {"name": "get_all_media", "status": "EXPOSED"},
-        {"name": "get_db_stats", "status": "EXPOSED"}
-    ]
-    return api_reporting.get_api_forensics(registry)
-
-@eel.expose
-def get_environment_forensics():
-    return api_reporting.get_environment_forensics()
 
 
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
@@ -1150,8 +711,8 @@ def initialize_debug_flags(args=None):
     if args is None:
         args = sys.argv
 
-    # Environment Detection
-    env_type, env_name, env_path, _, _ = _detect_python_environment()
+    # Environment Detection (Delegated to api_core_app v1.54.021)
+    env_type, env_name, env_path, _, _ = api_core_app._detect_python_environment()
     is_dev = "Coding" in str(env_path) or os.path.exists(PROJECT_ROOT / ".git")
 
     # Update PARSER_CONFIG env
@@ -1186,20 +747,7 @@ GLOBAL_ACTIVE_STREAMS = {}  # Tracks metrics for get_playback_stats
 
 
 # Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
-def find_venv_pid(venv_name):
-    import psutil
-    venv_path = str((PROJECT_ROOT / venv_name).resolve())
-    for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
-        try:
-            exe = proc.info.get('exe')
-            if exe and exe.startswith(venv_path):
-                return proc.info['pid']
-            cmdline = proc.info.get('cmdline')
-            if cmdline and venv_path in ' '.join(cmdline):
-                return proc.info['pid']
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
-    return None
+
 
 
 # Initialize logging as early as possible after paths are set
@@ -1211,7 +759,7 @@ BROWSER_PID = None  # Global to track browser process
 
 # PID-Logging beim Startup
 main_pid = os.getpid()
-testbed_pid = find_venv_pid('.venv_testbed')
+testbed_pid = api_core_app.find_venv_pid('.venv_testbed')
 log.info(f"[System] Forensic Bridge PID: {main_pid}")
 log.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
 # Logge Browser-PID, falls schon gesetzt (z.B. bei Headless-Start)
@@ -1246,7 +794,7 @@ except ModuleNotFoundError as exc:
         os.execv(str(local_venv_python), [str(local_venv_python), str(
             Path(__file__).resolve()), *sys.argv[1:]])
 
-    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    env_type, env_name, env_path, py_ver, py_exec = api_core_app._detect_python_environment()
 
     if env_type == 'conda':
         current_env = f" Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"

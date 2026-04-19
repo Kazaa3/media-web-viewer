@@ -1,4 +1,8 @@
 import time
+import os
+import sys
+import platform
+import psutil
 from pathlib import Path
 from src.core.eel_shell import eel
 
@@ -66,3 +70,82 @@ def get_session_id():
     """ Returns the current backend session ID. """
     from src.core.main import SESSION_ID
     return SESSION_ID
+
+# --- Environmental Detection & Lifecycle (Migrated from main.py v1.54.018) ---
+
+def _detect_python_environment():
+    """ Detect current Python environment: system, venv, or conda. """
+    python_version = platform.python_version()
+    python_executable = sys.executable
+    in_venv = sys.prefix != sys.base_prefix
+    venv_env = os.environ.get('VIRTUAL_ENV')
+    if in_venv or venv_env:
+        env_path = venv_env or sys.prefix
+        return ('venv', Path(env_path).name, env_path, python_version, python_executable)
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+    conda_prefix = os.environ.get('CONDA_PREFIX')
+    if conda_env and conda_prefix:
+        return ('conda', conda_env, conda_prefix, python_version, python_executable)
+    return ('system', None, sys.prefix, python_version, python_executable)
+
+def find_venv_pid(venv_name):
+    """ Locates the PID of a specific virtual environment process. """
+    venv_path = str((PROJECT_ROOT / venv_name).resolve())
+    for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
+        try:
+            exe = proc.info.get('exe')
+            if exe and exe.startswith(venv_path): return proc.info['pid']
+            cmdline = proc.info.get('cmdline')
+            if cmdline and venv_path in ' '.join(cmdline): return proc.info['pid']
+        except (psutil.NoSuchProcess, psutil.AccessDenied): continue
+    return None
+
+@eel.expose
+def get_system_environment():
+    """ Environment Forensic Audit: Provides real-time resource telemetry. """
+    try:
+        process = psutil.Process()
+        cpu_percent = process.cpu_percent(interval=None)
+        mem_rss_mb = process.memory_info().rss / (1024 * 1024)
+        from src.core.main import APP_START_TIME, APP_VERSION_CORE
+        uptime = time.time() - (APP_START_TIME or time.time())
+        return {
+            "status": "ok",
+            "telemetry": {"cpu": f"{cpu_percent:.1f}%", "ram": f"{mem_rss_mb:.1f} MB", "uptime": f"{int(uptime)}s"},
+            "platform": {"python": platform.python_version(), "os": platform.system() + " " + platform.release()},
+            "pid": os.getpid()
+        }
+    except Exception as e:
+        log.error(f"[Forensic-ENV] Environment Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def get_startup_info():
+    """ Returns dual-PID forensic info and startup metrics. """
+    from src.core.main import APP_START_TIME, APP_VERSION_CORE, SESSION_ID
+    return {
+        "pid": os.getpid(),
+        "boot_duration_sec": round(time.time() - (APP_START_TIME or time.time()), 2),
+        "start_time": APP_START_TIME,
+        "env": "diagnostic-lab-forensic",
+        "version": APP_VERSION_CORE,
+        "os": platform.system(),
+        "node": platform.node()
+    }
+
+@eel.expose
+def trigger_workstation_update(force: bool = False):
+    """ Manually triggers the forensic self-healing update cycle. """
+    log.info(f"🚀 [Governance] Manual Workstation Update Triggered (Force: {force})")
+    from src.core.config_master import DEPENDENCY_REGISTRY
+    orig_force = DEPENDENCY_REGISTRY["bootstrap_governance"].get("force_updates", False)
+    if force: DEPENDENCY_REGISTRY["bootstrap_governance"]["force_updates"] = True
+    try:
+        from src.core.startup_auditor import ensure_critical_packages
+        success = ensure_critical_packages()
+        return {"status": "ok" if success else "error", "restored": success}
+    except Exception as e:
+        log.error(f"❌ [Governance] Runtime Update Failed: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        DEPENDENCY_REGISTRY["bootstrap_governance"]["force_updates"] = orig_force
