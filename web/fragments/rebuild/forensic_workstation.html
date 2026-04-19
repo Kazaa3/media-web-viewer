@@ -3,15 +3,40 @@
     
     <!-- LANE 1: TECHNICAL SIDEBAR (Context & Filters) -->
     <aside id="workstation-lane-sidebar" class="workstation-lane sidebar-lane" style="border-right: 1px solid var(--border-glass); background: var(--bg-glass); display: flex; flex-direction: column; overflow: hidden;">
+        <!-- [v1.53.001] DISCOVERY CLUSTER -->
         <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.2);">
-            <div style="font-size: 10px; font-weight: 900; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;">Technical Context</div>
-            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">MODULE SELECTOR</div>
+            <div style="font-size: 10px; font-weight: 900; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Filter & Discovery</div>
+            
+            <!-- Global Mode Toggle -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">MODE</span>
+                <button id="lib-filter-mode-toggle-btn-sidebar" 
+                        class="lib-filter-mode-toggle-btn elite-toggle"
+                        onclick="toggleLibraryFilterMode()"
+                        style="padding: 4px 10px; font-size: 9px; min-width: 80px;">
+                    ROUTE
+                </button>
+            </div>
+
+            <!-- Enhanced Category Select -->
+            <select id="queue-type-filter-sidebar" 
+                    class="forensic-select-modern"
+                    onchange="if(typeof setLibraryFilter === 'function') setLibraryFilter(this.value)"
+                    style="width: 100%; margin-bottom: 12px;">
+                <option value="all">ALLE MEDIEN</option>
+            </select>
+
+            <!-- Sidebar Search Echo -->
+            <div style="position: relative;">
+                <input type="text" id="workstation-sidebar-search" 
+                       placeholder="Asset SUCHE..." 
+                       oninput="if(typeof handleLibrarySearch === 'function') handleLibrarySearch(this.value)"
+                       style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 4px; padding: 6px 12px; color: white; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+            </div>
         </div>
         
         <div id="workstation-sidebar-content" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
-            <!-- Categories / Filter Pills injected here -->
-            <div class="loading-fragment" style="font-size: 10px;">Hydrating Sidebar...</div>
-        </div>
+            <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">Module Explorer</div>
 
         <!-- Meta Data Summary Mini-Panel -->
         <div style="padding: 15px; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.1);">
