@@ -4,8 +4,8 @@ import time
 import subprocess
 from pathlib import Path
 
-# Add project root to sys.path
-PROJECT_ROOT = Path("/home/xc/#Coding/gui_media_web_viewer")
+# Dynamic Path Discovery (v1.46.132)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # Attempt to load config (v1.35.98 SSOT)
