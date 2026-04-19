@@ -191,22 +191,6 @@ def get_tech_markers():
 @eel.expose
 def get_system_forensics():
     return api_testing.get_system_forensics()
-                    # Global Browser Detection
-                    if any(b in name for b in browser_sigs):
-                        potential_browsers.append({
-                            "pid": pid,
-                            "type": proc.info['name'],
-                            "time": proc.info['create_time']
-                        })
-
-                    # Global Tool Detection
-                    for t in targets:
-                        if t in name:
-                            if t not in forensics["tools"]: forensics["tools"][t] = []
-                            if pid not in forensics["tools"][t]:
-                                forensics["tools"][t].append(pid)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
              
              # Pick the youngest browser (likely the one just opened by Eel)
              if potential_browsers and forensics["fe"]["pid"] == "N/A":
