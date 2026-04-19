@@ -1,8 +1,12 @@
 import os
 import time
 import sqlite3
+import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, cast
+from typing import Dict, Any, List, Tuple, cast, Optional
 
 # --- Forensic Handshake Imports ---
 from src.core.config_master import (
@@ -16,16 +20,14 @@ from src.core import db
 # Project Root Resolution (Consistent with main.py)
 from src.core.config_master import PROJECT_ROOT, DB_FILENAME, DATA_DIR, MEDIA_DIR, LOGS_DIR
 
-# Specialized Lazy Config Proxy (Shim for PARSER_CONFIG)
-# In a full-scale refactor, this would be centralized.
-def get_parser_config():
-    from src.core.main import PARSER_CONFIG
-    return PARSER_CONFIG
+# Specialized Lazy Config (SSOT)
+from src.parsers.format_utils import PARSER_CONFIG, save_parser_config, get_default_scan_dir
 
 from src.core.logger import get_logger
 log = get_logger("api_library")
 
-def apply_library_filters(all_media: List[Dict],
+from src.core.object_discovery import ObjectDiscoveryEngine
+from src.core.models import MediaItem
                           force_raw: bool = False,
                           search: str = "",
                           genre: str = "all",
@@ -311,13 +313,408 @@ def run_direct_scan():
     """ Triggers a full re-index of the media library. """
     log.warning("[Diagnostic] Manual DIRECT SCAN triggered. Clearing DB...")
     try:
-        from src.core.main import _scan_media_execution
         _scan_media_execution(clear_db=True)
         stats = db.get_db_stats()
         return {"status": "success", "items_found": stats.get('total_items', 0)}
     except Exception as e:
         log.error(f"[Diagnostic] Direct Scan failed: {e}")
         return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def scan_media(dir_path: str | None = None, clear_db: bool = True):
+    """
+    @brief Scans a directory recursively and indexes audio files.
+    """
+    import eel
+    if getattr(eel, 'js_set_scanning_status', None):
+        eel.js_set_scanning_status(True)
+
+    try:
+        _scan_media_execution(dir_path, clear_db)
+    finally:
+        if getattr(eel, 'js_set_scanning_status', None):
+            eel.js_set_scanning_status(False)
+
+
+def _parse_nfo_file(nfo_path: Path) -> dict:
+    """
+    Parses a Kodi/Plex style .nfo XML file (Centralized v1.46.131).
+    """
+    metadata = {}
+    nfo_cfg = GLOBAL_CONFIG.get("nfo_settings", {})
+    if not nfo_cfg.get("enable_parsing", True):
+        return {}
+
+    try:
+        import xml.etree.ElementTree as ET
+        if not nfo_path.exists(): return {}
+        
+        # Use centralized encoding if provided (default utf-8)
+        encoding = nfo_cfg.get("encoding", "utf-8")
+        with nfo_path.open("r", encoding=encoding, errors="replace") as f:
+            content = f.read()
+            # Basic sanity check for XML
+            if not content.strip().startswith("<"):
+                return {}
+            
+            # Reset pointer or parse from string
+            root = ET.fromstring(content)
+        
+        # Mapping: XML Tag -> Metadata Key (Centralized)
+        mappings = nfo_cfg.get("mapping", {
+            'title': 'title', 'year': 'year', 'genre': 'genre',
+            'artist': 'artist', 'album': 'album', 'plot': 'plot'
+        })
+        
+        for xml_tag, meta_key in mappings.items():
+            el = root.find(xml_tag)
+            if el is not None and el.text:
+                metadata[meta_key] = el.text.strip()
+                
+        # Handle multiple genres (Kodi standard)
+        genres = [g.text for g in root.findall('genre') if g.text]
+        if genres: 
+            metadata['genre'] = ", ".join(genres)
+            
+    except Exception as e:
+        # Respect the global compact logging flag
+        exc = None if GLOBAL_CONFIG["logging_registry"].get("log_compact_errors_only", True) else True
+        log.error(f"[NFO-Parser-Error] Failed to parse {nfo_path.name}: {e}", exc_info=exc)
+        
+    return metadata
+
+
+def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
+    """
+    @brief Performs the actual media scan (Refactored for Round 5.5 Performance).
+    """
+    start_time = time.time()
+    count_indexed = 0
+    total_traversed = 0
+
+    # 0. Round 5.6 - Emergency DB Purge (v1.35.98)
+    if clear_db:
+        log.warning("[DB-SCAN] Round 5.6: Emergency DB Purge triggered. Clearing existing items.")
+        db.clear_media()
+        # [DIAGNOSTIC] Ensure existing_media is reset
+        existing_media = set()
+    else:
+        existing_media = {str(Path(m['path']).resolve()) for m in db.get_all_media_items() if m.get('path')}
+
+    # 1. Imports (Round 5.5: Avoid Scoping Issues)
+    from src.parsers.format_utils import (
+        AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
+        DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
+        DSD_EXTENSIONS, HDDVD_EXTENSIONS, PARSER_CONFIG, get_default_scan_dir
+    )
+
+    # 4. Prepare Extension Filter & Fast-Category-Mapper (v1.35.98)
+    from src.core.models import MASTER_CAT_MAP
+    ext_to_cat = {}
+    for cat, info in MASTER_CAT_MAP.items():
+        for ext in info.get("extensions", []):
+            ext_to_cat[ext.lower()] = cat
+
+    all_exts = set(ext_to_cat.keys())
+    
+    # [v1.45.130] Toggles
+    enable_collections = GLOBAL_CONFIG.get("enable_collection_management", True)
+    enable_nfo = GLOBAL_CONFIG.get("enable_nfo_parsing", True)
+
+    # 2. Fast-Scan Override
+    parser_mode = 'lightweight'
+    # Wait, GLOBAL_CONFIG is imported, but parser_mode might be in a subdict.
+    # We'll just assume it works as in main.py for now.
+
+    # MUTE ARTWORK (The True 10-minute Stall Source)
+    orig_art_cfg = PARSER_CONFIG.get('ffmpeg_extract_thumbnails', True)
+    PARSER_CONFIG['ffmpeg_extract_thumbnails'] = False
+
+    log.info(f"[DB-SCAN] EMERGENCY Round 5.5 (v1.35.98): Mode={parser_mode} & Muting Thumbnails.")
+
+    # 3. Path Resolution
+    scan_roots = [Path(dir_path).resolve()] if dir_path else []
+    if not scan_roots:
+        config_dirs = PARSER_CONFIG.get("scan_dirs", [])
+        for d in config_dirs:
+            p = Path(d).resolve()
+            if p.exists():
+                scan_roots.append(p)
+
+    # Default fallback
+    if not scan_roots:
+        scan_roots = [get_default_scan_dir()]
+
+    # 5. Batch Collection
+    collected_items = []
+
+    try:
+        scan_settings = GLOBAL_CONFIG.get("scan_settings", {})
+        max_files = scan_settings.get("max_files", 50000)
+        max_depth = scan_settings.get("max_depth", 12)
+        enable_ext_skip = scan_settings.get("enable_extension_skipping", True)
+        skip_exts = set(scan_settings.get("skip_extensions", [".txt", ".log", ".tmp"]))
+        enable_size_skip = scan_settings.get("enable_size_skipping", True)
+        min_size = scan_settings.get("min_size_kb", 1) * 1024
+        max_size = scan_settings.get("max_size_mb", 50000) * 1024 * 1024
+        batch_size = scan_settings.get("batch_commit_size", 250)
+        log_compact = scan_settings.get("log_compact_errors_only", True)
+        log_unsupported = scan_settings.get("log_unsupported_extensions", False)
+
+        for scan_root in scan_roots:
+            log.info(f" [Scan] Starting scan of: {scan_root}")
+            for root, dirs, files in os.walk(str(scan_root), followlinks=False):
+                total_traversed += (len(files) + len(dirs))
+                if total_traversed > max_files:
+                    log.warning(f"[DB-SCAN] Safety Cap Triggered ({max_files} items). Stopping traversal.")
+                    dirs[:] = []  # Stop os.walk from recursing further
+                    break
+
+                d = Path(root)
+                # Depth Check (Centralized)
+                try:
+                    rel_path = d.relative_to(scan_root)
+                    if len(rel_path.parts) > max_depth:
+                        dirs[:] = []  # Stop recursion
+                        continue
+                except Exception as e:
+                    exc = None if log_compact else True
+                    log.error(f"[Scan-Depth-Error] Failed depth calculation for {d}: {e}", exc_info=exc)
+                    continue
+
+                # 2. Folders as Media (Albums/DVDs) - v1.45.130
+                if d != scan_root and enable_collections:
+                    media_files = [f for f in files if f.lower().endswith(tuple(all_exts))]
+                    m_count = len(media_files)
+                    
+                    if m_count > 0:
+                        # 1. Detect NFO & Coverage
+                        nfo_file = next((f for f in files if f.lower().endswith('.nfo')), None)
+                        nfo_data = _parse_nfo_file(d / nfo_file) if (nfo_file and enable_nfo) else {}
+                        
+                        # 2. Determine Collection Category
+                        is_audio = any(f.lower().endswith(tuple(AUDIO_EXTENSIONS)) for f in media_files)
+                        cat = 'audio' if is_audio else 'video'
+                        
+                        # Forensic Categorization Logic (v1.45.130-EXT)
+                        folder_name = d.name.lower()
+                        genre = nfo_data.get('genre', '').lower()
+                        artist = nfo_data.get('artist', '').lower()
+                        
+                        # Optical Media Check (v1.45.130)
+                        has_dvd = 'video_ts' in [sd.lower() for sd in dirs]
+                        has_bd = 'bdmv' in [sd.lower() for sd in dirs]
+                        
+                        if has_dvd or has_bd: cat = 'video_iso'
+                        elif 'klassik' in genre or 'classical' in genre or 'klassik' in folder_name: cat = 'klassik'
+                        elif 'soundtrack' in genre or 'ost' in genre or 'ost' in folder_name: cat = 'soundtrack'
+                        elif 'podcast' in genre or 'podcast' in folder_name: cat = 'podcast'
+                        elif 'hörbuch' in genre or 'audiobook' in genre or 'hörbuch' in folder_name: cat = 'hörbuch'
+                        elif ('mix' in folder_name or 'mixtape' in folder_name) and any(va in artist for va in ['va', 'varios', 'various artists']): cat = 'mix'
+                        elif any(va in artist for va in ['va', 'varios', 'various artists']): cat = 'compilation'
+                        elif m_count > 1 and is_audio: cat = 'album'
+                        elif m_count > 1 and not is_audio: cat = 'series'
+                        elif 'doku' in folder_name or 'dokumentation' in folder_name: cat = 'documentation'
+                        
+                        collected_items.append({
+                            'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
+                            'is_mock': 0, 'mock_stage': 0, 'full_tags': nfo_data, 'chapters': [],
+                            'type': 'folder', 'media_type': cat, 'nfo_parsed': 1 if nfo_data else 0
+                        })
+                        count_indexed += 1
+                        
+                        # Atomic Batch Commit (v1.46.102)
+                        if len(collected_items) >= batch_size:
+                            log.info(f"[DB-SCAN] Batch Commit (Folder): {len(collected_items)} items...")
+                            db.insert_media_batch(collected_items)
+                            collected_items = []
+
+                # 3. Individual Files (Standard Pass)
+                for filename in files:
+                    ext = "." + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
+                    
+                    if enable_ext_skip and ext in skip_exts:
+                        log.debug(f"[Scan-Trace] SKIPPING (Blacklisted Ext '{ext}'): {filename}")
+                        continue
+                        
+                    if ext not in all_exts:
+                        if log_unsupported:
+                            log.debug(f"[Scan-Trace] SKIPPING (Unsupported Ext '{ext}'): {filename}")
+                        continue
+                        
+                    f_path = os.path.join(root, filename)
+                    if f_path in existing_media:
+                        log.debug(f"[Scan-Trace] SKIPPING (Already Indexed): {filename}")
+                        continue
+
+                    if enable_size_skip:
+                        try:
+                            f_size = os.path.getsize(f_path)
+                            if f_size < min_size:
+                                log.debug(f"[Scan-Trace] SKIPPING (Ghost File < {min_size}B): {filename}")
+                                continue
+                            if f_size > max_size:
+                                log.debug(f"[Scan-Trace] SKIPPING (Oversize File > {max_size}B): {filename}")
+                                continue
+                        except Exception as e:
+                            log.warning(f"[Scan-Size-Error] Skip due to unreadable file size for {filename}: {e}")
+                            continue
+
+                    try:
+                        cat = ext_to_cat.get(ext, 'Unknown')
+                        log.debug(f"[Scan-Trace] INDEXING: {filename} -> {cat}")
+                        collected_items.append({
+                            'name': filename, 'path': f_path, 'category': cat,
+                            'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                            'type': 'file', 'file_type': ext[1:].upper(),
+                            'extension': ext
+                        })
+                        count_indexed += 1
+                    except Exception as e:
+                        exc = None if log_compact else True
+                        log.error(f"[Scan-Index-Error] Fatal crash indexing '{filename}': {e}", exc_info=exc)
+
+                    # 4. Atomic Batch Commit (v1.46.102)
+                    if len(collected_items) >= batch_size:
+                        log.info(f"[DB-SCAN] Batch Commit: {len(collected_items)} items...")
+                        db.insert_media_batch(collected_items)
+                        collected_items = []
+
+        # 6. Final Sync
+        if collected_items:
+            log.info(f"[DB-SCAN] Finalizing batch of {len(collected_items)} items...")
+            db.insert_media_batch(collected_items)
+
+        # --- [v1.54.001] OBJECT-CENTRIC GROUPING PHASE ---
+        log.info("[DB-SCAN] Starting Object-Centric Grouping Phase (v1.54)...")
+        all_items = db.get_all_media_items()
+        engine = ObjectDiscoveryEngine()
+        discovered_objects = engine.discover_groups(all_items)
+        
+        objects_inserted = 0
+        for obj in discovered_objects:
+            # 1. Insert the parent object record
+            parent_id = db.insert_media_object(obj.to_dict())
+            if parent_id:
+                objects_inserted += 1
+                # 2. Link all child items to the new parent
+                for item_id in obj.items:
+                    db.set_item_parent(item_id, parent_id)
+                # 3. Link sidecars (using path as lookup)
+                for sidecar_path in obj.sidecars.values():
+                    sidecar_item = next((it for it in all_items if it['path'] == sidecar_path), None)
+                    if sidecar_item:
+                        db.set_item_parent(sidecar_item['id'], parent_id)
+
+        log.info(f"[DB-SCAN] Object Grouping Complete. Created {objects_inserted} high-density objects.")
+
+        # 10. Round 5.6 - Final Sync & Availability Check (v1.35.98)
+        if not clear_db:
+            log.info("[DB-SCAN] Running availability check for incremental sync...")
+            total, missing = db.check_media_availability()
+            log.info(f"[DB-SCAN] Availability check done. Total: {total} | Missing/Renamed: {missing}")
+
+        return {"status": "ok", "count": count_indexed, "time_seconds": time.time() - start_time}
+
+    except Exception as e:
+        log.error(f"[Scan-Trace] CRITICAL FAILURE: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        # Restore artwork setting
+        PARSER_CONFIG['ffmpeg_extract_thumbnails'] = orig_art_cfg
+        # Silent Status Update (Optional bridge in api_library)
+        pass
+
+
+@eel.expose
+def add_scan_dir():
+    """
+    @brief Opens a dialog to select a new directory for library scanning.
+    """
+    from src.core.main import pick_folder
+    new_dir = pick_folder()
+    if new_dir:
+        dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
+        if new_dir not in dirs:
+            dirs.append(new_dir)
+            PARSER_CONFIG["scan_dirs"] = dirs
+            save_parser_config()
+            return {"status": "ok", "dirs": dirs}
+    return {"status": "cancel"}
+
+
+@eel.expose
+def remove_scan_dir(dir_path):
+    """
+    @brief Removes a directory from the scan list in the configuration.
+    """
+    dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
+    if dir_path in dirs:
+        dirs.remove(dir_path)
+        PARSER_CONFIG["scan_dirs"] = dirs
+        save_parser_config()
+        return {"status": "ok", "dirs": dirs}
+    return {"status": "error", "message": "Pfad nicht in Liste"}
+
+
+@eel.expose
+def update_tags(name, tags_dict):
+    """
+    @brief Saves customized tags for a media item in the database.
+    """
+    log.debug(f"[DB-Update] Updating tags for {name}: {tags_dict}")
+    db.update_media_tags(name, tags_dict)
+    return {"status": "ok"}
+
+
+@eel.expose
+def rename_media(old_name, new_name):
+    """
+    @brief Renames a media record in the database.
+    """
+    if not new_name or new_name.strip() == "":
+        return {"status": "error", "message": "Name darf nicht leer sein"}
+
+    log.debug(f"[DB-Update] Renaming record: {old_name} -> {new_name}")
+
+    success = db.rename_media(old_name, new_name)
+    if success:
+        return {"status": "ok"}
+    else:
+        return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
+
+
+@eel.expose
+def delete_media(name):
+    """
+    @brief Deletes a media item from the database.
+    """
+    log.debug(f"[DB-Update] Deleting record: {name}")
+    return db.delete_media(name)
+
+
+@eel.expose
+def add_file_to_library(file_path):
+    """
+    @brief Adds a single file from the browser to the library.
+    """
+    p = Path(file_path)
+    if not p.exists() or not p.is_file():
+        return {"error": "Datei nicht gefunden"}
+    
+    from src.core.config_master import AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
+    if p.suffix.lower() not in AUDIO_EXTENSIONS and p.suffix.lower() not in VIDEO_EXTENSIONS:
+        return {"error": "Kein untersttztes Audio- oder Videoformat"}
+
+    known = db.get_known_media_names()
+    if p.name in known:
+        return {"status": "exists", "name": p.name}
+
+    item = MediaItem(p.name, p)
+    item_dict = item.to_dict()
+    db.insert_media(item_dict)
+    return {"status": "added", "item": item_dict}
 
 @eel.expose
 def sync_library_atomic():
