@@ -540,7 +540,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
         "max_buffer_size": 10000,       # For UI Log Buffer
         "transcoding_log_dir": str(PROJECT_ROOT / "logs" / "transcoding"),
-        "enable_granular_transcoder_logs": True
+        "enable_granular_transcoder_logs": True,
+        "log_timestamp_format": "%Y%m%d_%H%M%S"
     },
 
     # --- EXTRACTION & TRANSCODING PROFILES (v1.46.131) ---

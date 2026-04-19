@@ -447,7 +447,7 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
     sb.update(40, "Environment Stabilized")
 
     # --- Core Imports & Logging ---
-    from src.core.logger import get_logger, stall_watchdog, progress_update
+    from src.core.logger import get_logger, stall_watchdog, progress_update, get_timestamped_log_path
     import src.core.logger as logger
     sb.update(60, "Logger Initializing")
 
@@ -5210,19 +5210,17 @@ def log_process_stderr(process, name):
     """
     if not process or not process.stderr:
         return
-def log_process_stderr(process, name):
     # Determine granular logging destinations (Forensic Phase 7)
     log_cfg = GLOBAL_CONFIG.get("logging_registry", {})
-    enable_granular = log_cfg.get("enable_granular_tradef log_process_stderr(process, name):def log_process_stderr(process, name):nscoder_logs", False)
+    enable_granular = log_cfg.get("enable_granular_transcoder_logs", False)
     log_dir = Path(log_cfg.get("transcoding_log_dir", str(PROJECT_ROOT / "logs" / "transcoding")))
     
     log_handle = None
     if enable_granular:
         try:
             log_dir.mkdir(parents=True, exist_ok=True)
-            # Normalize name for filename safety
-            safe_name = name.lower().replace("-", "_").replace(" ", "_")
-            log_handle = open(log_dir / f"{safe_name}.log", "a", encoding="utf-8")
+            log_file = get_timestamped_log_path(log_dir, name)
+            log_handle = open(log_file, "a", encoding="utf-8")
             log_handle.write(f"\n--- Process Log Start [{name}]: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
         except Exception as e:
             log.debug(f"[Log-Process-Internal] Failed to setup specialized log for {name}: {e}")

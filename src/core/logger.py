@@ -146,6 +146,21 @@ class UIHandler(logging.Handler):
             self.handleError(record)
 
 
+def get_timestamped_log_path(log_dir: Path | str, tag: str) -> Path:
+    """
+    Generates a centralized, timestamped log path.
+    (v1.46.132 Centralized)
+    """
+    log_cfg = GLOBAL_CONFIG.get("logging_registry", {})
+    ts_fmt = log_cfg.get("log_timestamp_format", "%Y%m%d_%H%M%S")
+    ts = time.strftime(ts_fmt)
+    # Normalize tag for filename safety
+    safe_tag = tag.lower().replace("-", "_").replace(" ", "_")
+    
+    log_dir_path = Path(log_dir)
+    return log_dir_path / f"{ts}_{safe_tag}.log"
+
+
 def log_system_diagnostics():
     """Logs detailed system and environment information for debugging."""
     import sys

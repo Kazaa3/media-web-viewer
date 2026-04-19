@@ -14,9 +14,10 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from .format_utils import PARSER_CONFIG
 from src.core import logger
-from src.core.config_master import GLOBAL_CONFIG
+from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT
+from src.core.logger import get_logger, get_timestamped_log_path
 
-log = logger.get_logger("artwork")
+log = get_logger("artwork")
 
 class ArtworkExtractor:
     """
@@ -256,9 +257,7 @@ class ArtworkExtractor:
         if enable_granular:
             try:
                 log_dir.mkdir(parents=True, exist_ok=True)
-                # Timestamped safe name (Forensic Phase 7.1)
-                ts = time.strftime('%Y%m%d_%H%M%S')
-                log_file = log_dir / f"{ts}_{log_tag}.log"
+                log_file = get_timestamped_log_path(log_dir, log_tag)
                 # Decision: Append for history as requested by user
                 log_handle = open(log_file, "a", encoding="utf-8")
                 std_out = log_handle
