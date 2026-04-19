@@ -3,9 +3,9 @@ import os
 import json
 from pathlib import Path
 
-# Correct DB configuration based on project structure
-PROJECT_ROOT = "/home/xc/#Coding/gui_media_web_viewer"
-DB_FILENAME = os.path.join(PROJECT_ROOT, "data/database.db")
+# Dynamic Path Discovery (v1.46.132)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+DB_FILENAME = PROJECT_ROOT / "data" / "database.db"
 
 def verify_persistence():
     print("--- Persistence Verification ---")
