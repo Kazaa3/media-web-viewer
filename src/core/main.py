@@ -6963,6 +6963,16 @@ def run_unified_audit():
     return api_audit.generate_unified_audit_report()
 
 @eel.expose
+def run_extended_forensic_audit():
+    """Nuclear multi-phase audit (Connectivity -> DOM -> Screenshot -> Automation)."""
+    return api_audit.run_extended_forensic_audit()
+
+@eel.expose
+def perform_granular_dom_audit():
+    """Step-by-step structural verification of UI elements."""
+    return api_audit.perform_granular_dom_audit()
+
+@eel.expose
 def run_automation_audit(engine="playwright"):
     """Triggers a specialized automation audit (Playwright/Selenium)."""
     if engine == "playwright":
