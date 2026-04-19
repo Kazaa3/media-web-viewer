@@ -289,6 +289,12 @@ def background_version_discovery(config_dict: dict):
 
 
 # --- NETWORK & HOST CALCULATION ---
+DEFAULT_REQUEST_TIMEOUT = 15
+DEFAULT_REQUEST_STREAM = True
+
+APP_PORT = int(os.environ.get("MWV_PORT", 8345))
+APP_HOST = os.environ.get("MWV_HOST", "localhost")
+BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime
