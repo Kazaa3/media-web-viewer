@@ -75,7 +75,6 @@ import sys
 import shutil
 import re
 import subprocess
-import eel
 from pathlib import Path
 from typing import Any, Dict, List
 from importlib.metadata import distributions

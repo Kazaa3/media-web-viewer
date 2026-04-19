@@ -124,10 +124,22 @@ def get_environment_inventory():
         for tool in FORENSIC_TOOLS_LIST:
             forensic_binaries.append(get_tool_metadata(tool))
             
-        log.info(f"[Inventory] Aggregated {len(python_packages)} packages and {len(forensic_binaries)} binaries.")
+        # 3. Python Runtime Metadata (v1.46.138)
+        python_env = {
+            "executable": sys.executable,
+            "prefix": sys.prefix,
+            "base_prefix": sys.base_prefix,
+            "is_venv": sys.prefix != sys.base_prefix,
+            "conda_prefix": os.environ.get("CONDA_PREFIX", "None"),
+            "platform": sys.platform,
+            "version": sys.version.split(" ")[0]
+        }
+            
+        log.info(f"[Inventory] Aggregated {len(python_packages)} packages, {len(forensic_binaries)} binaries, and runtime metadata.")
         return {
             "status": "ok", 
             "is_container": is_in_container(),
+            "python_env": python_env,
             "python_packages": python_packages, 
             "forensic_binaries": forensic_binaries,
             "counts": {
