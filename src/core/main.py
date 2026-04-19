@@ -22,7 +22,7 @@ from src.core.config_master import PORT_CLEANUP_CMD
 from src.core.config_master import (
     _DOTENV_LOADED, APP_VERSION_CORE, 
     PROJECT_ROOT, DEFAULT_TIME_FORMAT, 
-    WINDOW_SIZE, FRONTEND_SETTINGS,
+    WINDOW_SIZE, FRONTEND_SETTINGS, EEL_SETTINGS,
     LAUNCH_PROFILE, FORENSIC_TOOLS_LIST
 )
 from src.core.db import get_active_db_path
@@ -689,8 +689,7 @@ def log_session_diagnostics():
     log.info(f"[System] Session: {SESSION_ID} | PID: {os.getpid()} | Port: {EEL_SETTINGS['port']}")
     log.info(f"[System] Active Database: {get_active_db_path()}")
 
-if __name__ == "__main__":
-    log_session_diagnostics()
+# (log_session_diagnostics call moved to bottom)
 
 
 @eel.expose
