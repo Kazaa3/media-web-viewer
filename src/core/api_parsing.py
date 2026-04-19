@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT
-from src.parsers.media_parser import parse as _parse_media
+from src.parsers.media_parser import extract_metadata as _parse_media
 from src.core.logger import get_logger
 
 log = get_logger("api_parsing")
