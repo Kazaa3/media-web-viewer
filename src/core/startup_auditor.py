@@ -64,12 +64,29 @@ def ensure_critical_packages() -> bool:
     Checks and restores packages categorized by functional groups.
     """
     try:
-        from src.core.config_master import DEPENDENCY_REGISTRY
+        from src.core.config_master import DEPENDENCY_REGISTRY, APP_VERSION_CORE
     except ImportError:
         log.error("[Audit-Deps] Failed to import DEPENDENCY_REGISTRY. Aborting.")
         return False
     
-    # 0. Global Governance Check
+    gov = DEPENDENCY_REGISTRY.get("bootstrap_governance", {})
+    skip = gov.get("skip_updates", False)
+    force = gov.get("force_updates", False)
+    version_only = gov.get("update_on_version_change", True)
+    last_version = gov.get("last_updated_version", "")
+
+    # 1. Skip Update Guard
+    if skip and not force:
+        log.info("[Audit-Deps] Update cycle SKIPPED via --no-update flag.")
+        return True # Assume environment is stable or handled manually
+
+    # 2. Version-Change Guard ("lade nur wenn neue version")
+    if version_only and not force:
+        if APP_VERSION_CORE == last_version:
+            log.info(f"[Audit-Deps] System version '{APP_VERSION_CORE}' matches last update. Skipping self-healing.")
+            return True
+
+    # 3. Global Enable Switch
     if not DEPENDENCY_REGISTRY.get("auto_install_enabled", True):
         log.warning("[Audit-Deps] Automated installation is DISABLED via global flag.")
         return _verify_all_groups_passive(DEPENDENCY_REGISTRY)

@@ -89,7 +89,23 @@ DEPENDENCY_REGISTRY = {
         "win32": [
             "ffmpeg.exe", "MediaInfo.dll", "vlc.exe", "google-chrome.exe"
         ]
+    },
+
+    # --- [v1.54.002] BOOTSTRAP & UPDATE GOVERNANCE ---
+    "bootstrap_governance": {
+        "skip_updates":            "--no-update" in sys.argv,
+        "force_updates":           "--force-update" in sys.argv,
+        "update_on_version_change": True,
+        "last_updated_version":    "v1.54.001" 
     }
+}
+
+# --- [v1.54.002] FORENSIC QUALITY SSOT ---
+BITRATE_QUALITY_THRESHOLDS = {
+    "high":     1000, # Lossless/High-Res (v1.53 Standard)
+    "standard": 320,  # High-Quality lossy
+    "low":      192,  # Standard lossy
+    "minimum":  128   # Low-Quality
 }
 
 # --- FORENSIC AUDIT & AUTOMATION REGISTRY (v1.47.01) ---

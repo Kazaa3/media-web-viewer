@@ -10,6 +10,29 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 @dataclass
+class ObjectAsset:
+    """
+    Represents a single supplementary asset (e.g., Cover, Booklet, Disk Art).
+    """
+    path: str
+    asset_type: str  # front, back, disc, inlay, booklet, poster
+    locale: str = "US"  # Country/Locale code
+    name: str = ""
+
+@dataclass
+class ObjectRelease:
+    """
+    Represents a specific release version of an object (e.g., Japanese Deluxe Edition).
+    """
+    name: str
+    media_type: str  # DVD, Blu-ray, CD, Digital, Vinyl
+    country: str = "US"
+    edition: str = "Standard"
+    year: str = ""
+    items: List[int] = field(default_factory=list) # Member MediaItem IDs
+    assets: List[ObjectAsset] = field(default_factory=list)
+
+@dataclass
 class MediaObject:
     """
     Base class for virtual grouping entities (Forensic SSOT).
@@ -19,10 +42,14 @@ class MediaObject:
     name: str = ""
     path: str = ""  # The anchor path (usually the folder containing the assets)
     category: str = "unknown"
-    items: List[int] = field(default_factory=list)  # IDs of child MediaItems
+    items: List[int] = field(default_factory=list)  # ALL IDs of child MediaItems
     sidecars: Dict[str, str] = field(default_factory=dict)  # k: variant, v: path (NFO, CUE, etc.)
     subtype: str = "OBJECT"
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # [v1.54.002] High-Density Asset Model
+    releases: List[ObjectRelease] = field(default_factory=list)
+    global_assets: List[ObjectAsset] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -33,7 +60,9 @@ class MediaObject:
             "items": self.items,
             "sidecars": self.sidecars,
             "subtype": self.subtype,
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "releases": [r.__dict__ for r in self.releases],
+            "global_assets": [a.__dict__ for a in self.global_assets]
         }
 
 @dataclass
@@ -44,7 +73,6 @@ class FilmObject(MediaObject):
     """
     subtype: str = "FILM_OBJECT"
     versions: Dict[str, int] = field(default_factory=dict)  # k: Cut name, v: item_id
-    covers: List[str] = field(default_factory=list) # List of image paths (US, DE, etc.)
     
     def __post_init__(self):
         self.category = "video"
@@ -56,7 +84,6 @@ class AlbumObject(MediaObject):
     Supports multiple releases (CD, Digital, SACD), CUE files, and EAC logs.
     """
     subtype: str = "ALBUM_OBJECT"
-    releases: List[Dict[str, Any]] = field(default_factory=list)
     is_gapless: bool = False
     has_cue: bool = False
     has_log: bool = False
