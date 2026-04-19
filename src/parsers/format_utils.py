@@ -7,8 +7,8 @@ import subprocess
 import shutil
 import eel
 from src.core.logger import get_logger
-from src.core.config_master import (, MEDIA_DIR
-    GLOBAL_CONFIG,
+from src.core.config_master import (
+    GLOBAL_CONFIG, MEDIA_DIR,
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
     PLAYLIST_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
