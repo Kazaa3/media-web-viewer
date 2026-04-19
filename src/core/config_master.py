@@ -1177,7 +1177,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
         "library_category_map": [
             {"id": "all",             "label": "ALLE MEDIEN"},
-            {"id": "audio",           "label": "audio"},
+            {"id": "audio",           "label": "AUDIO (Gruppe)"},
             {"id": "audio_native",    "label": "audio_native"},
             {"id": "audio_transcode", "label": "audio_transcode"},
             {"id": "album",           "label": "album"},
@@ -1188,7 +1188,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             {"id": "podcast",         "label": "podcast"},
             {"id": "soundtrack",      "label": "soundtrack"},
             {"id": "klassik",         "label": "klassik"},
-            {"id": "video",           "label": "video"},
+            {"id": "video",           "label": "VIDEO (Gruppe)"},
             {"id": "video_iso",       "label": "iso-image"},
             {"id": "series",          "label": "serie"},
             {"id": "documentation",   "label": "dokumentation"},
@@ -1208,6 +1208,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             {"id": "unknown",         "label": "unbekannt"},
             {"id": "unbekannt",       "label": "unbekannt"}
         ],
+
+        "library_filter_mode_registry": {
+            "route":    ["all", "audio_native", "audio_transcode", "video", "video_iso", "bilder", "docs", "archives", "unknown"],
+            "category": ["all", "audio", "album", "single", "hörbuch", "sampler", "podcast", "soundtrack", "klassik", "video", "series", "documentation", "bilder", "epub", "games"]
+        },
+
+        "library_category_hierarchy": {
+            "audio": ["album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
+            "video": ["series", "documentation", "video_iso"]
+        },
 
         "branch_architecture_registry": {
             "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],

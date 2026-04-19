@@ -70,6 +70,13 @@
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <button onclick="refreshLibrary()" class="tab-btn"
                             style="padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; background: #111; border: 1px solid #333; color: #fff; cursor: pointer;">REFRESH</button>
+                        
+                        <!-- [v1.53] Forensic Filter Mode Toggle -->
+                        <button id="lib-filter-mode-toggle-btn" onclick="toggleLibraryFilterMode()" class="tab-btn"
+                            style="padding: 8px 12px; font-size: 10px; font-weight: 900; background: #1a1a1a; border: 1px solid #444; color: var(--accent-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <span id="lib-filter-mode-label">ROUTE</span>
+                        </button>
+
                         <select id="queue-type-filter" class="tab-btn"
                             style="padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; background: #111; border: 1px solid #333; color: #fff;">
                         </select>
@@ -182,6 +189,23 @@
 </div>
 
 <script>
+    /**
+     * [v1.53] Toggle Library Filter Mode (Route vs. Category)
+     */
+    window.activeLibraryFilterMode = window.activeLibraryFilterMode || 'route';
+    function toggleLibraryFilterMode() {
+        window.activeLibraryFilterMode = (window.activeLibraryFilterMode === 'category') ? 'route' : 'category';
+        
+        const label = document.getElementById('lib-filter-mode-label');
+        if (label) label.innerText = window.activeLibraryFilterMode.toUpperCase();
+        
+        console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()}`);
+        
+        if (typeof hydrateCategoryDropdown === 'function') {
+            hydrateCategoryDropdown('media'); // Re-populate based on new mode
+        }
+    }
+
     /**
      * Switch Player Sub-Views (v1.34 Master)
      */
