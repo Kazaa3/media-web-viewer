@@ -8783,3 +8783,526 @@ def list_feature_modal_items():
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+
+
+# === [V3 DEEP SWEEP ARCHIVE - RECENT PULSES] ===
+# These functions were recovered from recent baselines (Yesterday and Today 07:00).
+
+            def probe_trigger():
+                spawn_event.wait()
+                time.sleep(GLOBAL_CONFIG['sleep_times']['boot_probe_wait'])
+                log.info("[Eel] Triggering automated frontend probe (@eel.run_frontend_probe)")
+                eel.run_frontend_probe()()
+            threading.Thread(target=probe_trigger, daemon=True).start()
+
+        # --- [v1.46.053] Automated Boot Scan ---
+        if GLOBAL_CONFIG.get("scan_settings", {}).get("rescan_on_boot"):
+            def boot_scan_trigger():
+                log.info("[Boot-Scan] Waiting for UI synchronization...")
+                spawn_event.wait()
+                # Wait a bit more to ensure the UI is actually rendering
+                time.sleep(2) 
+                log.info("[Boot-Scan] Initiating automated library rescan (Additive Mode)...")
+                scan_media(clear_db=False)
+                log.info("[Boot-Scan] Scan complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=boot_scan_trigger, daemon=True).start()
+
+        # --- [v1.46.097] Zero-Item Auto-Recovery Scan ---
+        elif db.get_media_count() == 0:
+            def auto_recovery_trigger():
+                log.info("[Boot-Scan] DB is empty. Triggering background Auto-Recovery scan...")
+                spawn_event.wait()
+                time.sleep(2)
+                scan_media(clear_db=True)
+                log.info("[Boot-Scan] Auto-Recovery complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=auto_recovery_trigger, daemon=True).start()
+
+        # --- Debug Audit Trigger (v1.34) ---
+        if "--debug" in sys.argv:
+            run_app_audit_detached(port)
+
+        # --- Hang Detection / Watchdog (SSOT v1.35.93) ---
+        timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
+        start_wait = time.time()
+        last_alive = start_wait
+
+        while not spawn_event.is_set():
+            now = time.time()
+            if now - start_wait > timeout:
+                print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Python: {sys.version.split()[0]}", flush=True)
+                print(f"Eel Mode: {eel_mode}", flush=True)
+                print(f"Working Dir: {os.getcwd()}", flush=True)
+                print(f"App HTML: {'Exists' if (Path('web') / 'app.html').exists() else 'MISSING'}", flush=True)
+                print("-----------------------------", flush=True)
+                print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
+                break
+
+            if now - last_alive >= 5:
+                elapsed = int(now - start_wait)
+                log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
+                last_alive = now
+            eel.sleep(0.5)
+
+        if spawn_event.is_set():
+            print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
+            if profiler:
+                profiler.end_phase("UI-Sync-Wait")
+            if profiler:
+                profiler.log_checkpoint("Application Ready", tag="success")
+
+    except Exception as e:
+        print(f"CRITICAL: Eel launch failure: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+
+            def boot_scan_trigger():
+                log.info("[Boot-Scan] Waiting for UI synchronization...")
+                spawn_event.wait()
+                # Wait a bit more to ensure the UI is actually rendering
+                time.sleep(2) 
+                log.info("[Boot-Scan] Initiating automated library rescan (Additive Mode)...")
+                scan_media(clear_db=False)
+                log.info("[Boot-Scan] Scan complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=boot_scan_trigger, daemon=True).start()
+
+        # --- [v1.46.097] Zero-Item Auto-Recovery Scan ---
+        elif db.get_media_count() == 0:
+            def auto_recovery_trigger():
+                log.info("[Boot-Scan] DB is empty. Triggering background Auto-Recovery scan...")
+                spawn_event.wait()
+                time.sleep(2)
+                scan_media(clear_db=True)
+                log.info("[Boot-Scan] Auto-Recovery complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=auto_recovery_trigger, daemon=True).start()
+
+        # --- Debug Audit Trigger (v1.34) ---
+        if "--debug" in sys.argv:
+            run_app_audit_detached(port)
+
+        # --- Hang Detection / Watchdog (SSOT v1.35.93) ---
+        timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
+        start_wait = time.time()
+        last_alive = start_wait
+
+        while not spawn_event.is_set():
+            now = time.time()
+            if now - start_wait > timeout:
+                print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Python: {sys.version.split()[0]}", flush=True)
+                print(f"Eel Mode: {eel_mode}", flush=True)
+                print(f"Working Dir: {os.getcwd()}", flush=True)
+                print(f"App HTML: {'Exists' if (Path('web') / 'app.html').exists() else 'MISSING'}", flush=True)
+                print("-----------------------------", flush=True)
+                print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
+                break
+
+            if now - last_alive >= 5:
+                elapsed = int(now - start_wait)
+                log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
+                last_alive = now
+            eel.sleep(0.5)
+
+        if spawn_event.is_set():
+            print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
+            if profiler:
+                profiler.end_phase("UI-Sync-Wait")
+            if profiler:
+                profiler.log_checkpoint("Application Ready", tag="success")
+
+    except Exception as e:
+        print(f"CRITICAL: Eel launch failure: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+
+            def auto_recovery_trigger():
+                log.info("[Boot-Scan] DB is empty. Triggering background Auto-Recovery scan...")
+                spawn_event.wait()
+                time.sleep(2)
+                scan_media(clear_db=True)
+                log.info("[Boot-Scan] Auto-Recovery complete. Synchronizing frontend...")
+                if hasattr(eel, 'refreshLibrary'):
+                    eel.refreshLibrary()()
+            threading.Thread(target=auto_recovery_trigger, daemon=True).start()
+
+        # --- Debug Audit Trigger (v1.34) ---
+        if "--debug" in sys.argv:
+            run_app_audit_detached(port)
+
+        # --- Hang Detection / Watchdog (SSOT v1.35.93) ---
+        timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
+        start_wait = time.time()
+        last_alive = start_wait
+
+        while not spawn_event.is_set():
+            now = time.time()
+            if now - start_wait > timeout:
+                print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Python: {sys.version.split()[0]}", flush=True)
+                print(f"Eel Mode: {eel_mode}", flush=True)
+                print(f"Working Dir: {os.getcwd()}", flush=True)
+                print(f"App HTML: {'Exists' if (Path('web') / 'app.html').exists() else 'MISSING'}", flush=True)
+                print("-----------------------------", flush=True)
+                print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
+                break
+
+            if now - last_alive >= 5:
+                elapsed = int(now - start_wait)
+                log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
+                last_alive = now
+            eel.sleep(0.5)
+
+        if spawn_event.is_set():
+            print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
+            if profiler:
+                profiler.end_phase("UI-Sync-Wait")
+            if profiler:
+                profiler.log_checkpoint("Application Ready", tag="success")
+
+    except Exception as e:
+        print(f"CRITICAL: Eel launch failure: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+
+    def ffmpeg_stream():
+        # Auto-detect best encoder for performance
+        encoder = get_best_hw_encoder()
+        log.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
+
+        # Register active stream for stats (SSOT v1.35.94)
+        if "GLOBAL_ACTIVE_STREAMS" in globals():
+            GLOBAL_ACTIVE_STREAMS["mse_transcode"] = {
+                "ts": time.time(),
+                "codec": "H.264 (AVC) / AAC",
+                "bitrate": "Target: 4-8 Mbps",
+                "engine": f"FFmpeg ({encoder})",
+                "rtt": 5,  # Low latency for MSE
+                "atmos": False,
+                "bitstream": False
+            }
+
+        # Base command for H.264 FragMP4
+        ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
+        is_iso = str(resolved_path).lower().endswith('.iso')
+
+        # ISO / DVD optimization
+        if is_iso:
+            main_track = find_main_track_iso(resolved_path)
+            # FFmpeg DVD syntax: -playlist X (if supported) or just -i
+            input_args = ["-i", str(resolved_path)]
+        else:
+            input_args = ["-i", str(resolved_path)]
+
+        # FFmpeg command for FragMP4 remuxing/transcoding (profiles pre-calculated)
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
+        cmd.extend(ss_args)
+        cmd.extend(input_args)
+
+        if is_audio:
+            # Audio Transcoding Profile Selection (v1.35.98 Unified)
+            profile = profiles.get(p_key, {})
+            codec = profile.get("codec", "aac")
+            bitrate = profile.get("bitrate", "192k")
+            fmt = profile.get("format", "mp4")
+            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
+
+            cmd.extend([
+                "-vn",
+                "-c:a", codec, "-b:a", bitrate,
+                "-f", fmt
+            ])
+            if movflags:
+                cmd.extend(["-movflags", movflags])
+        else:
+            # Video/ISO Transcoding Profile (SSOT)
+            profile = profiles.get("video_transcode", {})
+            preset = profile.get("preset", "veryfast")
+            crf = profile.get("crf", "23")
+            a_codec = profile.get("a_codec", "aac")
+            a_bitrate = profile.get("a_bitrate", "128k")
+            fmt = profile.get("format", "mp4")
+            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
+
+            if subs_idx is not None and str(subs_idx).lower() != 'none':
+                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}", "-map", f"0:s:{subs_idx}"])
+            else:
+                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
+
+            cmd.extend([
+                "-c:v", encoder, "-preset", preset, "-crf", crf,
+                "-c:a", a_codec, "-b:a", a_bitrate,
+                "-f", fmt,
+                "-movflags", movflags
+            ])
+
+        cmd.append("pipe:1")
+
+        # Apply Large File Protection (v1.35.98 Hook)
+        cmd, is_large_file = apply_large_file_protection(cmd, resolved_path)
+
+        perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
+        stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
+
+        process = None
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf)
+            # Log stderr in background
+
+            def log_stderr(p):
+                for line in p.stderr:
+                    log.error(f"[FFmpeg-Stream] {line.decode().strip()}")
+            import threading
+            threading.Thread(target=log_stderr, args=(process,), daemon=True).start()
+
+            while True:
+                chunk = process.stdout.read(512 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        except Exception as e:
+            log.error(f"[stream] Generator error: {e}")
+        finally:
+            if process:
+                process.terminate()
+                try:
+                    process.wait(timeout=1)
+                except BaseException:
+                    process.kill()
+
+    # Determine Correct Content-Type (v1.35.98 Dynamic)
+    if is_audio:
+        low_path = str(resolved_path).lower()
+        if ".wma" in low_path or ".opus" in low_path:
+            bottle.response.content_type = 'audio/webm'
+        elif ".alac" in low_path or "flac" in str(profiles.get(p_key, {}).get("codec")):
+            bottle.response.content_type = 'audio/flac'
+        else:
+            bottle.response.content_type = 'audio/mp4'
+    else:
+        bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
+    return ffmpeg_stream()
+
+
+@eel.expose
+
+            def log_stderr(p):
+                for line in p.stderr:
+                    log.error(f"[FFmpeg-Stream] {line.decode().strip()}")
+            import threading
+            threading.Thread(target=log_stderr, args=(process,), daemon=True).start()
+
+            while True:
+                chunk = process.stdout.read(512 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        except Exception as e:
+            log.error(f"[stream] Generator error: {e}")
+        finally:
+            if process:
+                process.terminate()
+                try:
+                    process.wait(timeout=1)
+                except BaseException:
+                    process.kill()
+
+    # Determine Correct Content-Type (v1.35.98 Dynamic)
+    if is_audio:
+        low_path = str(resolved_path).lower()
+        if ".wma" in low_path or ".opus" in low_path:
+            bottle.response.content_type = 'audio/webm'
+        elif ".alac" in low_path or "flac" in str(profiles.get(p_key, {}).get("codec")):
+            bottle.response.content_type = 'audio/flac'
+        else:
+            bottle.response.content_type = 'audio/mp4'
+    else:
+        bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
+    return ffmpeg_stream()
+
+
+@eel.expose
+
+        def generate():
+            # PIPE-KIT: mkvmerge (MKV) -> ffmpeg (FragMP4)
+            # This provides the best of both worlds: lossless remux and browser-friendly streaming.
+            mkv_proc = None
+            ffmpeg_proc = None
+
+            try:
+                # Seeking support
+                ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
+                is_iso = str(file_path).lower().endswith('.iso')
+
+                # FOR DVDs: Force transcoding because fMP4 in Chrome doesn't support MPEG-2 (VOB/ISO)
+                if is_iso:
+                    log.info(f" [Remux] ISO detected, redirecting to transcode flow for compatibility.")
+                    return stream_video_fragmented(item_id)
+
+                # Mapping support for track switching
+                map_args = ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
+                if subs_idx is not None and str(subs_idx).lower() != 'none':
+                    map_args += ["-map", f"0:s:{subs_idx}"]
+
+                perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
+                stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
+                mkv_buf = perf_cfg.get("mkvmerge_bufsize", 1024 * 1024)
+
+                if is_mkvtoolnix_available() and float(start_time) == 0 and audio_idx == '0' and not subs_idx:
+                    # Lossless remux via mkvmerge for start (best compatibility)
+                    mkv_proc = subprocess.Popen(
+                        [mkvmerge_path, "-o", "-", str(file_path)],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=mkv_buf
+                    )
+                    log_process_stderr(mkv_proc, "MKVMerge-Pipe")
+
+                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
+                    lossless_flags = lossless_cfg.get(
+                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+
+                    ffmpeg_cmd = [
+                        ffmpeg_path, "-loglevel", "error", "-i", "pipe:0"
+                    ] + lossless_flags + ["-"]
+
+                    ffmpeg_proc = subprocess.Popen(
+                        ffmpeg_cmd,
+                        stdin=mkv_proc.stdout,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        bufsize=stream_buf)
+                    log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
+                else:
+                    # Use FFmpeg for seeking/mapping remux (more reliable for mid-stream offsets/tracks)
+                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
+                    lossless_flags = lossless_cfg.get(
+                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+
+                    ffmpeg_cmd = [
+                        ffmpeg_path, "-loglevel", "error"
+                    ] + ss_args + [
+                        "-i", str(file_path)
+                    ] + map_args + lossless_flags + ["-"]
+
+                    ffmpeg_proc = subprocess.Popen(
+                        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf
+                    )
+                    log_process_stderr(ffmpeg_proc, "FFmpeg-Remux-SS")
+
+                # Stream chunks to browser
+                while True:
+                    if ffmpeg_proc.stdout is None:
+                        break
+                    chunk = ffmpeg_proc.stdout.read(256 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
+            except Exception as e:
+                log.error(f" [Remux] Generator error: {e}")
+            finally:
+                # Cleanup processes
+                for p in [ffmpeg_proc, mkv_proc]:
+                    if p:
+                        try:
+                            p.terminate()
+                            p.wait(timeout=1)
+                        except BaseException:
+                            try:
+                                p.kill()
+                            except BaseException:
+                                pass
+                log.info(f" [Remux] Finalized Pipe-Kit stream for: {file_path}")
+
+        return bottle.HTTPResponse(generate(), content_type="video/mp4")
+    except Exception as e:
+        import traceback
+        log.error(f" [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
+        return bottle.HTTPError(500, f"Remux Error: {e}")
+
+
+
+@eel.expose
+def read_file(filename, context='logbuch'):
+    """
+    @brief Reads the content of a file from a specific context.
+    @param filename Name of the file.
+    @param context Context/Folder (default: 'logbuch').
+    @return File content as string or None if error.
+    """
+    try:
+        if context == 'logbuch':
+            base_path = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
+        else:
+            # For security, only allow logbuch for now
+            return None
+
+        file_path = base_path / filename
+        if not file_path.exists() or not file_path.is_file():
+            return None
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        log.error(f"read_file error: {e}")
+        return None
+
+
+@eel.expose
+
+@eel.expose
+def run_selenium_session_tests(options=None):
+    """
+    Runs Selenium tests by attaching to the running Chrome instance.
+    """
+    test_script = PROJECT_ROOT / "tests" / "test_selenium_session.py"
+    if not test_script.exists():
+        return {"status": "error", "message": f"Test script nicht gefunden unter {test_script}"}
+
+    try:
+        # We use the same venv as the main app if possible
+        cmd = [sys.executable, str(test_script)]
+        if options:
+            if options.get('verbose'):
+                cmd.append('--verbose')
+            if options.get('trace'):
+                cmd.append('--trace')
+            if options.get('debug'):
+                cmd.append('--debug')
+            if options.get('dom_control'):
+                cmd.append('--dom-control')
+            if options.get('pp_mode'):
+                cmd.append('--pp-mode')
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return {
+            "status": "ok",
+            "output": result.stdout,
+            "error": result.stderr,
+            "exit_code": result.returncode
+        }
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "message": "Selenium Test Zeitberschreitung (30s)"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+
