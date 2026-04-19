@@ -125,7 +125,8 @@ def _restore_packages(packages: List[str], registry: Dict) -> bool:
                 subprocess.check_call(cmd)
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from Repository.")
                 success = True
-            except: pass
+            except Exception as e:
+                log.debug(f"[Audit-Deps] Phase-1 Failed for '{package}': {e}")
 
         # Phase 2: Local
         if not success and local_cache and os.path.exists(local_cache):
@@ -137,7 +138,8 @@ def _restore_packages(packages: List[str], registry: Dict) -> bool:
                 subprocess.check_call(cmd)
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from LOCAL CACHE.")
                 success = True
-            except: pass
+            except Exception as e:
+                log.debug(f"[Audit-Deps] Phase-2 Failed for '{package}': {e}")
             
         if not success:
             log.error(f"[Audit-Deps] ABORT: Could not restore mission-critical package '{package}'.")

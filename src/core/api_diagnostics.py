@@ -14,15 +14,15 @@ try:
 except ImportError:
     import eel
 
-# High-Fidelity Mocking of tkinter to satisfy PyAutoGUI dependencies (v1.46.142 Workaround)
-mock_tk = MagicMock()
-mock_tk.TkVersion = 8.6
-if "tkinter" not in sys.modules:
-    sys.modules["tkinter"] = mock_tk
-if "tkinter.messagebox" not in sys.modules:
-    sys.modules["tkinter.messagebox"] = MagicMock()
-
-import pyautogui
+# [v1.53.003-R2] Defensive Dependency Safeguard
+try:
+    import pyautogui
+except ImportError as e:
+    # Use MagicMock to satisfy the symbol table without crashing the process
+    # This prevents ModuleNotFoundError on systems where auto-install failed.
+    import logging
+    logging.getLogger("api_diagnostics").warning(f"[Audit-Pulse] pyautogui NOT FOUND: Using Mock Fallback. Reason: {e}")
+    pyautogui = MagicMock()
 
 from src.core.config_master import (
     GLOBAL_CONFIG, PROJECT_ROOT, 
