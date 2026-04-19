@@ -142,6 +142,7 @@ def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[s
             legacy_db.unlink()
             deleted.append(str(legacy_db))
         except Exception:
+            log.debug(f"[ROOT-CLEANUP] Could not delete {name}", exc_info=True)
             continue
     return deleted
 
@@ -180,7 +181,8 @@ def cleanup_legacy_root_files():
         
         _ROOT_CLEANED = True
     except Exception as e:
-        log.error(f"[ROOT-CLEANUP] Critical error during cleanup: {e}")
+        log.error(f"[ROOT-CLEANUP] Critical error during cleanup: {e}", exc_info=True)
+
 
 
 def init_db(depth: int = 0):
@@ -232,7 +234,7 @@ def init_db(depth: int = 0):
                 except Exception as e:
                     retry_count += 1
                     if retry_count >= MAX_INIT_RETRIES:
-                        log.error(f"[DB-CRITICAL] Failed to connect to DB after {retry_count} attempts: {e}.")
+                        log.error(f"[DB-CRITICAL] Failed to connect to DB after {retry_count} attempts: {e}", exc_info=True)
                         return False
                     log.warning(f"[DB-RETRY] DB connect failed (attempt {retry_count}): {e}")
                     time.sleep(0.2)
@@ -331,7 +333,7 @@ def init_db(depth: int = 0):
                         cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
                         conn.commit()
                     except Exception as e:
-                        log.error(f"Migration error for column {col_name}: {e}")
+                        log.error(f"Migration error for column {col_name}: {e}", exc_info=True)
 
             # Migration: Rename categories to new SSOT standards (v1.35.75)
             try:
@@ -354,7 +356,7 @@ def init_db(depth: int = 0):
             log.info("[DB] Database initialization/migration successful.")
             return True
         except Exception as e:
-            log.critical(f"[DB-FATAL] Initialization failed: {e}")
+            log.critical(f"[DB-FATAL] Initialization failed: {e}", exc_info=True)
             if 'conn' in locals() and conn:
                 conn.close()
             return False
@@ -383,7 +385,7 @@ def factory_reset(depth: int = 0):
             db_path.unlink()
             log.info("[DB] Database file deleted successfully.")
         except Exception as e:
-            log.error(f"[DB] Could not delete database file: {e}")
+            log.error(f"[DB] Could not delete database file: {e}", exc_info=True)
             # Try to just clear tables if file delete fails
             clear_media()
     _DB_INITIALIZED = False
@@ -479,7 +481,7 @@ def insert_media_batch(items: list[dict]):
         conn.commit()
         log.info(f"[DB] [BATCH-SUCCESS] Inserted {len(items)} items in one transaction.")
     except Exception as e:
-        log.error(f"[DB] [BATCH-ERROR] {e}")
+        log.error(f"[DB] [BATCH-ERROR] {e}", exc_info=True)
         conn.rollback()
     finally:
         conn.close()
@@ -539,7 +541,7 @@ def insert_media(item_dict):
         conn.close()
         return None
     except Exception as e:
-        log.error(f"[DB-VERIFY] [INSERT-CRITICAL] Failed to index '{item_dict['name']}': {e}")
+        log.error(f"[DB-VERIFY] [INSERT-CRITICAL] Failed to index '{item_dict['name']}': {e}", exc_info=True)
         conn.close()
         raise
 
@@ -751,7 +753,7 @@ def check_media_availability():
         conn.commit()
         conn.close()
     except Exception as e:
-        log.error(f"[DB-VERIFY] Error: {e}")
+        log.error(f"[DB-VERIFY] Error: {e}", exc_info=True)
         
     return total, missing
 

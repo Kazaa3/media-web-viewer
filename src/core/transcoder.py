@@ -94,7 +94,7 @@ class TranscoderManager:
         except Exception as e:
             task.status = "error"
             task.error_message = str(e)
-            log.error(f"Transcode error: {e}")
+            log.error(f"Transcode error: {e}", exc_info=True)
         finally:
             if callback: callback(task_id, task.progress)
 
