@@ -1366,10 +1366,8 @@ BROWSER_PID = None  # Global to track browser process
 # PID-Logging beim Startup
 main_pid = os.getpid()
 testbed_pid = find_venv_pid('.venv_testbed')
-selenium_pid = find_venv_pid('.venv_selenium')
-log.info(f"[System] Main PID: {main_pid}")
+log.info(f"[System] Forensic Bridge PID: {main_pid}")
 log.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
-log.info(f"[System] Selenium PID: {selenium_pid if selenium_pid else 'nicht aktiv'}")
 # Logge Browser-PID, falls schon gesetzt (z.B. bei Headless-Start)
 if BROWSER_PID:
     log.info(f"[System] Browser PID: {BROWSER_PID}")
