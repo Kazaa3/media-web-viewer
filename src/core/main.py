@@ -14,6 +14,14 @@ if str(_root) not in sys.path:
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
+# --- EARLY GEVENT PATCHING (v1.46.136) ---
+# Must occur before any other imports to avoid lock collisions
+try:
+    from gevent import monkey
+    monkey.patch_all()
+except ImportError:
+    pass
+
 from src.core import api_core_app, api_tools, api_transcoding, api_parsing
 
 from src.core.config_master import PORT_CLEANUP_CMD
@@ -267,17 +275,7 @@ class Lazy:
         return getattr(self._mod, attr)
 
 
-# 3. Early Monkey Patching
-try:
-    if profiler:
-        profiler.start_phase("Gevent-Patching")
-    from gevent import monkey
-    monkey.patch_all()
-    log.info("[Bootstrap] gevent monkey-patching successful")
-    if profiler:
-        profiler.end_phase("Gevent-Patching")
-except ImportError:
-    log.info("[Bootstrap] gevent not found, continuing without patching")
+# (gevent patching moved to top for v1.46.136 stability)
 
 # Lazy Proxy Module Registry (v1.41.00 - Exact Mappings)
 mode_router = Lazy("src.core.mode_router")
@@ -352,21 +350,22 @@ def log_checkpoint(msg: str, tag: str = "generic"):
         log.info(f"[Checkpoint] {elapsed:6.3f}s | {msg}")
 
 
-# --- Application Initialization Sequence ---
-with StatusBar("Loading Core Components", total=100) as sb:
-    sb.update(0, "Importing Eel")
-    import eel
+def launch_eel_server():
+    """Initializes the Eel server and assets (v1.46.136)."""
+    with StatusBar("Loading Core Components", total=100) as sb:
+        sb.update(0, "Importing Eel")
+        import eel
 
-    sb.update(10, "Initializing Eel Assets")
-    web_dir = str(PROJECT_ROOT / "web")
-    log.info(f"\n[DIAGNOSTIC] !!! EEL WEB DIRECTORY: {os.path.abspath(web_dir)} !!!\n")
-    if not os.path.exists(web_dir):
-        log.critical(f"Web dir not found at {web_dir}")
-        sys.exit(1)
-    eel.init(web_dir)
-    sb.update(25, "Eel Assets Ready")
+        sb.update(10, "Initializing Eel Assets")
+        web_dir = str(PROJECT_ROOT / "web")
+        log.info(f"\n[DIAGNOSTIC] !!! EEL WEB DIRECTORY: {os.path.abspath(web_dir)} !!!\n")
+        if not os.path.exists(web_dir):
+            log.critical(f"Web dir not found at {web_dir}")
+            sys.exit(1)
+        eel.init(web_dir)
+        sb.update(25, "Eel Assets Ready")
 
-    sb.update(30, "Registering Core SRC Modules")
+        sb.update(30, "Registering Core SRC Modules")
 def bootstrap_core_settings():
     """Initializes the core runtime settings (v1.46.136)."""
     global port, eel_kwargs, transcode_mgr
