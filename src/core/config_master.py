@@ -227,23 +227,103 @@ def get_env_list(name: str, default: list) -> list:
     return [item.strip() for item in val.split(",")]
 
 def discover_binary(name: str, fallback: str = "") -> str:
-    """Safely discover a binary path on the current system."""
-    # Forensic Evolution (v1.46.132): Prioritize local tools/bin path
+    """
+    Safely discover a binary path on the current system with platform awareness.
+    Priority: tools/[platform]/bin -> tools/bin -> system PATH
+    """
+    platform = "windows" if sys.platform == "win32" else "linux"
+    
+    # 1. Platform-Specific Tools (Forensic Priority v1.46.132)
+    platform_bin = TOOLS_DIR / platform / "bin" / name
+    if platform_bin.exists():
+        return str(platform_bin)
+    
+    platform_bin_exe = TOOLS_DIR / platform / "bin" / f"{name}.exe"
+    if platform_bin_exe.exists():
+        return str(platform_bin_exe)
+
+    # 2. General Tools Bin
     local_path = TOOLS_BIN_DIR / name
     if local_path.exists():
         return str(local_path)
     
-    # Check for .exe on Windows-like environments if applicable (future proofing)
     local_exe_path = TOOLS_BIN_DIR / f"{name}.exe"
     if local_exe_path.exists():
         return str(local_exe_path)
 
+    # 3. Handle Special Aliases
     if name == "vlc":
-        return shutil.which("vlc") or shutil.which("cvlc") or "/usr/bin/vlc"
+        return shutil.which("vlc") or shutil.which("cvlc") or ("/usr/bin/vlc" if platform == "linux" else "")
     if name == "cvlc":
-        return shutil.which("cvlc") or "/usr/bin/cvlc"
+        return shutil.which("cvlc") or ("/usr/bin/cvlc" if platform == "linux" else "")
     
+    # 4. System PATH & Environment Overrides
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
+
+# --- BROWSER REGISTRY (v1.46.132) ---
+# Supports multiple channels and forensic-grade web engine discovery
+BROWSER_REGISTRY = {
+    "chrome": {
+        "stable": discover_binary("google-chrome", "google-chrome"),
+        "dev":    discover_binary("google-chrome-unstable", "google-chrome-unstable"),
+        "beta":   discover_binary("google-chrome-beta", "google-chrome-beta"),
+    },
+    "chromium": {
+        "stable": discover_binary("chromium", "chromium"),
+        "browser": discover_binary("chromium-browser", "chromium-browser"),
+    },
+    "firefox": {
+        "stable": discover_binary("firefox", "firefox"),
+        "dev":    discover_binary("firefox-developer-edition", "firefox-developer-edition"),
+    }
+}
+
+# --- PROGRAM REGISTRY (v1.46.132 Professional Suite) ---
+# Centralized SSOT for all forensic and playback tools
+PROGRAM_REGISTRY = {
+    "vlc":         discover_binary("vlc"),
+    "cvlc":        discover_binary("cvlc"),
+    "ffmpeg":      discover_binary("ffmpeg"),
+    "ffprobe":     discover_binary("ffprobe"),
+    "ffplay":      discover_binary("ffplay"),
+    "handbrake":   discover_binary("HandBrakeCLI"),
+    "mkvmerge":    discover_binary("mkvmerge"),
+    "mkvinfo":     discover_binary("mkvinfo"),
+    "mkvextract":  discover_binary("mkvextract"),
+    "mkvpropedit": discover_binary("mkvpropedit"),
+    "mediamtx":    discover_binary("mediamtx"),
+    "swyh-rs-cli": discover_binary("swyh-rs-cli"),
+    "spotifyd":    discover_binary("spotifyd"),
+    "spt":         discover_binary("spt"),
+    "pyvidplayer2": discover_binary("pyvidplayer2"),
+    "mpv":         discover_binary("mpv"),
+    "m3u8":        discover_binary("m3u8-tester"),
+    "isoinfo":     discover_binary("isoinfo"),
+    "mediainfo":   discover_binary("mediainfo"),
+    "docker":      discover_binary("docker"),
+    "doxygen":     discover_binary("doxygen"),
+    "graphviz":    discover_binary("dot"),
+    "chrome":      BROWSER_REGISTRY["chrome"]["stable"] or BROWSER_REGISTRY["chromium"]["stable"]
+}
+
+# --- MEDIA RESOURCE REGISTRY (v1.46.132 Forensic Data Base) ---
+# Standardized location for auditing and development assets
+MEDIA_RESOURCE_REGISTRY = {
+    "reference": {
+        "video": TEST_DATA_DIR / "reference" / "video.mp4",
+        "audio": TEST_DATA_DIR / "reference" / "audio.mp3",
+        "mkv":   TEST_DATA_DIR / "reference" / "test.mkv",
+        "iso":   TEST_RESOURCES_DIR / "iso" / "test_disc.iso"
+    },
+    "mocks": {
+        "root": TEST_RESOURCES_DIR / "mockfiles",
+        "dvd":  TEST_RESOURCES_DIR / "mockfiles" / "dvd_vts",
+        "db":   TEST_RESOURCES_DIR / "media_library_root_backup.db"
+    },
+    "archives": {
+        "sample_zip": TEST_RESOURCES_DIR / "assets" / "sample.zip"
+    }
+}
 
 # --- VERSION DISCOVERY OPTIMIZATION (v1.41.00) ---
 _VERSION_CACHE = {}
@@ -1420,32 +1500,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "poll_fast": float(os.environ.get("MWV_SLEEP_POLL_FAST", 0.1))
     },
     
-    # --- EXTERNAL BINARY DISCOVERY (Centralized v1.41.00) ---
-    "program_paths": {
-        "vlc": discover_binary("vlc", "vlc"),
-        "cvlc": discover_binary("cvlc", "cvlc"),
-        "ffmpeg": discover_binary("ffmpeg", "ffmpeg"),
-        "ffprobe": discover_binary("ffprobe", "ffprobe"),
-        "ffplay": discover_binary("ffplay", "ffplay"),
-        "handbrake": discover_binary("HandBrakeCLI", "HandBrakeCLI"),
-        "mkvmerge": discover_binary("mkvmerge", "mkvmerge"),
-        "mkvinfo": discover_binary("mkvinfo", "mkvinfo"),
-        "mkvextract": discover_binary("mkvextract", "mkvextract"),
-        "mkvpropedit": discover_binary("mkvpropedit", "mkvpropedit"),
-        "mediamtx": discover_binary("mediamtx", "mediamtx"),
-        "swyh-rs-cli": discover_binary("swyh-rs-cli", "swyh-rs-cli"),
-        "spotifyd": discover_binary("spotifyd", "spotifyd"), # Spotify Connect daemon
-        "spt": discover_binary("spt", "spt"),           # Spotify TUI for remote control
-        "pyvidplayer2": discover_binary("pyvidplayer2", "pyvidplayer2"),
-        "mpv": discover_binary("mpv", "mpv"),
-        "m3u8": discover_binary("m3u8", "m3u8-tester"),
-        "isoinfo": discover_binary("isoinfo", "isoinfo"), # ISO 9660 tool
-        "mediainfo": discover_binary("mediainfo", "mediainfo"), # MediaInfo CLI backend
-        "docker": discover_binary("docker", "docker"), # Docker CLI
-        "doxygen": discover_binary("doxygen", "doxygen"), # documentation
-        "graphviz": discover_binary("dot", "dot"), # graphviz
-        "chrome": discover_binary("google-chrome", "google-chrome") # playwright/eel backend
-    },
+    "program_paths": PROGRAM_REGISTRY,
+    "browser_registry": BROWSER_REGISTRY,
+    "media_resources": MEDIA_RESOURCE_REGISTRY,
     
     # --- STORAGE REGISTRY (v1.46.132 Centralized SSOT) ---
     "storage_registry": {
@@ -1541,10 +1598,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         # --- Reference Media (Test Assets) ---
         "reference_media": {
-            "video": str(TEST_DATA_DIR / "reference" / "video.mp4"),
-            "audio": str(TEST_DATA_DIR / "reference" / "audio.mp3"),
-            "iso":   str(TEST_DATA_DIR / "iso" / "test_disc.iso"),
-            "mkv":   str(TEST_DATA_DIR / "reference" / "test.mkv"),
+            "video": str(MEDIA_RESOURCE_REGISTRY["reference"]["video"]),
+            "audio": str(MEDIA_RESOURCE_REGISTRY["reference"]["audio"]),
+            "iso":   str(MEDIA_RESOURCE_REGISTRY["reference"]["iso"]),
+            "mkv":   str(MEDIA_RESOURCE_REGISTRY["reference"]["mkv"]),
         }
     },
 
