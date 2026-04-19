@@ -51,7 +51,9 @@ from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
     api_logbuch, api_testing, api_diagnostics, api_audit,
     api_config, api_core_app, api_library, api_reporting,
-    api_tools, api_environment, api_ui
+    api_tools, api_environment, api_ui,
+    api_playback, api_file_browser, api_legacy_archive,
+    api_media_tools
 )
 from src.core.object_discovery import ObjectDiscoveryEngine
 from src.core.objects import create_forensic_object
