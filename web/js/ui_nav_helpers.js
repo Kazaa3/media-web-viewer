@@ -750,8 +750,11 @@ function switchPlayerView(viewId) {
             }
         });
 
-        // Trigger logic based on view
-        if (viewId === 'warteschlange' && typeof renderAudioQueue === 'function') renderAudioQueue();
+        // Trigger logic based on view (v1.54.014: Aggressive Hydration)
+        if (viewId === 'warteschlange') {
+            if (typeof renderAudioQueue === 'function') renderAudioQueue();
+            if (typeof renderPhotoQueue === 'function') renderPhotoQueue();
+        }
         if (viewId === 'visualizer' && typeof initVisualizer === 'function') initVisualizer();
         if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') refreshSavedPlaylists();
 
