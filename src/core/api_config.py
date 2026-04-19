@@ -64,3 +64,9 @@ def set_language(lang):
     GLOBAL_CONFIG["language"] = lang
     save_config()
     return True
+
+@eel.expose
+def set_ui_config_value(key: str, value: Any):
+    """ Atomic helper to set values in the ui_settings registry. """
+    from src.core.api_ui import set_ui_setting
+    return set_ui_setting(key, value)

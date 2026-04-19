@@ -13,14 +13,7 @@ log = logging.getLogger("mwv.api.ui")
 @eel.expose
 def get_ui_settings():
     """Returns the current UI registry and configuration."""
-    return {
-        **GLOBAL_CONFIG,
-        "ui_settings": {
-            **GLOBAL_CONFIG,
-            "footer_settings": GLOBAL_CONFIG.get("footer_settings", {}),
-            "ui_flag_registry": GLOBAL_CONFIG.get("ui_flag_registry", {})
-        }
-    }
+    return GLOBAL_CONFIG.get("ui_settings", {})
 
 @eel.expose
 def set_ui_setting(key: str, value: Any):
