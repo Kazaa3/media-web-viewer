@@ -47,6 +47,10 @@ EXTENSION_REGISTRY = {
 # Deriving the Master Category Map from the Global Taxonomy SSOT.
 MASTER_CAT_MAP = {}
 for key, cfg in GLOBAL_MEDIA_TAXONOMY.items():
+    # [v1.54.008] Defensive Guard: Skip technical metadata or malformed entries
+    if not isinstance(cfg, dict) or "label" not in cfg:
+        continue
+
     # Bridge the taxonomy structure to the internal model schema
     MASTER_CAT_MAP[key] = {
         "internal": cfg.get("parent", key),

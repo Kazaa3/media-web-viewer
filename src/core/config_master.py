@@ -42,7 +42,7 @@ LOGGING_REGISTRY = {
     "frontend_log":         "frontend_errors.log",
     "transcoding_log_dir":  "transcoding",
     "max_size_mb":          10,
-    "backup_count":         3,
+    "backup_count":         50,
     "log_datefmt":          DEFAULT_TIME_FORMAT,
     "use_session_subfolders": True,
     "enable_main_log":      True,
@@ -100,7 +100,7 @@ DEPENDENCY_REGISTRY = {
     }
 }
 
-# --- [v1.54.007] FORENSIC QUALITY SSOT ---
+# --- [v1.54.008] FORENSIC QUALITY SSOT ---
 BITRATE_QUALITY_THRESHOLDS = {
     "lossless": 1000, # FLAC/DSD/Alac (v1.53 Standard)
     "high":     320,  # High-Quality lossy
@@ -224,18 +224,15 @@ GLOBAL_MEDIA_TAXONOMY = {
     "audio":           {"label": "Audio (Gruppe)",      "desc": "General audio asset",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category"},
     "album":           {"label": "Album",               "desc": "Standard discography item",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "single":          {"label": "Single / EP",         "desc": "Short-form release",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "maxi":            {"label": "Maxi / Extended",     "desc": "Extended single release",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "hörbuch":         {"label": "Hörbuch",             "desc": "Spoken word narrative",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "sampler":         {"label": "Sampler",             "desc": "Multiple artists collection",     "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "sampler":         {"label": "Sampler / VA",        "desc": "Multiple artists collection",     "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "compilation":     {"label": "Compilation",         "desc": "Various tracks assembly",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "podcast":         {"label": "Podcast",             "desc": "Digital talk series",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "mix":             {"label": "Mix / DJ-Set",        "desc": "Continuous audio performance",    "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "single":          {"label": "Single / 7\"",        "desc": "Single song release",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "maxi":            {"label": "Maxi / 12\"",        "desc": "Extended single release",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
 
     # --- LITERARY & ORDERED MEDIA (v1.54.005) ---
     "audiobook":       {"label": "Hörbuch / Audiobook",  "desc": "Literary spoken word",           "ext": ALL_AUDIO_EXTENSIONS|{".m4b"}, "type": "category", "parent": "audio"},
@@ -267,14 +264,6 @@ GLOBAL_MEDIA_TAXONOMY = {
     "nfo":             {"label": "NFO / Metadata",      "desc": "Information files",              "ext": {".nfo"},              "type": "category"},
     "unknown":         {"label": "Unbekannt",           "desc": "Unprocessed status",             "ext": set(),                 "type": "category"},
     "unbekannt":       {"label": "Unbekannt (Alias)",   "desc": "Alias for Unknown",              "ext": set(),                 "type": "category"},
-    
-    # --- [v1.54.002] FORENSIC QUALITY SSOT ---
-    "bitrate_thresholds": {
-        "high":     1000, # Lossless/High-Res (v1.53 Standard)
-        "standard": 320,  # High-Quality lossy
-        "low":      192,  # Standard lossy
-        "minimum":  128   # Low-Quality
-    }
 }
 
 try:

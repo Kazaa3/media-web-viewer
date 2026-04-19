@@ -96,7 +96,18 @@ def ensure_critical_packages() -> bool:
         "pillow": "PIL",
         "vlc": "vlc",
         "m3u8": "m3u8",
-        # Default: module_name == package_name
+        "python-dotenv": "dotenv",
+        "music-tag": "music_tag",
+        "opencv-python": "cv2",
+        "pywavelets": "pywt",
+        "webdriver-manager": "webdriver_manager",
+        "pytest-playwright": "playwright",
+        "pytest-cov": "pytest_cov",
+        "python-vlc": "vlc",
+        "requests": "requests",
+        "urllib3": "urllib3",
+        "chardet": "chardet",
+        "charset-normalizer": "charset_normalizer"
     }
     
     overall_success = True
