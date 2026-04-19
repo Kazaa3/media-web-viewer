@@ -122,11 +122,11 @@ try:
     log.info("[Bootstrap] Eel loaded successfully")
 
     # --- CORE METADATA REGISTRY ---
-    from core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem, get_allowed_internal_cats
-    from core.config_master import (
+    from src.core.config_master import (
         GLOBAL_CONFIG, APP_VERSION, APP_VERSION_CORE, APP_VERSION_FULL, BACKEND_VERSION, FRONTEND_VERSION,
         VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
     )
+    from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem, get_allowed_internal_cats
     from src.core.transcoder import TranscoderManager
     from src.core import handbrake_wrapper as handbrake
     from src.core import api_library
@@ -1401,6 +1401,7 @@ def get_startup_info():
 
             current_process = psutil.Process(os.getpid())
             # 4. PRC HEALTH
+            health_report = {"metrics": {}}
             health_report["metrics"]["prc"] = "CLEAN" if api_tools.kill_stalled_forensic_processes() == 0 else "PROCESS_CLEANUP_ACTIVE"
             children = current_process.children(recursive=True)
             for child in children:
