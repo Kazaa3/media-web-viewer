@@ -59,8 +59,8 @@ DEPENDENCY_REGISTRY = {
     
     # Tiered Package Categorization
     "package_groups": {
-        "core":       ["eel", "gevent", "bottle", "psutil", "requests"],
-        "forensic":   ["pyautogui", "pillow", "playwright", "selenium"],
+        "core":       ["eel", "gevent", "bottle", "psutil", "requests", "python-dotenv", "numpy"],
+        "forensic":   ["pyautogui", "pillow", "playwright", "selenium", "opencv-python", "pywavelets"],
         "media":      ["vlc", "pyvidplayer2", "m3u8"],
         "analytics":  ["pytest", "psutil"]
     },
@@ -104,14 +104,14 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    # [v1.53.003-R2] Forensic Pentagon Navigation
-    VERSION = "v1.53.003-R2"
+    # [v1.53.003-R3] Adaptive Environment Bootstrap
+    VERSION = "v1.53.003-R3"
 
-# --- v1.53.003-R2 Registry (Tri-Digit Forensic Evolution) ---
+# --- v1.53.003-R3 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
 APP_VERSION_FRONTEND = f"{VERSION}-MASTER-FINAL"
 APP_VERSION_BACKEND = f"{VERSION}-SUBTYPE-ALIGN"
-# Created with MWV v1.53.003-R2-MASTER
+# Created with MWV v1.53.003-R3-MASTER
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
