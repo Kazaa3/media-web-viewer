@@ -40,17 +40,16 @@ def kill_stalled_forensic_processes(targets: Optional[list] = None):
     (Migrated from api_reporting v1.46.132)
     """
     if targets is None:
-        targets = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc']
+        targets = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc', 'ffplay']
         
     log.info(f"[Cleanup] Targeted forensic audit: killing stalled processes {targets}")
     count = 0
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            name = proc.info['name'].lower()
+            name = (proc.info['name'] or "").lower()
             cmdline = " ".join(proc.info['cmdline'] or []).lower()
             
             if any(t in name for t in targets) or any(t in cmdline for t in targets):
-                # Ensure we don't kill the master process itself if it happens to match (safety guard)
                 if proc.info['pid'] != os.getpid():
                     proc.kill()
                     count += 1
@@ -59,6 +58,15 @@ def kill_stalled_forensic_processes(targets: Optional[list] = None):
             
     log.info(f"[Cleanup] Terminated {count} forensic artifacts.")
     return count
+
+def kill_stalled_ffmpeg_streams():
+    """Specific hook for high-priority FFmpeg cleanup (v1.46.135)."""
+    return kill_stalled_forensic_processes(['ffmpeg', 'ffprobe', 'ffplay'])
+
+def super_kill():
+    """Nuclear cleanup: Terminates ALL forensic tools and known browsers."""
+    targets = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc', 'ffplay', 'chrome', 'chromium', 'firefox']
+    return kill_stalled_forensic_processes(targets)
 
 def check_binary_available(name: str) -> bool:
     """Verifies if a specific tool is operational in the registry."""
