@@ -657,8 +657,10 @@ function renderAudioQueue() {
                                 ${item.mock_stage ? `<span style="font-size: 10px; font-weight: 800; color: var(--accent-color); opacity: 0.8; margin-left: -2px; margin-right: 6px; background: rgba(0, 122, 255, 0.1); padding: 2px 4px; border-radius: 4px;">S${item.mock_stage}</span>` : ''}
                                 <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${item.name || 'Untitled'}</span>
                             </div>
-                            <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary);">
-                                ${item.artist || tags.artist || 'Unknown Artist'} • ${tags.album || 'Unknown Album'}
+                            <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                                ${isVideo ? `<svg width="10" height="10" style="color: var(--accent-color);"><use href="#icon-video"></use></svg>` : ''}
+                                <span>${item.artist || tags.artist || 'Unknown Artist'} • ${tags.album || 'Unknown Album'}</span>
+                                ${isVideo && (item.resolution || tags.width) ? `<span style="color: var(--accent-color); font-weight: 800; font-size: 9px; background: rgba(0, 122, 255, 0.1); padding: 1px 4px; border-radius: 3px;">${item.resolution || `${tags.width}x${tags.height}`}</span>` : ''}
                             </div>
                         </div>
                     </div>
