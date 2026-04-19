@@ -471,13 +471,31 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_scanner": False,
         "supported_codes": ["EAN13", "UPC-A", "QR"],
         "min_quality_score": 0.8,
-        "ocr_fallback": False
+        "ocr_fallback": False,
+        
+        "isbn_scanner": {
+            "enable_openlibrary": True,
+            "api_template": "https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data",
+            "cache_results": True
+        }
     },
 
     # --- ARTWORK & COVER EXTRACTION (v1.46.131) ---
     "artwork_settings": {
         "enable_extraction": True,
+        "enable_local_search": True,  # Toggle for _find_local_art
         "thumbnail_offset_sec": 7,
+        "thumbnail_resolution": "480:480",
+        "ffmpeg_timeout_sec": 5,     # Global timeout for commands
+        "cache_root": "~/.cache/gui_media_web_viewer/art",
+        "search_priority": ["local", "mutagen", "streams", "thumbnail"]
+    },
+
+    # --- STREAMING & PERFORMANCE (v1.46.131) ---
+    "streaming_settings": {
+        "chunk_size_kb": 256,    # Global chunk size for ffmpeg pipe reading
+        "buffer_size_kb": 1024
+    },
         "thumbnail_resolution": "480:480",
         "cache_root": "~/.cache/gui_media_web_viewer/art",
         "search_priority": ["local", "mutagen", "streams", "thumbnail"]
