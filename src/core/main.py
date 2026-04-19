@@ -14,9 +14,13 @@ if str(_root) not in sys.path:
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-from src.core.config_master import PORT_CLEANUP_CMD
-
 # --- 1. Path Forensics Done ---
+from src.core import startup_auditor
+try:
+    # [v1.53.003] Absolute Boot Priority: Fix environment BEFORE imports
+    startup_auditor.run_audit()
+except Exception as e:
+    print(f"STDOUT: [Audit-Pulse] Critical boot guard failure: {e}", flush=True)
 
 # --- 2. Internal Imports ---
 from src.core.config_master import (
