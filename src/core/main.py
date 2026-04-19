@@ -5405,51 +5405,39 @@ def write_media_tags(path, tags):
 
 # --- [v1.46.135] Playlist Engine (Delegated to api_playlist) ---
 
-@eel.expose
 def set_current_playlist(*args, **kwargs):
     return api_playlist.set_current_playlist(*args, **kwargs)
 
-@eel.expose
 def get_current_playlist():
     return api_playlist.get_current_playlist()
 
-@eel.expose
 def get_current_playlist_exposed():
     return api_playlist.get_current_playlist_exposed()
 
-@eel.expose
 def jump_to_index(index: int):
     return api_playlist.jump_to_index(index)
 
-@eel.expose
 def next_in_playlist():
     return api_playlist.next_in_playlist()
 
-@eel.expose
 def prev_in_playlist():
     return api_playlist.prev_in_playlist()
 
-@eel.expose
 def move_item_up(index: int):
     return api_playlist.move_item_up(index)
 
-@eel.expose
 def move_item_down(index: int):
     return api_playlist.move_item_down(index)
 
-@eel.expose
 def remove_playlist_item(index: int):
     return api_playlist.remove_playlist_item(index)
 
-@eel.expose
 def clear_playlist():
     return api_playlist.clear_playlist()
 
-@eel.expose
 def save_playlist(media_names: list, output_path: str):
     return api_playlist.save_playlist(media_names, output_path)
 
-@eel.expose
 def load_playlist(input_path: str):
     return api_playlist.load_playlist(input_path)
 
