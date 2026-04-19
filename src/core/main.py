@@ -7966,6 +7966,16 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+    # 1. Initialize Forensic Environment
+    launch_eel_server()
+    if not bootstrap_core_settings():
+        log.critical("[Bootstrap] Core settings failure. Aborting.")
+        sys.exit(1)
+        
+    # 2. Log Session Details
+    log_session_diagnostics()
+    
+    # 3. Start Eel Application
     start_app()
 
     log.info("[Main] Entering keepalive loop.")
