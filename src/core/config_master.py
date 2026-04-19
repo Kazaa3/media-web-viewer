@@ -95,6 +95,7 @@ APP_DATA_DIR = str(PROJECT_ROOT)
 
 # --- SSOT: KEY DIRECTORY REGISTRY (v1.46.132) ---
 DATA_DIR      = PROJECT_ROOT / "data"
+DIST_DIR      = PROJECT_ROOT / "dist"
 LOGS_DIR      = PROJECT_ROOT / "logs"
 MEDIA_DIR     = PROJECT_ROOT / "media"
 SCRIPTS_DIR   = PROJECT_ROOT / "scripts"
@@ -304,7 +305,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "branch_id": os.environ.get("MWV_BRANCH", "extended"),
     "orchestrator_version": "v1.46.017-MASTER",
     "build_id": "STABLE-FORENSIC-2026-04-12",
-    "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
+    "build_link_template": str(DIST_DIR / "MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe"),
     "release_channel": "development",
     
     # --- NETWORK REGISTRY (v1.41.00 Centralized) ---
@@ -1384,6 +1385,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "test_dir":                 str(TEST_DIR),
         "tools_dir":                str(TOOLS_DIR),
         "tools_bin_dir":            str(TOOLS_BIN_DIR),
+        "dist_dir":                 str(DIST_DIR),
         "scripts_dir":              str(SCRIPTS_DIR),
         "logs_dir":                 str(LOGS_DIR),
         "db_path":                  str(DB_FILENAME),           # SSOT -> use DB_FILENAME
