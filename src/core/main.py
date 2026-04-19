@@ -6953,7 +6953,6 @@ def test_pyautogui():
 
 
 @eel.expose
-@eel.expose
 def run_diagnostic_snapshot():
     """Triggers a forensic screenshot of the workstation using PyAutoGUI."""
     return api_audit.run_pyautogui_proof()
