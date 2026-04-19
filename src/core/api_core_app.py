@@ -1,7 +1,6 @@
-import os
-import sys
+import time
 from pathlib import Path
-from typing import Dict, Any
+from src.core.eel_shell import eel
 
 from src.core.config_master import PROJECT_ROOT, SRC_DIR
 from src.core.logger import get_logger
@@ -48,3 +47,22 @@ def shutdown_application():
     api_tools.kill_stalled_forensic_processes()
     # Additional cleanup hooks can be added here
     sys.exit(0)
+
+# --- Application Lifecycle API (Migrated from main.py v1.54.018) ---
+
+@eel.expose
+def shutdown_backend():
+    """ Delegated Bridge to shutdown_application. """
+    shutdown_application()
+
+@eel.expose
+def heartbeat():
+    """ Explicit heartbeat for window health monitoring. """
+    GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
+    return {"status": "ok", "timestamp": time.time()}
+
+@eel.expose
+def get_session_id():
+    """ Returns the current backend session ID. """
+    from src.core.main import SESSION_ID
+    return SESSION_ID

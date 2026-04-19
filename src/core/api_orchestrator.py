@@ -148,3 +148,50 @@ def vlc_hls_live_proxy(filename):
         with open(target, 'rb') as f: data = f.read()
         return btl.HTTPResponse(data, status=200, headers={'Content-Type': mimetype, 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
     except Exception: return btl.HTTPResponse(status=500)
+
+# --- Media Orchestration API (Migrated from main.py v1.54.018) ---
+
+@eel.expose
+def get_universal_stream_url(file_path, mode=None, audio_idx=0, subs_idx=None, start_time=0):
+    """ Returns the optimal stream URL for a given file and mode. """
+    from src.core.mode_router import smart_route
+    from src.core.streams import hls_stream, vlc_bridge
+    
+    target_mode = mode if mode else smart_route(file_path)
+    log.info(f"[Universal] Routing {file_path} via {target_mode}")
+    if target_mode == 'direct_play': return f"/stream/via/direct/{file_path}"
+    elif target_mode == 'mse':
+        url = f"/stream/via/transcode/{file_path}?audio_idx={audio_idx}&ss={start_time}"
+        if subs_idx is not None and str(subs_idx).lower() != 'null': url += f"&subs_idx={subs_idx}"
+        return url
+    elif target_mode == 'hls_fmp4':
+        session_id = f"hls_{int(time.time())}"
+        hls_stream.start_hls_fmp4(file_path, f"web/streams/hls/{session_id}", session_id, audio_idx=audio_idx, subs_idx=subs_idx, start_time=start_time)
+        return f"/streams/hls/{session_id}/master.m3u8"
+    elif target_mode == 'vlc_bridge':
+        vlc_bridge.start_vlc_bridge(file_path)
+        return "/streams/vlc/vlc.m3u8"
+    return f"/stream/via/direct/{file_path}"
+
+@eel.expose
+def get_playback_stats():
+    """ Returns real-time performance metrics for the Stats Overlay. """
+    try:
+        from src.core import hardware_detector
+        gpu_util = hardware_detector.get_gpu_usage_safe()
+        hw = hardware_detector.get_gpu_info()
+        active = {} # v1.46.162 Discovery logic delegated to internal registry
+        return {
+            "codec": active.get("codec", "H.264 / HEVC"),
+            "bitrate": active.get("bitrate", "8.5 Mbps"),
+            "gpu_info": f"{hw.get('type', 'Unknown')} ({gpu_util:.1f}%)",
+            "gpu_util": gpu_util,
+            "rtt_ms": active.get("rtt", 12),
+            "audio_engine": active.get("engine", "FFmpeg Premium Remux"),
+            "atmos": active.get("atmos", False),
+            "bitstream": active.get("bitstream", False),
+            "is_active": bool(active)
+        }
+    except Exception as e:
+        log.error(f"[Stats] Error: {e}")
+        return {"is_active": False}
