@@ -4269,7 +4269,13 @@ def api_scan_isbn(isbn: str):
 
     # 2. Fetch from External API (OpenLibrary)
     try:
-        url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{cleaned}&format=json&jscmd=data"
+        isbn_cfg = GLOBAL_CONFIG.get("barcode_scanner_settings", {}).get("isbn_scanner", {})
+        if not isbn_cfg.get("enable_openlibrary", True):
+            return {"error": "External ISBN search disabled"}
+
+        template = isbn_cfg.get("api_template", "https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data")
+        url = template.format(isbn=cleaned)
+        
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             data = response.json()
@@ -5332,10 +5338,13 @@ def video_remux_stream(item_id):
                     log_process_stderr(ffmpeg_proc, "FFmpeg-Remux-SS")
 
                 # Stream chunks to browser
+                stream_cfg = GLOBAL_CONFIG.get("streaming_settings", {})
+                chunk_sz = stream_cfg.get("chunk_size_kb", 256) * 1024
+                
                 while True:
                     if ffmpeg_proc.stdout is None:
                         break
-                    chunk = ffmpeg_proc.stdout.read(256 * 1024)
+                    chunk = ffmpeg_proc.stdout.read(chunk_sz)
                     if not chunk:
                         break
                     yield chunk

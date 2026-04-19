@@ -67,7 +67,8 @@ class ArtworkExtractor:
         ext = path.suffix.lower()
 
         # Strategy 1: Local Files (Fastest, highest quality for DVD/ISO/Albums)
-        success = self._find_local_art(path, art_file)
+        if art_cfg.get("enable_local_search", True):
+            success = self._find_local_art(path, art_file)
 
         # Strategy 2: Mutagen (Fast for Audio/Audiobooks)
         if not success:
@@ -144,11 +145,14 @@ class ArtworkExtractor:
         """
         # 1. Broad stream mapping (picks first attached pic)
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
+        timeout = art_cfg.get("ffmpeg_timeout_sec", 5)
+        
         return self._run_ffmpeg([
             ffmpeg_bin, "-i", str(path),
             "-map", "0:v", "-c:v", "copy", "-vframes", "1",
             "-y", str(out_path)
-        ], timeout=5)
+        ], timeout=timeout)
 
     def _extract_video_thumbnail(self, path: Path, out_path: Path) -> bool:
         """
@@ -158,6 +162,7 @@ class ArtworkExtractor:
         art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
         offset = art_cfg.get("thumbnail_offset_sec", 7)
         res = art_cfg.get("thumbnail_resolution", "480:480")
+        timeout = art_cfg.get("ffmpeg_timeout_sec", 8) 
         
         return self._run_ffmpeg([
             ffmpeg_bin, "-i", str(path),
@@ -165,7 +170,7 @@ class ArtworkExtractor:
             "-vframes", "1",
             "-vf", f"scale=w={res.split(':')[0]}:h={res.split(':')[1]}:force_original_aspect_ratio=decrease",
             "-y", str(out_path)
-        ], timeout=8)
+        ], timeout=timeout)
 
     def _find_local_art(self, path: Path, out_path: Path) -> bool:
         """

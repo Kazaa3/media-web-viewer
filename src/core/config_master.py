@@ -496,10 +496,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chunk_size_kb": 256,    # Global chunk size for ffmpeg pipe reading
         "buffer_size_kb": 1024
     },
-        "thumbnail_resolution": "480:480",
-        "cache_root": "~/.cache/gui_media_web_viewer/art",
-        "search_priority": ["local", "mutagen", "streams", "thumbnail"]
-    },
 
     # --- PARSER MODES & MODE REGISTRY (v1.46.131) ---
     "parser_modes": {
