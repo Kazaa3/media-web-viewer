@@ -4596,51 +4596,7 @@ def play_media(path):
 
 
 def resolve_media_path(file_path: str) -> str:
-    """
-    Resolves a file path that might be a URL-encoded string or a relative /media/ path.
-    """
-    # Decouple from URL encoding (Robust v1.41.00)
-    path_decoded = unquote(str(file_path))
-
-    # Pathlib safety: Ensure the path is normalized for the OS
-    p_obj = Path(path_decoded).expanduser()
-    path_normalized = str(p_obj)
-
-    # 1. Try direct filesystem check first (some absolute paths might exist)
-    if p_obj.exists():
-        return str(p_obj.resolve())
-
-    # 1b. Handle absolute paths where Bottle might have stripped the leading slash
-    if not path_normalized.startswith("/"):
-        p_abs = Path("/" + path_normalized)
-        if p_abs.exists():
-            return str(p_abs.resolve())
-
-    # 2. Strip /media/ prefix if present and handle virtual pathing
-    stripped_path = path_normalized
-    prefixes = GLOBAL_CONFIG.get("player_settings", {}).get("media_prefixes", ["/media/", "media/"])
-    for prefix in prefixes:
-        if path_normalized.startswith(prefix):
-            stripped_path = path_normalized[len(prefix):]
-            break
-
-    # 3. Try to find in DB using the stripped path
-    db_path = db.get_media_path(stripped_path)
-    if db_path and Path(db_path).exists():
-        return db_path
-
-    # 4. Try direct filesystem check on stripped path
-    p_stripped = Path(stripped_path)
-    if p_stripped.exists():
-        return str(p_stripped.resolve())
-
-    # 5. Try resolving relative to PROJECT_ROOT/media
-    media_root = PROJECT_ROOT / "media"
-    alt_path = media_root / stripped_path
-    if alt_path.exists():
-        return str(alt_path.resolve())
-
-    return path_decoded
+    return api_orchestrator.resolve_media_path(file_path)
 
 
 def resolve_dvd_bundle_path(path_str: str) -> str:
@@ -4726,51 +4682,17 @@ def get_best_hw_encoder():
 
 @eel.btl.route('/stream/via/direct/<file_path:path>')
 def server_file_direct(file_path):
-    """
-    @brief Serves local media files directly via the Eel/Bottle bridge.
-    @details Hardened v1.46.044: Configuration-driven MIME resolution via pipeline registry.
-    """
-    import bottle as btl
-    
-    # [v1.46.087] Forensic Pulse Trace
-    log.info(f"[PLAY-PULSE] Direct Stream Request Received: {file_path}")
-    
-    # 1. Path Forensic Resolution (v1.46.046)
-    file_path = resolve_media_path(file_path)
-    log.debug(f"[PLAY-PULSE] Resolved Path: {file_path}")
-    
-    if not os.path.exists(file_path):
-        log.error(f"[PLAY-PULSE] CRITICAL: File not found: {file_path}")
-        return btl.HTTPResponse(status=404, body=f"File not found: {file_path}")
+    return api_orchestrator.server_file_direct(file_path)
 
-    # 2. Dynamic MIME Resolution (v1.46.044 SSOT)
-    ext = os.path.splitext(file_path)[1].lower()
-    
-    from src.core.ffprobe_analyzer import ffprobe_analyze
-    analysis = ffprobe_analyze(file_path)
-    subtype = analysis.get("media_subtype", "FILE")
-    mimetype = 'auto'
-    
-    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {})
-    audio_map = reg.get("audio", {}).get("mime_map", {})
-    video_map = reg.get("video", {}).get("mime_map", {})
-    
-    if ext in audio_map:
-        mimetype = audio_map[ext]
-    elif ext in video_map:
-        mimetype = video_map[ext]
-    
-    log.info(f"[PLAY-PULSE] Direct Stream Handshake: {os.path.basename(file_path)} | Subtype: {subtype} | MIME: {mimetype} (Config-Driven)")
-    range_header = btl.request.get_header('Range')
-    if range_header:
-        log.debug(f"[PLAY-PULSE-DEBUG] Range Request Detected: {range_header}")
-        
-    return btl.static_file(
-        os.path.basename(file_path),
-        root=os.path.dirname(file_path),
-        mimetype=mimetype,
-        download=False
-    )
+
+@eel.btl.route('/stream/via/transcode/<file_path:path>')
+def stream_video_fragmented(file_path):
+    return api_orchestrator.stream_video_fragmented(file_path)
+
+
+@eel.btl.route('/stream/via/remux/<item_id>')
+def video_remux_stream(item_id):
+    return api_orchestrator.video_remux_stream(item_id)
 
 
 # [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py
@@ -4808,13 +4730,6 @@ def apply_large_file_protection(cmd, file_path):
         return cmd, False
 
 
-@eel.btl.route('/stream/via/transcode/<file_path:path>')
-def stream_video_fragmented(file_path):
-    """
-    On-the-fly FragMP4/Matroska streaming via FFmpeg.
-    Supports ?ss=XXXX for seeking.
-    """
-    import bottle
     start_time = bottle.request.query.get('ss', '0')
     audio_idx = bottle.request.query.get('audio_idx', '0')
     subs_idx = bottle.request.query.get('subs_idx', None)
