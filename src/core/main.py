@@ -7707,6 +7707,41 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
     return api_reporting.audit_specific_item(query)
 
 
+# --- [v1.54.002] WORKSTATION GOVERNANCE API ---
+
+@eel.expose
+def trigger_workstation_update(force: bool = False):
+    """
+    Manually triggers the forensic self-healing update cycle during runtime.
+    """
+    log.info(f"🚀 [Governance] Manual Workstation Update Triggered (Force: {force})")
+    
+    # Temporarily override force flag if requested
+    from src.core.config_master import DEPENDENCY_REGISTRY
+    orig_force = DEPENDENCY_REGISTRY["bootstrap_governance"].get("force_updates", False)
+    if force:
+        DEPENDENCY_REGISTRY["bootstrap_governance"]["force_updates"] = True
+    
+    try:
+        from src.core.startup_auditor import ensure_critical_packages
+        success = ensure_critical_packages()
+        return {"status": "ok" if success else "error", "restored": success}
+    except Exception as e:
+        log.error(f"❌ [Governance] Runtime Update Failed: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        # Restore original flag
+        DEPENDENCY_REGISTRY["bootstrap_governance"]["force_updates"] = orig_force
+
+@eel.expose
+def get_forensic_thresholds():
+    """
+    Returns centralized bitrate quality thresholds for UI parity.
+    """
+    from src.core.config_master import BITRATE_QUALITY_THRESHOLDS
+    return BITRATE_QUALITY_THRESHOLDS
+
+
 if __name__ == "__main__":
     import subprocess
     # 1. Flash Burn (Instant Port Cleanup - v1.46.135 Centralized)

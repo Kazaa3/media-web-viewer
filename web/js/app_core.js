@@ -99,11 +99,35 @@ window.getBitrateQualityClass = function(bitrateStr) {
     const val = parseInt(bitrateStr.replace(/[^0-9]/g, ''));
     if (isNaN(val)) return '';
     
-    // Classify by kbps (v1.53 Standard)
-    if (val >= 1000) return 'quality-high'; // Lossless/High-Res
-    if (val >= 320) return 'quality-high';
-    if (val >= 192) return 'quality-std';
+    // Fetch thresholds from Global Config (v1.54.002 SSOT)
+    const thresholds = window.CONFIG?.bitrate_thresholds || {
+        high: 1000, standard: 320, low: 192
+    };
+
+    if (val >= thresholds.high) return 'quality-high'; // Lossless/High-Res
+    if (val >= thresholds.standard) return 'quality-high';
+    if (val >= thresholds.low) return 'quality-std';
     return 'quality-low';
+};
+
+window.triggerWorkstationUpdate = async function(force = false) {
+    const btn = document.getElementById('footer-btn-UPDT');
+    if (btn) btn.classList.add('loading');
+    
+    console.info("🚀 [Governance] Initiating Workstation Update Cycle...");
+    try {
+        const result = await eel.trigger_workstation_update(force)();
+        if (result.status === "ok") {
+            console.info("✅ [Governance] Workstation Update Successful.");
+            if (typeof triggerAuditPulse === 'function') triggerAuditPulse();
+        } else {
+            console.error("❌ [Governance] Workstation Update Failed:", result.message);
+        }
+    } catch (e) {
+        console.error("❌ [Governance] RPC Error during update:", e);
+    } finally {
+        if (btn) btn.classList.remove('loading');
+    }
 };
 
 window.triggerAuditPulse = function() {

@@ -96,7 +96,7 @@ DEPENDENCY_REGISTRY = {
         "skip_updates":            "--no-update" in sys.argv,
         "force_updates":           "--force-update" in sys.argv,
         "update_on_version_change": True,
-        "last_updated_version":    "v1.54.001" 
+        "last_updated_version":    "v1.54.002" 
     }
 }
 
@@ -258,6 +258,14 @@ GLOBAL_MEDIA_TAXONOMY = {
     "nfo":             {"label": "NFO / Metadata",      "desc": "Information files",              "ext": {".nfo"},              "type": "category"},
     "unknown":         {"label": "Unbekannt",           "desc": "Unprocessed status",             "ext": set(),                 "type": "category"},
     "unbekannt":       {"label": "Unbekannt (Alias)",   "desc": "Alias for Unknown",              "ext": set(),                 "type": "category"},
+    
+    # --- [v1.54.002] FORENSIC QUALITY SSOT ---
+    "bitrate_thresholds": {
+        "high":     1000, # Lossless/High-Res (v1.53 Standard)
+        "standard": 320,  # High-Quality lossy
+        "low":      192,  # Standard lossy
+        "minimum":  128   # Low-Quality
+    }
 }
 
 try:
