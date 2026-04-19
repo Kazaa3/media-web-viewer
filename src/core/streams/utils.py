@@ -1,9 +1,11 @@
-import logging
 import subprocess
+from pathlib import Path
 from src.core import hardware_detector
+from src.core.logger import get_logger
+from src.core.config_master import GLOBAL_CONFIG
 
-# Specialized logger
-log = logging.getLogger("streams.utils")
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("streams_utils")
 
 def get_best_ffmpeg_encoder():
     """
@@ -17,17 +19,20 @@ def get_best_ffmpeg_encoder():
         if "qsv" in encoders: return "h264_qsv"
         if "vaapi" in encoders: return "h264_vaapi"
     except Exception as e:
-        log.warning(f"Hardware detection failed, falling back to libx264: {e}")
+        log.warning(f"[HW-Detect] Failed, falling back to libx264: {e}", exc_info=True)
     return "libx264"
 
 def get_base_ffmpeg_args(encoder):
     """
     @brief Returns base FFmpeg arguments for a given encoder. Includes device mapping.
+    @details (v1.46.132) Pulse-aware VAAPI device configuration.
     """
     args = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     if encoder == "h264_vaapi":
-        # /dev/dri/renderD128 is the default for Intel Arc/VAAPI on Linux
-        args += ["-vaapi_device", "/dev/dri/renderD128"]
+        # Pull from config instead of hardcoding (Phase 9 Centralization)
+        hw_cfg = GLOBAL_CONFIG.get("hardware_info", {})
+        vaapi_dev = hw_cfg.get("vaapi_device", "/dev/dri/renderD128")
+        args += ["-vaapi_device", vaapi_dev]
     return args
 
 def get_video_filter(analysis, subs_idx=None, is_4k=False):
