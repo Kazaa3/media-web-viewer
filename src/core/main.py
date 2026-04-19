@@ -5210,10 +5210,10 @@ def log_process_stderr(process, name):
     """
     if not process or not process.stderr:
         return
-
+def log_process_stderr(process, name):
     # Determine granular logging destinations (Forensic Phase 7)
     log_cfg = GLOBAL_CONFIG.get("logging_registry", {})
-    enable_granular = log_cfg.get("enable_granular_transcoder_logs", False)
+    enable_granular = log_cfg.get("enable_granular_tradef log_process_stderr(process, name):def log_process_stderr(process, name):nscoder_logs", False)
     log_dir = Path(log_cfg.get("transcoding_log_dir", str(PROJECT_ROOT / "logs" / "transcoding")))
     
     log_handle = None

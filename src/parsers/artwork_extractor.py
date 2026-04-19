@@ -256,11 +256,11 @@ class ArtworkExtractor:
         if enable_granular:
             try:
                 log_dir.mkdir(parents=True, exist_ok=True)
-                log_file = log_dir / f"{log_tag}.log"
-                # We use append mode for streams, but maybe write for short tasks? 
-                # User asked for "steerable" logs. We'll use append to keep history but maybe truncate?
-                # Decision: Write (overwrite) for specific extraction tasks to keep them clean.
-                log_handle = open(log_file, "w", encoding="utf-8")
+                # Timestamped safe name (Forensic Phase 7.1)
+                ts = time.strftime('%Y%m%d_%H%M%S')
+                log_file = log_dir / f"{ts}_{log_tag}.log"
+                # Decision: Append for history as requested by user
+                log_handle = open(log_file, "a", encoding="utf-8")
                 std_out = log_handle
                 std_err = log_handle
                 log_handle.write(f"--- FFmpeg Execution Start: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
