@@ -380,6 +380,11 @@ with StatusBar("Loading Core Components", total=100) as sb:
 
         sb.update(80, "Core modules registered")
         sb.update(80, "Core modules loaded")
+        if profiler:
+            profiler.end_phase("Core-Modules-Init")
+    except Exception as e:
+        log.critical(f"Resource load failure: {e}")
+        sys.exit(1)
 
 def bootstrap_core_settings():
     """Initializes the core runtime settings (v1.46.136)."""
