@@ -1114,9 +1114,65 @@ function initForensicHeartbeat() {
     }, 10000); // 10s Evaluation Cycle
 }
 
+/**
+ * [v1.54.016] Nuclear Bootstrap Sentinel
+ * Redundant watchdog that forcibly resolves "Loading" stalls after a legacy timeout.
+ */
+function initNuclearBootstrapSentinel() {
+    console.info(">>> [SENTINEL] Activating Nuclear Bootstrap Sentinel (v1.54.016)...");
+    
+    // Check after 15s (End of Boot Grace Period)
+    setTimeout(async () => {
+        const loadingNodes = document.querySelectorAll('.loading-fragment');
+        const stallFound = Array.from(loadingNodes).some(node => 
+            node.innerText.includes('Lade Player') || 
+            node.innerText.includes('Initializing') ||
+            node.innerText.includes('Hydrating')
+        );
+
+        if (stallFound) {
+            console.error("!!! [SENTINEL-NUCLEAR] Persistent Hydration Stall Detected. Initiating Emergency Pulse...");
+            
+            if (typeof showToast === 'function') showToast("BOOTSTRAP STALL: Initiating Nuclear Recovery...", "error");
+
+            // 1. Force Backend Ping
+            if (typeof eel !== 'undefined' && typeof eel.heartbeat === 'function') {
+                try { await eel.heartbeat()(); } catch(e) {}
+            }
+
+            // 2. Identify and Nuclear-Hydrate stalled viewports
+            for (const node of loadingNodes) {
+                const parent = node.parentElement;
+                if (!parent) continue;
+                
+                const targetId = parent.id;
+                console.warn(`[SENTINEL-NUCLEAR] Purging stalled container: #${targetId}`);
+                
+                // Determine fragment path from ID
+                let fragPath = null;
+                if (targetId === 'player-main-viewport') fragPath = 'fragments/player_queue.html';
+                if (targetId === 'library-main-viewport') fragPath = 'fragments/library_grid.html';
+                
+                if (fragPath && typeof window.FragmentLoader !== 'undefined') {
+                    console.info(`[SENTINEL-NUCLEAR] Forcing Atomic Injection: ${fragPath} -> #${targetId}`);
+                    // Cache bust with timestamp
+                    await window.FragmentLoader.loadAtomic(targetId, `${fragPath}?v=${Date.now()}`);
+                }
+            }
+
+            // 3. Final Re-navigation Pulse
+            const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+            if (typeof switchMainCategory === 'function') switchMainCategory(activeCat);
+        } else {
+            console.info("[SENTINEL-NUCLEAR] Boot Integrity Verified. No stalls detected.");
+        }
+    }, 15000); // 15s Nuclear Timeout
+}
+
 // Global initialization hook
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initForensicHeartbeat, 8000); // Wait for boot grace period
+    setTimeout(initForensicHeartbeat, 8000);  // 8s Start
+    setTimeout(initNuclearBootstrapSentinel, 16000); // 16s Sentinel
 });
 
 // Map globally for sidebar access
