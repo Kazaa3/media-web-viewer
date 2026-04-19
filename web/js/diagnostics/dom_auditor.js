@@ -20,7 +20,8 @@ window.runDomAudit = function() {
         { id: 'T-5', label: 'Tab Active Collision', check: () => checkTabCollision() },
         { id: 'L-6', label: 'Layout Offsets', check: () => checkLayoutHeight() },
         { id: 'M-7', label: 'Modal Layering', check: () => checkModalLayering() },
-        { id: 'L-8', label: 'Library Parity Audit', check: () => checkLibrarySync() }
+        { id: 'L-8', label: 'Library Parity Audit', check: () => checkLibrarySync() },
+        { id: 'H-9', label: 'Hydration Pulse', check: () => checkHydrationStall() }
     ];
 
     let healthyCount = 0;
@@ -106,4 +107,22 @@ function checkLibrarySync() {
         return { text: `PARTIAL: ${guiCount}/${dbCount}`, class: 'status-warning', healthy: false };
     }
     return { text: `SYNC: ${guiCount}`, class: 'status-healthy', healthy: true };
+}
+
+function checkHydrationStall() {
+    // 1. Detect placeholder text in key viewports
+    const playerPlaceholder = document.getElementById('player-main-viewport');
+    const isStalled = playerPlaceholder && playerPlaceholder.innerText.includes('LADE PLAYER');
+
+    // 2. Detect containers with missing 'loaded' marker
+    const containers = document.querySelectorAll('[data-domain]');
+    let missingLoaded = 0;
+    containers.forEach(c => {
+        if (c.style.display !== 'none' && c.getAttribute('data-loaded') !== 'true') missingLoaded++;
+    });
+
+    if (isStalled) return { text: 'STALLED: LADE PLAYER', class: 'status-error', healthy: false };
+    if (missingLoaded > 0) return { text: `PENDING: ${missingLoaded}`, class: 'status-warning', healthy: false };
+    
+    return { text: 'HYDRATED', class: 'status-healthy', healthy: true };
 }

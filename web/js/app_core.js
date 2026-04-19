@@ -358,12 +358,13 @@ window.hydrateCategoryDropdown = function (branchId) {
  */
 window.activeLibraryFilterMode = window.activeLibraryFilterMode || 'route';
 window.toggleLibraryFilterMode = function() {
-    const modes = ['route', 'category', 'items', 'objects', 'context'];
+    // [v1.54.013] Forensic 6-Mode discovery Cycle
+    const modes = ['item', 'release', 'object', 'route', 'category', 'context'];
     let idx = modes.indexOf(window.activeLibraryFilterMode);
     idx = (idx + 1) % modes.length;
     window.activeLibraryFilterMode = modes[idx];
     
-    console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()} (Cycle ${idx+1}/5)`);
+    console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()} (Cycle ${idx+1}/6)`);
     
     // [v1.53.004] Trigger Phase 13 Visual Feedback
     if (typeof window.triggerAuditPulse === 'function') window.triggerAuditPulse();

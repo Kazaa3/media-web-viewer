@@ -153,6 +153,8 @@ const FragmentLoader = {
                 window.auditFragmentHydration(fragName, 'will_spawn', fragmentPath, targetId);
             }
 
+            if (typeof traceUiNav === 'function') traceUiNav('HYDRATION', 'START', { path: fragmentPath, targetId });
+
             console.log(`[FragmentLoader] Loading fragment: ${fragmentPath}`);
             let html;
             
@@ -194,6 +196,7 @@ const FragmentLoader = {
                 window.auditFragmentHydration(fragName, 'success', fragmentPath, targetId);
             }
 
+            if (typeof traceUiNav === 'function') traceUiNav('HYDRATION', 'SUCCESS', { path: fragmentPath, targetId });
             if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-2', { path: fragmentPath, targetId });
             console.info(`[FL] STAGE 2: DOM Injection Complete (#${targetId})`);
 
@@ -282,6 +285,7 @@ const FragmentLoader = {
      */
     error(targetId, fragmentPath, err) {
         console.error(`[FragmentLoader] Failed to load ${fragmentPath}:`, err);
+        if (typeof traceUiNav === 'function') traceUiNav('HYDRATION', 'ERROR', { path: fragmentPath, error: err.message || err });
         if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'ERROR', { path: fragmentPath, error: err.message || err });
         
         const fragName = fragmentPath.split('/').pop().replace('.html', '');
