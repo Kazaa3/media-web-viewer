@@ -32,10 +32,11 @@ if __name__ == "__main__":
 from src.core.config_master import (
     _DOTENV_LOADED, APP_VERSION_CORE, 
     PROJECT_ROOT, DEFAULT_TIME_FORMAT, 
-    WINDOW_SIZE, FRONTEND_SETTINGS
+    WINDOW_SIZE, FRONTEND_SETTINGS,
+    LAUNCH_PROFILE, FORENSIC_TOOLS_LIST
 )
 from src.core.db import get_active_db_path
-from src.core import api_playlist
+from src.core import api_playlist, api_frontend, api_orchestrator, api_logbuch, api_testing
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
 import ast
@@ -719,133 +720,41 @@ def start_app():
                 log.error(f"[Bootstrap] MWV ALREADY RUNNING (PID {owner_pid}). Aborting.")
                 sys.exit(1)
 
-    # Port readiness is now handled by fast_port_kill above.
-    # Only do a safety check if not in low-latency mode.
-    if not GLOBAL_CONFIG.get("fast_startup", True):
-        try:
-            import socket
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                if s.connect_ex(('localhost', port)) == 0:
-                    log.warning(f"[Bootstrap] Port {port} STILL STUCK. Purging ZOMBIES...")
-                    pc.kill_by_port(port)
-        except Exception as e:
-            log.warning(f"[Bootstrap] Port check failed: {e}")
+    # 1. Environment Readiness (Centralized v1.46.136)
+    from api import frontend as api_frontend, testing as api_testing
+    eel_mode = api_frontend.get_eel_mode()
+    port = FRONTEND_SETTINGS["port"]
 
-    print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
-
-    eel_mode = FRONTEND_SETTINGS["mode"]
-    if "--ng" in sys.argv:
-        eel_mode = False
-    elif "--n" in sys.argv or GLOBAL_CONFIG.get("connectionless"):
-        eel_mode = None
-
-    # Ensure isolation for automated sessions or user preference
-    import shutil
-    # Browser Discovery (v1.41.00 Centralized)
-    chrome_path = None
-    for b in GLOBAL_CONFIG["browsers"]:
-        chrome_path = shutil.which(b)
-        if chrome_path:
-            break
-
-    if not chrome_path:
-        log.error("[Startup] No compatible browser (chrome/chromium) found in PATH!")
-        if eel_mode == 'chrome':
-            print("STDOUT: [Eel] FALLBACK: Switching to system default browser (mode=None).", flush=True)
-            eel_mode = None
-
-    print(f"STDOUT: [Bootstrap-Audit] Step 2: Starting Eel Engine (mode={eel_mode}, port={port})...", flush=True)
+    print(f"STDOUT: [Bootstrap-Audit] Starting Eel Engine (mode={eel_mode}, port={port})...", flush=True)
 
     try:
-        # We specify the port and block=False to allow the watchdog to run.
-        # mode='chrome' is the preferred isolated environment.
-        if profiler:
-            profiler.start_phase("Eel-Engine-Start")
         # [v1.44] DYNAMIC ENTRY POINT SELECTION
         evolution_mode = GLOBAL_CONFIG.get("ui_evolution_mode", "stable")
-        # [v1.45] Modern shell serves as the host for rebuild, bridge, and test_ref
         start_page = 'shell_master.html' if evolution_mode in ['rebuild', 'bridge', 'test_ref'] else 'app.html'
 
         print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
-        # Use centralized FRONTEND_SETTINGS and WINDOW_SIZE
+        # Use centralized FRONTEND_SETTINGS, WINDOW_SIZE and api_frontend
         eel.start(
             start_page, 
             block=False, 
-            port=FRONTEND_SETTINGS["port"], 
+            port=port, 
             mode=eel_mode, 
             size=WINDOW_SIZE,
             cmdline_args=FRONTEND_SETTINGS["cmdline_args"]
         )
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
-        if profiler:
-            profiler.end_phase("Eel-Engine-Start")
 
-        if profiler:
-            profiler.end_phase("App-Launch-Setup")
-        if profiler:
-            profiler.start_phase("UI-Sync-Wait")
+        # --- Debug Audit Trigger ---
+        if LAUNCH_PROFILE["debug_mode"]:
+            api_testing.run_app_audit_detached(port)
 
-        # --- Automated Probe Trigger ---
-        if "--probe" in sys.argv:
-            def probe_trigger():
-                spawn_event.wait()
-                time.sleep(GLOBAL_CONFIG['sleep_times']['boot_probe_wait'])
-                log.info("[Eel] Triggering automated frontend probe (@eel.run_frontend_probe)")
-                eel.run_frontend_probe()()
-            threading.Thread(target=probe_trigger, daemon=True).start()
-
-        # --- [v1.46.053] Automated Boot Scan ---
-        if GLOBAL_CONFIG.get("scan_settings", {}).get("rescan_on_boot"):
-            def boot_scan_trigger():
-                log.info("[Boot-Scan] Waiting for UI synchronization...")
-                spawn_event.wait()
-                # Wait a bit more to ensure the UI is actually rendering
-                time.sleep(2) 
-                log.info("[Boot-Scan] Initiating automated library rescan (Additive Mode)...")
-                scan_media(clear_db=False)
-                log.info("[Boot-Scan] Scan complete. Synchronizing frontend...")
-                if hasattr(eel, 'refreshLibrary'):
-                    eel.refreshLibrary()()
-            threading.Thread(target=boot_scan_trigger, daemon=True).start()
-
-        # --- [v1.46.097] Zero-Item Auto-Recovery Scan ---
-        elif db.get_media_count() == 0:
-            def auto_recovery_trigger():
-                log.info("[Boot-Scan] DB is empty. Triggering background Auto-Recovery scan...")
-                spawn_event.wait()
-                time.sleep(2)
-                scan_media(clear_db=True)
-                log.info("[Boot-Scan] Auto-Recovery complete. Synchronizing frontend...")
-                if hasattr(eel, 'refreshLibrary'):
-                    eel.refreshLibrary()()
-            threading.Thread(target=auto_recovery_trigger, daemon=True).start()
-
-        # --- Debug Audit Trigger (v1.34) ---
-        if "--debug" in sys.argv:
-            run_app_audit_detached(port)
-
-        # --- Hang Detection / Watchdog (SSOT v1.35.93) ---
+        # --- Hang Detection / Watchdog ---
         timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
         start_wait = time.time()
-        last_alive = start_wait
-
         while not spawn_event.is_set():
-            now = time.time()
-            if now - start_wait > timeout:
-                print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
-                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
-                print(f"Python: {sys.version.split()[0]}", flush=True)
-                print(f"Eel Mode: {eel_mode}", flush=True)
-                print(f"Working Dir: {os.getcwd()}", flush=True)
-                print(f"App HTML: {'Exists' if (Path('web') / 'app.html').exists() else 'MISSING'}", flush=True)
-                print("-----------------------------", flush=True)
-                print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
+            if time.time() - start_wait > timeout:
+                log.error(f"[Watchdog] Startup HANG detected (No UI sync after {timeout}s)!")
                 break
-
-            if now - last_alive >= 5:
-                elapsed = int(now - start_wait)
-                log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
-                last_alive = now
             eel.sleep(0.5)
 
         if spawn_event.is_set():
