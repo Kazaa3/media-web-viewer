@@ -2,7 +2,11 @@ import subprocess
 import re
 from pathlib import Path
 from typing import Any
+from src.core.config_master import GLOBAL_CONFIG
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_mkvinfo")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -11,7 +15,6 @@ def get_capabilities() -> dict[str, Any]:
         "supported_tags": ["title", "duration", "muxing_app", "writing_app"],
         "supported_codecs": ["mkv", "webm"]
     }
-
 
 def get_settings_schema() -> dict[str, Any]:
     return {
@@ -22,29 +25,27 @@ def get_settings_schema() -> dict[str, Any]:
         }
     }
 
-
 def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None, mode: str = 'lightweight', settings: dict[str, Any] = None) -> dict[str, Any]:
     """
     @brief Extracts metadata using mkvinfo CLI.
-    @details Extrahiert Metadaten mittels mkvinfo CLI.
-    @param path Absolute path / Absoluter Pfad.
-    @param file_type Extension / Dateiendung.
-    @param tags Existing tags dictionary / Vorhandene Tags.
-    @param mode Extraction mode / Extraktionsmodus.
-    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
     if file_type.lower() != '.mkv':
         return tags
 
+    if filename is None:
+        filename = path.name
     if settings is None:
         settings = {}
 
     try:
-        # We use -v to get more info if needed, but for basic tags, default output is fine.
-        cmd = ["mkvinfo", str(path)]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=settings.get('timeout', 10), encoding='utf-8', errors='ignore')
+        bin_path = GLOBAL_CONFIG.get("program_paths", {}).get("mkvinfo", "mkvinfo")
+        cmd = [bin_path, str(path)]
+        
+        timeout = settings.get('timeout', 10)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, encoding='utf-8', errors='ignore')
         
         if result.returncode != 0:
+            log.warning(f"[MKVInfo-Parser] Failed with exit code {result.returncode} for {filename}")
             return tags
             
         output = result.stdout
@@ -57,28 +58,25 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
             except (ValueError, TypeError):
                 pass
 
-        # Parse Title: | + Title: Some Title
+        # Parse Title
         title_match = re.search(r"Title: (.*)", output)
         if title_match and not tags.get('title'):
             tags['title'] = title_match.group(1).strip()
 
-        # Parse Muxing App: | + Multiplexing application: ...
+        # Muxing App
         muxing_app_match = re.search(r"Multiplexing application: (.*)", output)
         if muxing_app_match:
             tags['muxing_app'] = muxing_app_match.group(1).strip()
 
-        # Parse Writing App: | + Writing application: ...
+        # Writing App
         writing_app_match = re.search(r"Writing application: (.*)", output)
         if writing_app_match:
             tags['writing_app'] = writing_app_match.group(1).strip()
 
-        # Parse Tracks (Basic check)
-        if mode == 'full':
-            pass
-
     except subprocess.TimeoutExpired:
-        pass
-    except Exception:
-        pass
+        log.warning(f"[MKVInfo-Parser] Timeout expired for {filename}")
+    except Exception as e:
+        log.error(f"[MKVInfo-Parser] Unexpected error for {filename}: {e}", exc_info=True)
 
     return tags
+

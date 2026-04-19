@@ -1,6 +1,9 @@
 from pathlib import Path
 from typing import Any
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_musictag")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -10,10 +13,8 @@ def get_capabilities() -> dict[str, Any]:
         "supported_codecs": ["mp3", "flac", "m4a", "ogg", "opus", "wav", "dsf"]
     }
 
-
 def get_settings_schema() -> dict[str, Any]:
     return {}
-
 
 def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight', settings: dict[str, Any] | None = None) -> dict[str, Any]:
     """
@@ -22,6 +23,8 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
     if file_type not in [".mp3", ".flac", ".m4a", ".ogg", ".opus", ".wav", ".dsf"]:
         return tags
 
+    if filename is None:
+        filename = path_obj.name
     if settings is None:
         settings = {}
 
@@ -29,18 +32,24 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
         import music_tag
         f = music_tag.load_file(str(path_obj))
         
-        if not tags.get('title') and f['title'].value: tags['title'] = str(f['title'].value)
-        if not tags.get('artist') and f['artist'].value: tags['artist'] = str(f['artist'].value)
-        if not tags.get('album') and f['album'].value: tags['album'] = str(f['album'].value)
-        if not tags.get('duration') and f['duration'].value: tags['duration'] = int(float(f['duration'].value))
+        if not tags.get('title') and f['title'].value: 
+            tags['title'] = str(f['title'].value)
+        if not tags.get('artist') and f['artist'].value: 
+            tags['artist'] = str(f['artist'].value)
+        if not tags.get('album') and f['album'].value: 
+            tags['album'] = str(f['album'].value)
+        if not tags.get('duration') and f['duration'].value: 
+            tags['duration'] = int(float(f['duration'].value))
         
         tags['music_tag_title'] = str(f['title'].value)
         tags['music_tag_artist'] = str(f['artist'].value)
         tags['music_tag_album'] = str(f['album'].value)
         tags['music_tag_duration'] = float(f['duration'].value) if f['duration'].value else None
+        
     except ImportError:
-        pass
-    except Exception:
-        pass
+        log.debug(f"[Music-Tag] Library not installed, skipping.")
+    except Exception as e:
+        log.error(f"[Music-Tag-Parser] Failed for {filename}: {e}", exc_info=True)
 
     return tags
+
