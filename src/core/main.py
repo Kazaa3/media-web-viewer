@@ -1812,7 +1812,7 @@ def get_version():
 def get_version_info():
     """Returns detailed tiered version information."""
     return {
-        'app': APP_VERSION,
+        'app': GLOBAL_CONFIG.get("version", APP_VERSION),
         'backend': BACKEND_VERSION,
         'frontend': FRONTEND_VERSION
     }

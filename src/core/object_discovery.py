@@ -13,6 +13,7 @@ from src.core.objects import (
     FilmObject, AudioObject, AudiobookObject, SequenceObject, ObjectRelease, create_forensic_object
 )
 from src.parsers.format_utils import natural_sort_key
+from src.core.logger import get_logger
 
 log = get_logger("object_discovery")
 

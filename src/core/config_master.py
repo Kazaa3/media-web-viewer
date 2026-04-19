@@ -691,7 +691,7 @@ BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
-    "version": VERSION,
+    "version": APP_VERSION_FULL,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "branch_id": os.environ.get("MWV_BRANCH", "extended"),
     "orchestrator_version": "v1.53.001-MASTER",
