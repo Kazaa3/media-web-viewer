@@ -36,7 +36,10 @@ from src.core.config_master import (
     LAUNCH_PROFILE, FORENSIC_TOOLS_LIST
 )
 from src.core.db import get_active_db_path
-from src.core import api_playlist, api_frontend, api_orchestrator, api_logbuch, api_testing
+from src.core import (
+    api_playlist, api_frontend, api_orchestrator, 
+    api_logbuch, api_testing
+)
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
 import ast
