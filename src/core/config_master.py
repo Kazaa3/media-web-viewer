@@ -98,6 +98,12 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
+# --- TOOLS & BINARIES SSOT (v1.46.132) ---
+TOOLS_DIR = PROJECT_ROOT / "tools"
+TOOLS_BIN_DIR = TOOLS_DIR / "bin"
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
 # Path Discovery
 SCAN_MEDIA_DIR = str(PROJECT_ROOT / "media")
 BROWSER_DEFAULT_DIR = str(Path.home())
@@ -126,10 +132,21 @@ def get_env_list(name: str, default: list) -> list:
 
 def discover_binary(name: str, fallback: str = "") -> str:
     """Safely discover a binary path on the current system."""
+    # Forensic Evolution (v1.46.132): Prioritize local tools/bin path
+    local_path = TOOLS_BIN_DIR / name
+    if local_path.exists():
+        return str(local_path)
+    
+    # Check for .exe on Windows-like environments if applicable (future proofing)
+    local_exe_path = TOOLS_BIN_DIR / f"{name}.exe"
+    if local_exe_path.exists():
+        return str(local_exe_path)
+
     if name == "vlc":
         return shutil.which("vlc") or shutil.which("cvlc") or "/usr/bin/vlc"
     if name == "cvlc":
         return shutil.which("cvlc") or "/usr/bin/cvlc"
+    
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
 # --- VERSION DISCOVERY OPTIMIZATION (v1.41.00) ---
