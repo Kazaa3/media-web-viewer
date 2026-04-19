@@ -376,6 +376,23 @@ window.toggleLibraryFilterMode = function() {
 };
 
 /**
+ * [v1.54.013] cycleHydrationMode
+ * Transitions between REAL, MOCK, and BOTH forensic layers.
+ */
+window.cycleHydrationMode = function() {
+    const modes = ['real', 'mock', 'both'];
+    const current = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+    let idx = modes.indexOf(current);
+    idx = (idx + 1) % modes.length;
+    const next = modes[idx];
+    
+    console.info(`[UI-NAV] Hydration Layer Cycled: ${next.toUpperCase()}`);
+    if (typeof window.setHydrationMode === 'function') {
+        window.setHydrationMode(next);
+    }
+};
+
+/**
  * [v1.53.001] handleLibrarySearch
  * Global bridge for the forensic discovery search.
  */

@@ -279,6 +279,21 @@ async function renderLibrary() {
         console.log(`[FE-AUDIT] HIDB active - showing only mock/recovery items.`);
     }
 
+    // 2.5 [v1.54.013] FORENSIC LAYER FILTER (Item/Release/Object)
+    const activeMode = window.activeLibraryFilterMode || 'route';
+    if (['item', 'release', 'object'].includes(activeMode)) {
+        projectedItems = projectedItems.filter(i => {
+            if (i.is_mock || i.is_recovery) return true;
+            const type = (i.type || 'item').toLowerCase();
+            
+            if (activeMode === 'object') return (type === 'object' || type === 'album' || type === 'collection');
+            if (activeMode === 'release') return (type === 'release' || type === 'edition');
+            if (activeMode === 'item') return (type === 'item' || type === 'track' || type === 'file');
+            return true;
+        });
+        console.debug(`[FE-AUDIT] Layer Filter (${activeMode}): ${projectedItems.length} items remaining.`);
+    }
+
     // 2. Main Category Filter
     if (libraryFilter !== 'all') {
         const catInfo = (typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP[libraryFilter] : null);

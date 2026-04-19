@@ -355,19 +355,54 @@ function renderLibrarySidebar() {
         `;
     }).join('');
 
+    // [v1.54.013] FORENSIC DISCOVERY SECTION
+    const activeMode = window.activeLibraryFilterMode || 'route';
+    const activeHydration = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+
+    const discoverySectionHTML = `
+        <div id="lib-nav-discovery-container" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px;">
+            <h4 style="margin: 0 0 12px 10px; font-size: 11px; text-transform: uppercase; color: var(--accent-color); letter-spacing: 1.5px; font-weight: 800;" data-i18n="discovery_title">Forensic Discovery</h4>
+            
+            <!-- Mode Cycler (Item/Release/Object/Route/Category/Context) -->
+            <button id="lib-nav-btn-mode-cycle" class="sub-tab-btn" onclick="if(window.toggleLibraryFilterMode) { window.toggleLibraryFilterMode(); renderLibrarySidebar(); }">
+                <svg width="14" height="14" style="margin-right: 8px; color: var(--accent-color);"><use href="#icon-sync"></use></svg>
+                MODE: <span style="font-weight: 900; margin-left: auto;">${activeMode.toUpperCase()}</span>
+            </button>
+
+            <!-- Mock Layer Toggle -->
+            <button id="lib-nav-btn-mock-toggle" class="sub-tab-btn" onclick="if(window.cycleHydrationMode) { window.cycleHydrationMode(); renderLibrarySidebar(); }">
+                <svg width="14" height="14" style="margin-right: 8px; color: ${activeHydration === 'mock' ? '#9b59b6' : '#2ecc71'};"><use href="#icon-layers"></use></svg>
+                LAYER: <span style="font-weight: 900; margin-left: auto;">${activeHydration.toUpperCase()}</span>
+            </button>
+
+            <div style="height: 1px; background: var(--border-color); margin: 5px 10px 10px 10px; opacity: 0.3;"></div>
+            
+            <!-- Quick View Filters -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0 10px;">
+                <button onclick="window.activeLibraryFilterMode='item'; renderLibrarySidebar(); if(window.renderLibrary) renderLibrary();" 
+                    class="sub-tab-btn ${activeMode === 'item' ? 'active' : ''}" style="padding: 6px; font-size: 9px; justify-content: center;">ITEM</button>
+                <button onclick="window.activeLibraryFilterMode='release'; renderLibrarySidebar(); if(window.renderLibrary) renderLibrary();" 
+                    class="sub-tab-btn ${activeMode === 'release' ? 'active' : ''}" style="padding: 6px; font-size: 9px; justify-content: center;">RELEASE</button>
+                <button onclick="window.activeLibraryFilterMode='object'; renderLibrarySidebar(); if(window.renderLibrary) renderLibrary();" 
+                    class="sub-tab-btn ${activeMode === 'object' ? 'active' : ''}" style="padding: 6px; font-size: 9px; justify-content: center; grid-column: span 2;">OBJECT (ALBUM)</button>
+            </div>
+        </div>
+        <div style="height: 1px; background: var(--border-color); margin: 5px 10px 20px 10px; opacity: 0.5;"></div>
+    `;
+
     // Add static Filter & Search section if not in config
     const filterSectionHTML = `
         <div id="lib-nav-filters-container" style="display: flex; flex-direction: column; gap: 8px;">
-            <h4 style="margin: 0 0 12px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1.5px; font-weight: 800;" data-i18n="filter_title">Filtern &amp; Suche</h4>
+            <h4 style="margin: 0 0 12px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1.5px; font-weight: 800;" data-i18n="filter_title">Suche</h4>
             <div style="padding: 0 10px 12px 10px;">
-                <input type="text" id="library-search-input" placeholder="Suchen..." 
+                <input type="text" id="library-search-input" placeholder="Discovery Pulse..." 
                     oninput="if(typeof handleLibrarySearch === 'function') handleLibrarySearch(this.value)"
                     style="width: 100%; padding: 10px 14px; border-radius: 100px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none;">
             </div>
         </div>
     `;
 
-    sidebar.innerHTML = sectionsHTML + filterSectionHTML;
+    sidebar.innerHTML = sectionsHTML + discoverySectionHTML + filterSectionHTML;
 
     // Restore active states
     const activeView = localStorage.getItem('mwv_active_library_view') || 'coverflow';
