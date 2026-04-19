@@ -1100,6 +1100,11 @@ function initForensicHeartbeat() {
             // Recovery Pulse: Forced Refresh + Re-render
             if (typeof refreshLibrary === 'function') refreshLibrary();
             
+            // Re-render all queues (v1.54.015)
+            if (typeof renderAudioQueue === 'function') renderAudioQueue();
+            if (typeof renderPhotoQueue === 'function') renderPhotoQueue();
+            if (typeof renderVideoQueue === 'function') renderVideoQueue();
+
             // Re-assert active tab visibility
             const activeTab = localStorage.getItem('mwv_active_tab') || 'player';
             if (typeof switchTab === 'function') switchTab(activeTab);

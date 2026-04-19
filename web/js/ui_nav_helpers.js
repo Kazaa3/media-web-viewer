@@ -754,6 +754,7 @@ function switchPlayerView(viewId) {
         if (viewId === 'warteschlange') {
             if (typeof renderAudioQueue === 'function') renderAudioQueue();
             if (typeof renderPhotoQueue === 'function') renderPhotoQueue();
+            if (typeof renderVideoQueue === 'function') renderVideoQueue();
         }
         if (viewId === 'visualizer' && typeof initVisualizer === 'function') initVisualizer();
         if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') refreshSavedPlaylists();

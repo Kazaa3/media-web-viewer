@@ -336,14 +336,35 @@ function renderVideoQueue() {
         const titleDisplay = stagePrefix + (tags.title || item.name || 'Unknown');
         const filename = (item.path || '').split('/').pop();
         
+        const res = item.resolution || (tags.width ? `${tags.width}x${tags.height}` : 'SD');
+        const br = item.bitrate || tags.bitrate || '-';
+        const nameMock = item.name && item.name.startsWith('[MOCK]');
+        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
+        const prov = item.is_diag ? 'diag' : (mockFlag ? 'mock' : 'real');
+        const provLabel = item.is_diag ? '[D]' : (mockFlag ? '[M]' : '[R]');
+
         div.innerHTML = `
-            <div style="flex: 1;">
-                <strong style="display:block; font-size: 0.9em; color: var(--text-color);">${titleDisplay}</strong>
-                <span style="font-size: 0.8em; color: #888;">${filename}</span>
+            <div style="flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0;">
+                <div style="width: 40px; height: 40px; background: rgba(0,0,0,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);">
+                    <svg width="20" height="20" style="opacity: 0.5;"><use href="#icon-video"></use></svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="provenance-badge ${prov}">${provLabel}</span>
+                        <strong style="display:block; font-size: 0.9em; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${titleDisplay}</strong>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6; display: flex; gap: 8px; margin-top: 2px;">
+                        <span style="color: var(--accent-color); font-weight: 800;">${res}</span>
+                        <span>•</span>
+                        <span>${br}</span>
+                        <span>•</span>
+                        <span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${filename}</span>
+                    </div>
+                </div>
             </div>
-            <div style="display: flex; gap: 5px;">
-                <button onclick="event.stopPropagation(); if (typeof removeItem === 'function') removeItem(${index});" style="background:transparent; border:none; cursor:pointer; color: #f44;">
-                    <svg width="12" height="12"><use href="#icon-delete"></use></svg>
+            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                <button onclick="event.stopPropagation(); if (typeof removeItem === 'function') removeItem(${index});" style="background:transparent; border:none; cursor:pointer; color: #ff3366; opacity: 0.6;">
+                    <svg width="14" height="14"><use href="#icon-delete"></use></svg>
                 </button>
             </div>
         `;
