@@ -5452,51 +5452,26 @@ def move_current_down():
     state = api_playlist.get_state()
     return api_playlist.move_item_down(state["index"])
 
+    return api_playlist.move_current_up()
+
+@eel.expose
+def move_current_down():
+    return api_playlist.move_current_down()
+
 @eel.expose
 def move_item_to(old_index: int, new_index: int):
-    # This was a complex function in main.py, let's keep it simple or implement it in api_playlist
-    # For now, I'll recommend the user uses the new API once fully migrated.
-    # Actually, I should probably have moved move_item_to to api_playlist.
-    # Let me quickly check if I did. (I didn't). 
-    # I'll keep the delegation and I'll add move_item_to to api_playlist in the next step.
-    pass
+    return api_playlist.move_item_to(old_index, new_index)
 
 @eel.expose
 def move_item_up_by_key(key: str):
-    # This had logic to find index then call move_item_up. 
-    # I'll delegate this to a future implementation in api_playlist if needed, 
-    # or just keep it simple.
-    pass
+    return api_playlist.move_item_up_by_key(key)
+
+@eel.expose
+def move_item_down_by_key(key: str):
+    return api_playlist.move_item_down_by_key(key)
 
 @eel.expose
 def move_item_up_by_obj(item_obj):
-    # Delegation
-    pass
-
-
-@eel.expose
-def remove_playlist_item(index: int):
-    """
-    Remove playlist item at `index` from CURRENT_PLAYLIST.
-    Adjusts CURRENT_INDEX accordingly.
-    """
-    global CURRENT_PLAYLIST, CURRENT_INDEX
-    try:
-        idx = int(index)
-    except Exception:
-        return {"status": "error", "message": "invalid index"}
-
-    if not CURRENT_PLAYLIST:
-        return {"status": "error", "message": "no playlist"}
-    if idx < 0 or idx >= len(CURRENT_PLAYLIST):
-        return {"status": "error", "message": "index out of range"}
-
-    CURRENT_PLAYLIST.pop(idx)
-
-    if CURRENT_INDEX == idx:
-        CURRENT_INDEX = -1
-    elif CURRENT_INDEX > idx:
-        CURRENT_INDEX -= 1
 
     return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
 
