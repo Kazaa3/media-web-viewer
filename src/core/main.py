@@ -367,40 +367,31 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(25, "Eel Assets Ready")
 
     sb.update(30, "Registering Core SRC Modules")
-    try:
-        if profiler:
-            profiler.start_phase("Core-Modules-Init")
-        from core import db
-        from core.db import DB_FILENAME
-        from core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
-        from core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
-
-        # Core data initialization (no heavy parsing yet)
-        db.init_db()
-
-        sb.update(80, "Core modules registered")
-        sb.update(80, "Core modules loaded")
-        if profiler:
-            profiler.end_phase("Core-Modules-Init")
-    except Exception as e:
-        log.critical(f"Resource load failure: {e}")
-        sys.exit(1)
-
 def bootstrap_core_settings():
     """Initializes the core runtime settings (v1.46.136)."""
-    global port, eel_kwargs
+    global port, eel_kwargs, transcode_mgr
     try:
-        # Fast Data Count (v1.38.07)
+        if profiler:
+            profiler.start_phase("Core-Bootstrap")
+        
+        # 1. DB Initialization
+        from core import db
+        db.init_db()
         media_count = db.get_media_count()
         log.info(f"[Startup-Trace] DB Initialized: {media_count} records found.")
         
-        # Centralized settings handshake
+        # 2. Centralized settings handshake
         port = EEL_SETTINGS["port"]
         eel_kwargs = {
             'host': EEL_SETTINGS["host"], 
             'size': EEL_SETTINGS["size"]
         }
         
+        # 3. Manager Initialization
+        from src.core.transcoder import TranscoderManager
+        transcode_mgr = TranscoderManager()
+        
+        if profiler: profiler.end_phase("Core-Bootstrap")
         return True
     except Exception as e:
         log.critical(f"Resource bootstrap failure: {e}")
