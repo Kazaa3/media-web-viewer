@@ -28,7 +28,7 @@ from src.core.config_master import (
 from src.core.db import get_active_db_path
 from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
-    api_logbuch, api_testing, api_diagnostics
+    api_logbuch, api_testing, api_diagnostics, api_audit
 )
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
@@ -116,9 +116,13 @@ except ImportError:
 
 # --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
 # 2. Main Imports
-try:
-    import psutil
-    import bottle
+    # Dependency Shielding (v1.47)
+    try:
+        import bottle
+    except ImportError:
+        log.warning("[Bootstrap] Bottle missing. Mocking bridge active.")
+        bottle = MagicMock()
+    
     from src.core.eel_shell import eel
     from eel import chrome
     log.info("[Bootstrap] Eel loaded successfully")
@@ -6944,40 +6948,24 @@ def test_pyautogui():
 
 
 @eel.expose
-def run_selenium_session_tests(options=None):
-    """
-    Runs Selenium tests by attaching to the running Chrome instance.
-    """
-    test_script = PROJECT_ROOT / "tests" / "test_selenium_session.py"
-    if not test_script.exists():
-        return {"status": "error", "message": f"Test script nicht gefunden unter {test_script}"}
+@eel.expose
+def run_diagnostic_snapshot():
+    """Triggers a forensic screenshot of the workstation using PyAutoGUI."""
+    return api_audit.run_pyautogui_proof()
 
-    try:
-        # We use the same venv as the main app if possible
-        cmd = [sys.executable, str(test_script)]
-        if options:
-            if options.get('verbose'):
-                cmd.append('--verbose')
-            if options.get('trace'):
-                cmd.append('--trace')
-            if options.get('debug'):
-                cmd.append('--debug')
-            if options.get('dom_control'):
-                cmd.append('--dom-control')
-            if options.get('pp_mode'):
-                cmd.append('--pp-mode')
+@eel.expose
+def run_unified_audit():
+    """Consolidates PyAutoGUI, Selenium, and Playwright forensics into a single report."""
+    return api_audit.generate_unified_audit_report()
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        return {
-            "status": "ok",
-            "output": result.stdout,
-            "error": result.stderr,
-            "exit_code": result.returncode
-        }
-    except subprocess.TimeoutExpired:
-        return {"status": "error", "message": "Selenium Test Zeitberschreitung (30s)"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+@eel.expose
+def run_automation_audit(engine="playwright"):
+    """Triggers a specialized automation audit (Playwright/Selenium)."""
+    if engine == "playwright":
+        return api_audit.run_playwright_audit()
+    elif engine == "selenium":
+        return api_audit.run_selenium_session_audit()
+    return {"status": "error", "message": f"Engine {engine} not supported."}
 
 
 @eel.expose
