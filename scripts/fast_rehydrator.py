@@ -5,10 +5,8 @@ from pathlib import Path
 import sqlite3
 import time
 
-# Dynamic Path Discovery (v1.46.132)
-script_dir = Path(__file__).resolve().parent
-root = script_dir.parent
-sys.path.insert(0, str(root))
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME
+root = PROJECT_ROOT  # Legacy alias used below
 
 # Force lightweight environment BEFORE imports
 os.environ["MWV_PARSER_MODE"] = "lightweight"

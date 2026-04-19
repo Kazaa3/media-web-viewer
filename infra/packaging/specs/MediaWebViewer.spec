@@ -6,7 +6,7 @@ from pathlib import Path
 # Dynamic project root resolution
 # In PyInstaller spec files, __file__ is not defined, but SPECPATH is available.
 SPEC_DIR = Path(SPECPATH).resolve()
-PROJECT_ROOT = SPEC_DIR.parent.parent.parent
+# PROJECT_ROOT resolved via config_master at runtime
 
 VERSION = '1.34'
 
