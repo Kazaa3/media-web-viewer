@@ -65,10 +65,6 @@ except (ImportError, AttributeError):
     APP_DATA_DIR = str(PROJECT_ROOT)
     print("STDOUT: [Logger-Bridge] Warning: Initializing with fallback config due to cyclic import.")
 
-# --- Module Exports (v1.41.00) ---
-# Ensure other modules can access these via logger.XXX
-APP_DATA_DIR = APP_DATA_DIR 
-
 REGISTRY = GLOBAL_CONFIG.get("logging_registry", {})
 LOCAL_LOG_DIR = Path(REGISTRY.get("log_root", str(PROJECT_ROOT / "logs")))
 LOG_FILE = Path(REGISTRY.get("main_log", str(LOCAL_LOG_DIR / "app.log")))

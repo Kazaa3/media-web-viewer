@@ -4,15 +4,43 @@ from pathlib import Path
 # --- [v1.46.135] CORE INFRASTRUCTURE SSOT ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_DIR      = PROJECT_ROOT / "src"
+APP_DATA_DIR = str(PROJECT_ROOT)
 
 # Hardcoded Logic Centralization
 PORT_CLEANUP_CMD     = "fuser -k 8345/tcp > /dev/null 2>&1"
 DEFAULT_TIME_FORMAT  = "%H:%M:%S"
 WINDOW_SIZE          = (1440, 900)
+
 FRONTEND_SETTINGS    = {
     "port": 8345,
     "mode": "chrome",
     "cmdline_args": ["--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required"]
+}
+
+# [v1.46.136] LAUNCH & ENVIRONMENT MODES
+LAUNCH_PROFILE = {
+    "debug_mode": False,
+    "connectionless": "--n" in sys.argv,
+    "no_gui": "--ng" in sys.argv,
+    "is_dev": os.environ.get("MWV_ENV", "prod") == "dev"
+}
+
+# --- TOOL & LOGGING REGISTRIES (v1.46.136 Centralized) ---
+FORENSIC_TOOLS_LIST = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc', 'ffplay', 'mkvinfo', 'mkvextract', 'mkvpropedit']
+
+LOGGING_REGISTRY = {
+    "log_root":             str(PROJECT_ROOT / "logs"),
+    "main_log":             "app.log",
+    "debug_log":            "debug.log",
+    "frontend_log":         "frontend_errors.log",
+    "transcoding_log_dir":  "transcoding",
+    "max_size_mb":          10,
+    "backup_count":         3,
+    "log_datefmt":          DEFAULT_TIME_FORMAT,
+    "use_session_subfolders": True,
+    "enable_main_log":      True,
+    "enable_debug_log":     True,
+    "enable_ui_console":    True
 }
 
 # --- Core Path Registry (v1.35.94 SSOT) ---
@@ -1636,6 +1664,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "library_dir": str(PROJECT_ROOT / "media"),
         "displayed_categories": ["all", "audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "multimedia", "unbekannt"],
         "debug_scan": get_env_bool("MWV_DEBUG_SCAN", False),
+        
+        # --- INFRASTRUCTURE BRIDGE (v1.46.136) ---
+        "logging_registry": LOGGING_REGISTRY,
+        "launch_profile": LAUNCH_PROFILE,
+        "forensic_tools": FORENSIC_TOOLS_LIST,
         
         # --- FEATURE FLAGS (Centralized v1.46.132) ---
         "feature_flags": {
