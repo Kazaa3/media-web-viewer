@@ -4431,9 +4431,19 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     collected_items = []
 
     try:
+        scan_settings = GLOBAL_CONFIG.get("scan_settings", {})
+        max_files = scan_settings.get("max_files", 50000)
+        max_depth = scan_settings.get("max_depth", 12)
+        enable_ext_skip = scan_settings.get("enable_extension_skipping", True)
+        skip_exts = set(scan_settings.get("skip_extensions", [".txt", ".log", ".tmp"]))
+        enable_size_skip = scan_settings.get("enable_size_skipping", True)
+        min_size = scan_settings.get("min_size_kb", 1) * 1024
+        max_size = scan_settings.get("max_size_mb", 50000) * 1024 * 1024
+        log_compact = scan_settings.get("log_compact_errors_only", True)
+        log_unsupported = scan_settings.get("log_unsupported_extensions", False)
+
         for scan_root in scan_roots:
             log.info(f" [Scan] Starting scan of: {scan_root}")
-            max_files = GLOBAL_CONFIG.get("scan_settings", {}).get("max_files", 50000)
             for root, dirs, files in os.walk(str(scan_root), followlinks=False):
                 total_traversed += (len(files) + len(dirs))
                 if total_traversed > max_files:
@@ -4442,13 +4452,15 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                     break
 
                 d = Path(root)
-                # Depth Check (v1.35.98)
+                # Depth Check (Centralized)
                 try:
                     rel_path = d.relative_to(scan_root)
-                    if len(rel_path.parts) > 12:
+                    if len(rel_path.parts) > max_depth:
                         dirs[:] = []  # Stop recursion
                         continue
-                except Exception:
+                except Exception as e:
+                    exc = None if log_compact else True
+                    log.error(f"[Scan-Depth-Error] Failed depth calculation for {d}: {e}", exc_info=exc)
                     continue
 
                 # 2. Folders as Media (Albums/DVDs) - v1.45.130
@@ -4495,13 +4507,33 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                 # 3. Individual Files (Standard Pass)
                 for filename in files:
                     ext = "." + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
-                    if ext not in all_exts:
-                        log.debug(f"[Scan-Trace] SKIPPING (Unsupported Ext '{ext}'): {filename}")
+                    
+                    if enable_ext_skip and ext in skip_exts:
+                        log.debug(f"[Scan-Trace] SKIPPING (Blacklisted Ext '{ext}'): {filename}")
                         continue
+                        
+                    if ext not in all_exts:
+                        if log_unsupported:
+                            log.debug(f"[Scan-Trace] SKIPPING (Unsupported Ext '{ext}'): {filename}")
+                        continue
+                        
                     f_path = os.path.join(root, filename)
                     if f_path in existing_media:
                         log.debug(f"[Scan-Trace] SKIPPING (Already Indexed): {filename}")
                         continue
+
+                    if enable_size_skip:
+                        try:
+                            f_size = os.path.getsize(f_path)
+                            if f_size < min_size:
+                                log.debug(f"[Scan-Trace] SKIPPING (Ghost File < {min_size}B): {filename}")
+                                continue
+                            if f_size > max_size:
+                                log.debug(f"[Scan-Trace] SKIPPING (Oversize File > {max_size}B): {filename}")
+                                continue
+                        except Exception as e:
+                            log.warning(f"[Scan-Size-Error] Skip due to unreadable file size for {filename}: {e}")
+                            continue
 
                     try:
                         cat = ext_to_cat.get(ext, 'Unknown')
@@ -4513,8 +4545,9 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             'extension': ext
                         })
                         count_indexed += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        exc = None if log_compact else True
+                        log.error(f"[Scan-Index-Error] Fatal crash indexing '{filename}': {e}", exc_info=exc)
 
         # 6. Atomic Commit
         if collected_items:

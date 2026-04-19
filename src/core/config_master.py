@@ -424,6 +424,20 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "enable_collection_management": True, # GLOBAL: Automatische Ordner-Gruppierung.
     "enable_nfo_parsing": True,          # GLOBAL: XML-Extraktion aus .nfo Dateien.
 
+    # --- SCANNER ENGINE SETTINGS (v1.46.100) ---
+    "scan_settings": {
+        "max_files": 50000,
+        "max_depth": 12,
+        "batch_commit_size": 250,
+        "enable_extension_skipping": True,
+        "skip_extensions": [".txt", ".log", ".tmp", ".bak", ".db", ".ini"],
+        "enable_size_skipping": True,
+        "min_size_kb": 1,        # Skip empty or 0-byte ghost files
+        "max_size_mb": 50000,    # Default Max 50GB file cap
+        "log_unsupported_extensions": False,
+        "log_compact_errors_only": True
+    },
+
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
