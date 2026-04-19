@@ -22,8 +22,8 @@ def is_ssd(device_name: str) -> bool:
         rotational_path = Path(f"/sys/block/{device_name}/queue/rotational")
         if rotational_path.exists():
             return rotational_path.read_text().strip() == "0"
-    except Exception:
-        pass
+    except Exception as e:
+        log.debug(f"[HW-SSD] Failed to check rotational status for {device_name}: {e}", exc_info=True)
     return False
 
 def get_pcie_generation(device_path: str) -> str:
@@ -45,8 +45,8 @@ def get_pcie_generation(device_path: str) -> str:
                 return speed
             current = current.parent
             if current == Path("/"): break
-    except Exception:
-        pass
+    except Exception as e:
+        log.debug(f"[HW-PCIE] Failed to check PCIe generation for {device_path}: {e}", exc_info=True)
     return "Unknown"
 
 def is_network_mount(path: str) -> bool:
@@ -66,8 +66,8 @@ def is_network_mount(path: str) -> bool:
                         fs_type = parts[2]
                         if fs_type in ("nfs", "nfs4", "cifs", "smb3", "fuse.sshfs"):
                             return True
-    except Exception:
-        pass
+    except Exception as e:
+        log.debug(f"[HW-MOUNT] Failed to check network mount for {path}: {e}", exc_info=True)
     return False
 
 def get_gpu_info(fast_mode: bool = False) -> Dict[str, Any]:
@@ -130,8 +130,9 @@ def get_gpu_info(fast_mode: bool = False) -> Dict[str, Any]:
                 if f"hevc{marker}" in stdout_d: decoders.append(f"hevc{marker}")
                 if f"vp9{marker}" in stdout_d: decoders.append(f"vp9{marker}")
             
-        except Exception:
-            pass
+        except Exception as e:
+            log.debug(f"[HW-GPU-DETAIL] FFmpeg encoder parse failed: {e}", exc_info=True)
+
 
     return {
         "type": gpu_type, 
@@ -152,8 +153,8 @@ def get_best_hw_encoder() -> str:
         if "qsv" in available: return "h264_qsv"
         if "nvenc" in available: return "h264_nvenc"
         if "vaapi" in available: return "h264_vaapi"
-    except Exception:
-        pass
+    except Exception as e:
+        log.error(f"[HW-ENCODER-CRITICAL] Failed to determine best HW encoder: {e}", exc_info=True)
     return "libx264"
 
 def get_gpu_usage_safe() -> float:
@@ -192,8 +193,8 @@ def get_gpu_usage_safe() -> float:
             if res.returncode == 0:
                 return float(res.stdout.strip())
                 
-    except Exception:
-        pass
+    except Exception as e:
+        log.debug(f"[HW-GPU-USAGE] Failed to fetch GPU usage: {e}", exc_info=True)
     return 0.0
 
 def get_hardware_info():
@@ -229,8 +230,8 @@ def get_hardware_info():
                     m = info["disks"][0]
                     info["disk_type"] = "SSD" if m["is_ssd"] else "HDD"
                     info["pcie_gen"] = m["pcie_gen"]
-        except Exception:
-            pass
+        except Exception as e:
+            log.error(f"[HW-PULSE-ERROR] Linux block device audit failed: {e}", exc_info=True)
             
     # Add GPU / Encoder detection
     gpu = get_gpu_info()

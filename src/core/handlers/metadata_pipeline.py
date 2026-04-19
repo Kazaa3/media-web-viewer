@@ -1,11 +1,8 @@
-"""
-Metadata Pipeline Orchestrator.
-"""
 from pathlib import Path
 from typing import Dict, Any
-import logging
+from src.core.logger import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger("metadata_pipeline")
 
 class MetadataPipeline:
     """
@@ -23,11 +20,12 @@ class MetadataPipeline:
         from src.parsers.format_utils import ffprobe_suite
         
         if not self.filepath.exists():
-            log.warning(f"MetadataPipeline: File not found {self.filepath}")
+            log.warning(f"[Pipeline] File not found: {self.filepath}")
             return {}
             
         try:
             return ffprobe_suite(self.filepath)
         except Exception as e:
-            log.error(f"MetadataPipeline: Orchestration failed for {self.filepath}: {e}")
+            log.error(f"[Pipeline] Orchestration failed for {self.filepath}: {e}", exc_info=True)
             return {}
+
