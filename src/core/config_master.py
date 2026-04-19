@@ -95,15 +95,86 @@ ROOT_DIR     = PROJECT_ROOT                    # Canonical alias
 SRC_DIR      = PROJECT_ROOT / "src"            # Source directory
 APP_DATA_DIR = str(PROJECT_ROOT)
 
-# --- SSOT: KEY DIRECTORY REGISTRY (v1.46.132) ---
-DATA_DIR      = PROJECT_ROOT / "data"
-DIST_DIR      = PROJECT_ROOT / "dist"
-LOGS_DIR      = PROJECT_ROOT / "logs"
-MEDIA_DIR     = PROJECT_ROOT / "media"
-SCRIPTS_DIR   = PROJECT_ROOT / "scripts"
-TOOLS_DIR     = PROJECT_ROOT / "tools"
-TOOLS_BIN_DIR = TOOLS_DIR / "bin"
-TEST_DIR      = PROJECT_ROOT / "tests"
+# --- SSOT: KEY DIRECTORY REGISTRY (v1.46.132 Complete) ---
+# Every named directory in the project has a formal constant here.
+# Import the constants you need — do NOT recalculate paths elsewhere.
+
+# --- Core Source ---
+SRC_DIR           = PROJECT_ROOT / "src"
+SRC_CORE_DIR      = SRC_DIR / "core"
+SRC_PARSERS_DIR   = SRC_DIR / "parsers"
+SRC_HANDLERS_DIR  = SRC_CORE_DIR / "handlers"
+SRC_STREAMS_DIR   = SRC_CORE_DIR / "streams"
+
+# --- Web / Frontend ---
+WEB_DIR           = PROJECT_ROOT / "web"
+WEB_CSS_DIR       = WEB_DIR / "css"
+WEB_JS_DIR        = WEB_DIR / "js"
+WEB_ASSETS_DIR    = WEB_DIR / "assets"
+WEB_ICONS_DIR     = WEB_DIR / "icons"
+WEB_FRAGMENTS_DIR = WEB_DIR / "fragments"
+WEB_MEDIA_DIR     = WEB_DIR / "media"
+
+# --- Data & Storage ---
+DATA_DIR          = PROJECT_ROOT / "data"
+DB_DIR            = Path.home() / ".media-web-viewer"   # Shadow/user DB location
+CACHE_DIR         = PROJECT_ROOT / "cache"
+CACHE_MEDIA_DIR   = CACHE_DIR / "media"
+CACHE_MKV_DIR     = CACHE_DIR / "extracted"
+MEDIA_DIR         = PROJECT_ROOT / "media"
+
+# --- Output & Build ---
+DIST_DIR          = PROJECT_ROOT / "dist"
+BUILD_DIR         = PROJECT_ROOT / "build"
+PACKAGES_DIR      = PROJECT_ROOT / "packages"
+PACKAGES_DEB_DIR  = PACKAGES_DIR / "deb"
+PACKAGES_BIN_DIR  = PACKAGES_DIR / "bin"
+PACKAGES_PYPI_DIR = PACKAGES_DIR / "pypi"
+
+# --- Logs ---
+LOGS_DIR          = PROJECT_ROOT / "logs"
+LOGS_CACHE_DIR    = LOGS_DIR / "cache"
+
+# --- Scripts & Tools ---
+SCRIPTS_DIR       = PROJECT_ROOT / "scripts"
+AUDIT_REPORTS_DIR = SCRIPTS_DIR / "audit_reports"
+TOOLS_DIR         = PROJECT_ROOT / "tools"
+TOOLS_BIN_DIR     = TOOLS_DIR / "bin"
+
+# --- Tests ---
+TEST_DIR          = PROJECT_ROOT / "tests"
+TEST_DB_DIR       = TEST_DIR / "db"
+TEST_UNIT_DIR     = TEST_DIR / "unit"
+TEST_ENGINES_DIR  = TEST_DIR / "engines"
+TEST_FUNCTIONAL_DIR = TEST_DIR / "functional"
+TEST_UI_DIR       = TEST_DIR / "ui"
+TEST_LEGACY_DIR   = TEST_DIR / "legacy"
+TEST_RESOURCES_DIR = TEST_DIR / "resources"
+TEST_ARTIFACTS_DIR = TEST_DIR / "artifacts"
+TEST_DATA_DIR     = TEST_DIR / "data"
+TEST_DIAGNOSTICS_DIR = TEST_DIR / "diagnostics"
+
+# --- Documentation & Logbuch ---
+DOCS_DIR          = PROJECT_ROOT / "docs"
+LOGBUCH_DIR       = PROJECT_ROOT / "logbuch"
+FRAGMENTS_DIR     = PROJECT_ROOT / "fragments"   # Root-level HTML fragments
+
+# --- Infrastructure ---
+INFRA_DIR         = PROJECT_ROOT / "infra"
+SCRATCH_DIR       = PROJECT_ROOT / "scratch"
+
+# --- Virtual Environments (resolved, may not exist on all systems) ---
+VENV_DIR          = PROJECT_ROOT / ".venv"
+VENV_CORE_DIR     = PROJECT_ROOT / ".venv_core"
+VENV_BUILD_DIR    = PROJECT_ROOT / ".venv_build"
+VENV_DEV_DIR      = PROJECT_ROOT / ".venv_dev"
+VENV_RUN_DIR      = PROJECT_ROOT / ".venv_run"
+VENV_SELENIUM_DIR = PROJECT_ROOT / ".venv_selenium"
+VENV_TESTBED_DIR  = PROJECT_ROOT / ".venv_testbed"
+
+# Path Discovery (legacy compat)
+SCAN_MEDIA_DIR    = str(MEDIA_DIR)
+BROWSER_DEFAULT_DIR = str(Path.home())
 
 # --- SSOT: DATABASE PATHS (v1.46.132) ---
 # Priority: MWV_DB env var > user-home dir > project data dir
@@ -132,9 +203,6 @@ for _p in (PROJECT_ROOT, SCRIPTS_DIR, TOOLS_DIR):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-# Path Discovery
-SCAN_MEDIA_DIR = str(MEDIA_DIR)
-BROWSER_DEFAULT_DIR = str(Path.home())
 
 # Load local environment overrides if available
 if _DOTENV_LOADED:
@@ -1381,51 +1449,105 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     # --- STORAGE REGISTRY (v1.46.132 Centralized SSOT) ---
     "storage_registry": {
+        # --- Root & Source ---
         "project_root":             str(PROJECT_ROOT),
         "root_dir":                 str(ROOT_DIR),
         "src_dir":                  str(SRC_DIR),
+        "src_core_dir":             str(SRC_CORE_DIR),
+        "src_parsers_dir":          str(SRC_PARSERS_DIR),
+
+        # --- Web ---
+        "web_dir":                  str(WEB_DIR),
+        "web_css_dir":              str(WEB_CSS_DIR),
+        "web_js_dir":               str(WEB_JS_DIR),
+        "web_assets_dir":           str(WEB_ASSETS_DIR),
+        "web_fragments_dir":        str(WEB_FRAGMENTS_DIR),
+        "web_config":               str(WEB_DIR / "config.json"),
+        "web_config_dev":           str(WEB_DIR / "config.develop.json"),
+        "web_config_main":          str(WEB_DIR / "config.main.json"),
+        "i18n_file":                str(WEB_DIR / "i18n.json"),
+
+        # --- Data & DB ---
         "data_dir":                 str(DATA_DIR),
+        "db_path":                  str(DB_FILENAME),
+        "db_dir":                   str(DB_DIR),
+        "cache_dir":                str(CACHE_DIR),
+        "cache_media_dir":          str(CACHE_MEDIA_DIR),
+        "mkv_cache_dir":            str(CACHE_MKV_DIR),
         "media_dir":                str(MEDIA_DIR),
-        "test_dir":                 str(TEST_DIR),
+        "benchmarks_dir":           str(DATA_DIR / "benchmarks"),
+        "playback_benchmark_path":  str(DATA_DIR / "benchmarks" / "playback.json"),
+        "system_benchmark_path":    str(DATA_DIR / "benchmarks" / "system.json"),
+        "test_results_path":        str(DATA_DIR / "test_results.json"),
+
+        # --- Output & Build ---
+        "dist_dir":                 str(DIST_DIR),
+        "build_dir":                str(BUILD_DIR),
+        "packages_dir":             str(PACKAGES_DIR),
+        "packages_deb_dir":         str(PACKAGES_DEB_DIR),
+        "packages_bin_dir":         str(PACKAGES_BIN_DIR),
+
+        # --- Logs ---
+        "logs_dir":                 str(LOGS_DIR),
+        "app_logs_dir":             str(LOGS_DIR),
+        "probe_log":                str(PROJECT_ROOT / "probe_results.log"),
+        "audit_log":                str(PROJECT_ROOT / "audit_debug.log"),
+
+        # --- Scripts & Tools ---
+        "scripts_dir":              str(SCRIPTS_DIR),
+        "audit_reports_dir":        str(AUDIT_REPORTS_DIR),
         "tools_dir":                str(TOOLS_DIR),
         "tools_bin_dir":            str(TOOLS_BIN_DIR),
-        "dist_dir":                 str(DIST_DIR),
-        "scripts_dir":              str(SCRIPTS_DIR),
-        "logs_dir":                 str(LOGS_DIR),
-        "db_path":                  str(DB_FILENAME),           # SSOT -> use DB_FILENAME
-        "db_dir":                   str(Path.home() / ".media-web-viewer"),
-        "logbuch_dir":              PROJECT_ROOT / "logbuch",
-        "app_logs_dir":             LOGS_DIR,
-        "benchmarks_dir":           DATA_DIR / "benchmarks",
-        "playback_benchmark_path":  DATA_DIR / "benchmarks" / "playback.json",
-        "system_benchmark_path":    DATA_DIR / "benchmarks" / "system.json",
-        "test_results_path":        DATA_DIR / "test_results.json",
-        "mkv_cache_dir":            PROJECT_ROOT / "cache" / "extracted",
-        "media_cache_dir":          PROJECT_ROOT / "cache" / "media",
+
+        # --- Tests ---
+        "test_dir":                 str(TEST_DIR),
+        "test_db_dir":              str(TEST_DB_DIR),
+        "test_unit_dir":            str(TEST_UNIT_DIR),
+        "test_engines_dir":         str(TEST_ENGINES_DIR),
+        "test_functional_dir":      str(TEST_FUNCTIONAL_DIR),
+        "test_ui_dir":              str(TEST_UI_DIR),
+        "test_legacy_dir":          str(TEST_LEGACY_DIR),
+        "test_resources_dir":       str(TEST_RESOURCES_DIR),
+        "test_artifacts_dir":       str(TEST_ARTIFACTS_DIR),
+        "test_data_dir":            str(TEST_DATA_DIR),
+        "test_diagnostics_dir":     str(TEST_DIAGNOSTICS_DIR),
+        "test_reports_dir":         str(TEST_ARTIFACTS_DIR),
+
+        # --- Docs & Infra ---
+        "docs_dir":                 str(DOCS_DIR),
+        "logbuch_dir":              str(LOGBUCH_DIR),
+        "fragments_dir":            str(FRAGMENTS_DIR),
+        "infra_dir":                str(INFRA_DIR),
+        "scratch_dir":              str(SCRATCH_DIR),
+        "environment_file":         str(INFRA_DIR / "environment.yml"),
+        "version_sync_file":        str(INFRA_DIR / "VERSION_SYNC.json"),
+
+        # --- Virtual Environments ---
+        "venv_dir":                 str(VENV_DIR),
+        "venv_core_dir":            str(VENV_CORE_DIR),
+        "venv_build_dir":           str(VENV_BUILD_DIR),
+        "venv_dev_dir":             str(VENV_DEV_DIR),
+        "venv_run_dir":             str(VENV_RUN_DIR),
+        "venv_selenium_dir":        str(VENV_SELENIUM_DIR),
+        "venv_testbed_dir":         str(VENV_TESTBED_DIR),
+
+        # --- User Config ---
         "config_dir":               str(Path.home() / ".config" / "gui_media_web_viewer"),
+
+        # --- Version Files ---
         "pyproject_file":           str(PROJECT_ROOT / "pyproject.toml"),
         "version_file":             str(PROJECT_ROOT / "VERSION"),
         "benchmarks_file":          str(PROJECT_ROOT / "benchmarks.json"),
-        "environment_file":         str(PROJECT_ROOT / "infra" / "environment.yml"),
-        "version_sync_file":        str(PROJECT_ROOT / "infra" / "VERSION_SYNC.json"),
-        "probe_log":                str(PROJECT_ROOT / "probe_results.log"),
-        "audit_log": str(PROJECT_ROOT / "audit_debug.log"),
-        "web_config": str(PROJECT_ROOT / "web" / "config.json"),
-        "web_config_dev": str(PROJECT_ROOT / "web" / "config.develop.json"),
-        "web_config_main": str(PROJECT_ROOT / "web" / "config.main.json"),
-        "i18n_file": str(PROJECT_ROOT / "web" / "i18n.json"),
-        "test_dir": str(PROJECT_ROOT / "tests"),
-        "test_data_dir": str(PROJECT_ROOT / "tests" / "data"),
-        "test_engines_dir": str(PROJECT_ROOT / "tests" / "engines"),
-        "test_legacy_dir": str(PROJECT_ROOT / "tests" / "legacy"),
-        "test_reports_dir": str(PROJECT_ROOT / "tests" / "artifacts"),
+
+        # --- Reference Media (Test Assets) ---
         "reference_media": {
-            "video": str(PROJECT_ROOT / "tests" / "data" / "reference" / "video.mp4"),
-            "audio": str(PROJECT_ROOT / "tests" / "data" / "reference" / "audio.mp3"),
-            "iso": str(PROJECT_ROOT / "tests" / "data" / "iso" / "test_disc.iso"),
-            "mkv": str(PROJECT_ROOT / "tests" / "data" / "reference" / "test.mkv")
+            "video": str(TEST_DATA_DIR / "reference" / "video.mp4"),
+            "audio": str(TEST_DATA_DIR / "reference" / "audio.mp3"),
+            "iso":   str(TEST_DATA_DIR / "iso" / "test_disc.iso"),
+            "mkv":   str(TEST_DATA_DIR / "reference" / "test.mkv"),
         }
     },
+
     
     # --- PARSER & UI REGISTRY (v1.41.00 Centralized) ---
     # --- PARSER & UI REGISTRY (v1.46.132 Expanded SSOT) ---
