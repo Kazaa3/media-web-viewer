@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-startup_auditor.py - Forensic Integrity & Pre-Flight Validation (v1.51.02)
-Ensuring workstation stability with Offline-Ready Self-Healing capabilities.
-Includes robust guards for Linux system dependencies (tkinter).
-[AI-Anchor-Hash: 51_SELF_HEAL_STABLE_005]
+startup_auditor.py - Forensic Integrity & Pre-Flight Validation (v1.52)
+Comprehensive Multi-Tier Dependency Audit with Grouped Observations.
+[AI-Anchor-Hash: 52_SELF_HEAL_GROUPED_006]
 """
 
 import logging
 import sys
 import os
 import subprocess
-import importlib
+import importlib.util
 from typing import List, Dict, Any, Tuple
 
 log = logging.getLogger("app.integrity")
@@ -27,9 +26,9 @@ def run_preflight_audit() -> bool:
     """Executes all integrity checks and returns True if stable."""
     log.info("[Audit] Starting Pre-Flight Integrity Check...")
     
-    # 0. Dependency Healing (v1.51 Offline-Ready)
+    # 0. Dependency Healing (v1.52 Multi-Tier)
     if not ensure_critical_packages():
-        log.critical("[Audit-Deps] FATAL: Dependency stability could not be established.")
+        log.critical("[Audit-Deps] FATAL: Multi-tier dependency stability could not be established.")
         return False
         
     # 1. Configuration Audit
@@ -61,66 +60,80 @@ def run_preflight_audit() -> bool:
 
 def ensure_critical_packages() -> bool:
     """
-    Forensic Dependency Manager (v1.51 Online/Offline Hybrid).
-    Automatically detects and restores missing packages with local fallback.
+    Forensic Multi-Tier Dependency Auditor (v1.52).
+    Checks and restores packages categorized by functional groups.
     """
     try:
         from src.core.config_master import DEPENDENCY_REGISTRY
     except ImportError:
-        log.error("[Audit-Deps] Could not import DEPENDENCY_REGISTRY. Falling back to defaults.")
-        DEPENDENCY_REGISTRY = {"auto_install_enabled": True, "critical_packages": ["pyautogui", "bottle", "psutil"]}
+        log.error("[Audit-Deps] Failed to import DEPENDENCY_REGISTRY. Aborting.")
+        return False
     
     # 0. Global Governance Check
     if not DEPENDENCY_REGISTRY.get("auto_install_enabled", True):
         log.warning("[Audit-Deps] Automated installation is DISABLED via global flag.")
-        return _verify_packages_only()
+        return _verify_all_groups_passive(DEPENDENCY_REGISTRY)
 
-    critical_map = {
-        "pyautogui": "pyautogui",
-        "bottle": "bottle",
-        "psutil": "psutil",
-        "PIL": "pillow"
+    package_groups = DEPENDENCY_REGISTRY.get("package_groups", {})
+    mapping = {
+        "pillow": "PIL",
+        "vlc": "vlc",
+        "m3u8": "m3u8",
+        # Default: module_name == package_name
     }
     
-    missing = []
-    for module_name, package_name in critical_map.items():
-        if not _is_resource_present(module_name):
-            missing.append(package_name)
+    overall_success = True
     
-    if not missing:
-        return True
+    for group_name, packages in package_groups.items():
+        log.info(f"[Audit-Deps] Verifying tier: {group_name.upper()}...")
+        
+        missing = []
+        for pkg in packages:
+            module_name = mapping.get(pkg.lower(), pkg)
+            if not _is_resource_present(module_name):
+                missing.append(pkg)
+        
+        if not missing:
+            log.info(f"[Audit-Deps] Tier {group_name.upper()}: [OK]")
+            continue
+            
+        log.warning(f"[Audit-Deps] Tier {group_name.upper()}: MISSING {missing}")
+        
+        # Restoration Sequence
+        if not _restore_packages(missing, DEPENDENCY_REGISTRY):
+            log.error(f"[Audit-Deps] Tier {group_name.upper()}: RESTORATION FAILED.")
+            overall_success = False
+            
+    return overall_success
+
+def _restore_packages(packages: List[str], registry: Dict) -> bool:
+    """Orchestrates restoration for a list of packages."""
+    local_cache = registry.get("linux_cache_path")
+    offline_enforced = registry.get("offline_mode_enforced", False)
     
-    log.warning(f"[Audit-Deps] Missing critical packages: {missing}")
-    
-    # Attempt restoration
-    local_cache = DEPENDENCY_REGISTRY.get("linux_cache_path")
-    offline_enforced = DEPENDENCY_REGISTRY.get("offline_mode_enforced", False)
-    
-    for package in missing:
+    for package in packages:
         success = False
         
-        # Phase 1: Online Attempt (if allowed)
+        # Phase 1: Online
         if not offline_enforced:
             try:
-                log.info(f"[Audit-Deps] Phase 1: Attempting ONLINE restoration for '{package}'...")
+                log.info(f"[Audit-Deps] PHASE-1 [ONLINE]: Installing '{package}'...")
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "--timeout", "10", package])
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from Repository.")
                 success = True
-            except Exception as e:
-                log.warning(f"[Audit-Deps] Phase 1 FAILED for '{package}': {e}")
+            except: pass
 
-        # Phase 2: Local Cache Fallback
+        # Phase 2: Local
         if not success and local_cache and os.path.exists(local_cache):
             try:
-                log.info(f"[Audit-Deps] Phase 2: Attempting OFFLINE restoration for '{package}' from {local_cache}...")
+                log.info(f"[Audit-Deps] PHASE-2 [LOCAL]: Installing '{package}' from Cache...")
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(local_cache), package])
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from LOCAL CACHE.")
                 success = True
-            except Exception as e:
-                log.error(f"[Audit-Deps] Phase 2 FAILED for '{package}': {e}")
-        
+            except: pass
+            
         if not success:
-            log.error(f"[Audit-Deps] CRITICAL FAILURE: Could not restore mission-critical package '{package}'.")
+            log.error(f"[Audit-Deps] ABORT: Could not restore mission-critical package '{package}'.")
             return False
             
     return True
@@ -128,22 +141,24 @@ def ensure_critical_packages() -> bool:
 def _is_resource_present(module_name: str) -> bool:
     """Verifies module readiness without triggering system dependency alerts."""
     try:
-        # Use find_spec instead of full import to avoid triggering pyautogui's tkinter check
-        import importlib.util
         spec = importlib.util.find_spec(module_name)
         return spec is not None
     except:
         return False
 
-def _verify_packages_only() -> bool:
-    """Passive check of packages without attempting installation."""
-    missing = []
-    for module in ["pyautogui", "bottle", "psutil", "PIL"]:
-        if not _is_resource_present(module): missing.append(module)
-    if missing:
-        log.error(f"[Audit-Deps] MISSING MANDATORY MODULES: {missing}. Manual action required.")
-        return False
-    return True
+def _verify_all_groups_passive(registry: Dict) -> bool:
+    """Passive multi-tier check."""
+    package_groups = registry.get("package_groups", {})
+    mapping = {"pillow": "PIL"}
+    all_ok = True
+    for group, packages in package_groups.items():
+        missing = [p for p in packages if not _is_resource_present(mapping.get(p.lower(), p))]
+        if missing:
+            log.error(f"[Audit-Deps] Tier {group.upper()}: MISSING {missing}")
+            all_ok = False
+        else:
+            log.info(f"[Audit-Deps] Tier {group.upper()}: [OK]")
+    return all_ok
 
 def audit_config() -> Tuple[bool, List[Any]]:
     """Validates GLOBAL_CONFIG against the Golden Schema."""
