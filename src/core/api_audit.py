@@ -11,6 +11,12 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
+# Robust Eel shell fallback
+try:
+    from src.core.eel_shell import eel
+except ImportError:
+    import eel
+
 # Unified Forensic Registry
 from src.core.config_master import (
     GLOBAL_CONFIG, PROJECT_ROOT, 
