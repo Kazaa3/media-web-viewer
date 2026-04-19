@@ -8,7 +8,7 @@ Identifies and groups media collections (Films, Albums) from raw filesystem item
 import os
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional, Union
 from src.core.objects import (
     FilmObject, AudioObject, AudiobookObject, SequenceObject, ObjectRelease, create_forensic_object
 )

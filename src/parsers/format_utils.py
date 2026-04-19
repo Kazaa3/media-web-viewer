@@ -142,6 +142,10 @@ def load_parser_config() -> None:
                 save_parser_config()
         except (json.JSONDecodeError, Exception) as e:
             log.warning(f"[Config] File at {CONFIG_FILE} is malformed. Restoring SSOT. {e}", exc_info=True)
+            if CONFIG_FILE.exists():
+                try: CONFIG_FILE.unlink() # Force purge
+                except: pass
+            
             for key, value in GLOBAL_CONFIG.items():
                 PARSER_CONFIG[key] = value
             save_parser_config()
