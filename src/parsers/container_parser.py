@@ -1,8 +1,10 @@
 from typing import Any
-
 from pathlib import Path
 from pymediainfo import MediaInfo
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_container")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -12,25 +14,17 @@ def get_capabilities() -> dict[str, Any]:
         "supported_codecs": ["mkv", "mp4", "m4v", "webm", "avi", "mov", "wmv", "mpg", "mpeg"]
     }
 
-
 def get_settings_schema() -> dict[str, Any]:
     return {}
 
-
-def parse(
-    path: str | Path,
-    file_type: str,
-    tags: dict[str, Any],
-    filename: str | None = None,
-    mode: str = 'lightweight',
-    settings: dict[str, Any] | None = None
-) -> dict[str, Any]:
-    if filename is None:
-        filename = Path(path).name
+def parse(path, file_type, tags, filename=None, mode='lightweight', settings=None):
     """
     Parses container-level metadata specifically designed to identify
     embedded details such as MKV streams or nested audio.
     """
+    if filename is None:
+        filename = Path(path).name
+        
     if file_type not in ('.mkv', '.mp4', '.m4v', '.webm', '.avi', '.mov', '.wmv', '.mpg', '.mpeg'):
         return tags
 
@@ -61,7 +55,6 @@ def parse(
             if primary_video.format:
                 tags['video_codec'] = primary_video.format.lower()
             
-            # Resolution string (e.g. 1920x1080)
             if primary_video.width and primary_video.height:
                 tags['resolution'] = f"{primary_video.width}x{primary_video.height}"
 
@@ -102,7 +95,7 @@ def parse(
                 tags['full_tags'][f"container_track_{i}_{track.track_type}"] = track.to_data()
 
     except Exception as e:
-        from src.core.logger import get_logger
-        get_logger("parser").warning(f"Container parser failed for {filename}: {e}")
+        log.warning(f"[Container-Parser] Failed for {filename}: {e}", exc_info=True)
 
     return tags
+
