@@ -428,10 +428,24 @@ function renderGridView() {
             eel.log_spawn_event(item.name || 'Unknown', `GRID_SPAWN_${idx}`);
         }
 
+        // [v1.54.007] Forensic Quality & Fidelity Badges
+        const bitrateVal = parseInt((item.bitrate || "0").replace(/[^0-9]/g, "")) || 0;
+        const qualityBadge = (typeof renderQualityBadge === 'function') ? renderQualityBadge(bitrateVal) : '';
+        
+        let audioBadges = '';
+        if (item.audio_channels && item.audio_channels >= 6) {
+            audioBadges += `<div class="multichannel-badge" title="${item.audio_channels} Channels">SURROUND</div>`;
+        }
+        if (String(item.codec || '').toLowerCase().includes('dsd') || String(item.path || '').toLowerCase().endsWith('.dsf')) {
+            audioBadges += `<div class="dsd-badge" title="Direct Stream Digital">DSD</div>`;
+        }
+
         return `
             <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])" oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
                 <div class="grid-cover" style="background-image: url('${artwork}')">
                     ${item.is_chrome_native ? `<div class="native-badge" title="Chrome Native support">DIRECT</div>` : ''}
+                    ${qualityBadge}
+                    ${audioBadges}
                     ${typeof getCategoryBadgeHtml === 'function' ? getCategoryBadgeHtml(item) : ''}
                 </div>
                 <div class="grid-info">

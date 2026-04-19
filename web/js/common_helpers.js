@@ -237,17 +237,17 @@ function showContextMenu(e, item) {
     }
 
     window.contextMenuItem = item;
-    
+
     // [v1.46.098] Clean Visibility Reveal (Without destroying fragment content)
     menu.style.display = 'block';
-    menu.style.zIndex = '100005'; 
+    menu.style.zIndex = '100005';
 
     // Boundary check for window
     const menuWidth = 240;
-    const menuHeight = 350; 
+    const menuHeight = 350;
 
     if (x + menuWidth > window.innerWidth) x -= menuWidth;
-    if (y + menuHeight > window.innerHeight) y -= (menuHeight / 2); 
+    if (y + menuHeight > window.innerHeight) y -= (menuHeight / 2);
 
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
@@ -263,7 +263,7 @@ function showContextMenu(e, item) {
         titleHeader.className = 'context-menu-header';
         menu.insertBefore(titleHeader, menu.firstChild);
     }
-    
+
     titleHeader.innerHTML = `
         <div style="font-weight: 800; font-size: 11px; color: var(--accent-color); margin-bottom: 4px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
             ${mediaType}
@@ -454,18 +454,18 @@ function isAudioItem(item) {
     }
     if (hasAudioExt) return true;
 
-// 2. Category Matching
-const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
-if (audioCategories.includes(cat)) {
-    if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
-    if (window.__mwv_audio_log_count < 10) {
-        console.debug(`[FE-AUDIT] Category Match: ${item.name} | Cat: ${cat} | Result: AUDIO`);
-        window.__mwv_audio_log_count++;
+    // 2. Category Matching
+    const audioCategories = ['audio', 'music', 'album', 'podcast', 'audiobook', 'hörbuch', 'klassik', 'musik'];
+    if (audioCategories.includes(cat)) {
+        if (typeof window.__mwv_audio_log_count === 'undefined') window.__mwv_audio_log_count = 0;
+        if (window.__mwv_audio_log_count < 10) {
+            console.debug(`[FE-AUDIT] Category Match: ${item.name} | Cat: ${cat} | Result: AUDIO`);
+            window.__mwv_audio_log_count++;
+        }
+        return true;
     }
-    return true;
-}
 
-// Forensic signature fallbacks
+    // Forensic signature fallbacks
     if (path.includes("_DATA_STREAM") && !path.includes(".mp4")) return true;
 
     return false;
@@ -605,10 +605,10 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         const finalGuiParsed = parseInt(finalGui) || 0;
         // [v1.46.058] Forensic Parity: Match Green, Mismatch Yellow (Gelb)
         const isParity = (finalDb !== '--' && finalGui !== '--' && finalDbParsed === finalGuiParsed && finalDbParsed > 0);
-        
+
         footerAnchor.style.color = isParity ? '#2ecc71' : '#f1c40f';
         footerAnchor.style.borderColor = isParity ? 'rgba(46, 204, 113, 0.4)' : 'rgba(241, 196, 15, 0.4)';
-        
+
         // Pulse Effect if items are 0 to draw attention to the yellow warning
         if (!isParity && finalDbParsed > 0) {
             footerAnchor.classList.add('pulse-yellow-warning');
@@ -651,7 +651,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         const domCount = document.querySelectorAll('.media-item').length;
         const playerVisible = document.getElementById('audio-player-container')?.style.display !== 'none';
         const renderStatus = `[DOM-AUDIT] Iter:${window.iterations} | GUI-Rendered: ${domCount} | Player-Active: ${playerVisible} | Parity: ${isParity}`;
-        
+
         console.debug(`[SYNC-AUDIT] Parity check: DB(${finalDb}) vs GUI(${finalGui})`);
         if (typeof eel !== 'undefined' && typeof eel.ui_trace === 'function') {
             eel.ui_trace(renderStatus)();

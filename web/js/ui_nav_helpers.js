@@ -37,7 +37,7 @@ window.mwv_init_actions = {
     'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
     'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
     'tests': () => { toggleDiagnosticsSidebar(true); switchDiagnosticsSidebarTab('sentinel'); },
-    'diagnostics': () => { switchTab('diagnostics', document.getElementById('nav-btn-diagnostics'), () => { if(typeof loadDiagnosticsSuite === 'function') loadDiagnosticsSuite(); }); }
+    'diagnostics': () => { switchTab('diagnostics', document.getElementById('nav-btn-diagnostics'), () => { if (typeof loadDiagnosticsSuite === 'function') loadDiagnosticsSuite(); }); }
 };
 
 // Global state variables
@@ -85,7 +85,7 @@ function applyDiagnosticsSidebarState(isVisible) {
         // [v1.46.074] Force parent container visibility
         const container = document.getElementById('diagnostics-overlay-container');
         if (container) container.style.display = 'block';
-        
+
         sb.style.display = 'flex';
         // Small delay for animation trigger
         setTimeout(() => sb.classList.add('active'), 10);
@@ -802,6 +802,11 @@ function switchMainCategory(category, btn) {
         window.MWV_UI.apply(category);
     }
 
+    // [v1.54.007] Forensic Audit Pulse: Signal filtering state change
+    if (typeof triggerAuditPulse === 'function') {
+        triggerAuditPulse('main-sidebar');
+    }
+
     // [v1.41.112] Force Pill Refresh for Legacy Shell
     if (typeof updateGlobalSubNav === 'function') {
         updateGlobalSubNav(category);
@@ -950,7 +955,7 @@ function switchMediaSubView(tabId) {
             if (tabId === 'albums') FragmentLoader.load('player-main-viewport', 'fragments/album_view.html');
             if (tabId === 'audiobooks') FragmentLoader.load('player-main-viewport', 'fragments/audiobook_view.html');
             if (tabId === 'playlist-mgr') FragmentLoader.load('player-main-viewport', 'fragments/playlist_manager.html');
-            
+
             updateSubNavActiveState(tabId);
         });
     } else if (videoSubViews.includes(tabId)) {
@@ -1140,25 +1145,25 @@ function switchOptionsView(viewId) {
  */
 function switchLibrarySubTab(tabId) {
     if (typeof traceUiNav === 'function') traceUiNav('SUBTAB-LIB', tabId);
-    
+
     // [v1.46.092] Forensic Routing: Determine if this is a View or a Filter
     const viewModes = ['coverflow', 'grid', 'details', 'database', 'table'];
     const filterModes = ['cinema', 'films', 'series', 'albums', 'audiobooks', 'pictures', 'documents', 'video_iso'];
     const isFilter = filterModes.includes(tabId);
-    
+
     if (isFilter) {
         console.info(`[UI-NAV] Category Filter Pulse: ${tabId}`);
         window.librarySubFilter = tabId;
         localStorage.setItem('mwv_library_sub_filter', tabId);
-        
+
         // Ensure we stay in the current view mode or default to coverflow
         let currentView = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
         if (!viewModes.includes(currentView)) currentView = 'coverflow';
-        
+
         // Sync button states for filters
         document.querySelectorAll('.library-sidebar-item, .sub-tab-btn').forEach(b => {
-             if (b.getAttribute('onclick')?.includes(tabId)) b.classList.add('active');
-             else if (!b.getAttribute('onclick')?.includes(currentView)) b.classList.remove('active');
+            if (b.getAttribute('onclick')?.includes(tabId)) b.classList.add('active');
+            else if (!b.getAttribute('onclick')?.includes(currentView)) b.classList.remove('active');
         });
     } else {
         // [v1.46.092] View Mode Switch
