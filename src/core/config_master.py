@@ -496,7 +496,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chunk_size_kb": 256,    # Global chunk size for ffmpeg pipe reading
         "buffer_size_kb": 1024
     },
-
     # --- PARSER MODES & MODE REGISTRY (v1.46.131) ---
     "parser_modes": {
         "default": "lightweight",  # "lightweight", "full", "ultimate"
@@ -507,6 +506,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
+        "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
+        "ui_trace_log_path": str(PROJECT_ROOT / "logs" / "ui_trace_environment_info.log"),
         "enable_main_log": True,        # Global app.log
         "enable_debug_log": True,       # Detailed debug.log
         "enable_session_log": True,     # Persistent session-specific log
@@ -514,11 +515,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "use_session_subfolders": True, # logs/<session_id>/...
         "enable_ui_console": True,      # Real-time UI log buffer
         "session_id_format": "{timestamp}_{pid}", # e.g. 1775416263_1001527 for sorting
-        
-        "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
-        "session_log_name": "session.log", # Named app.log inside subfolder
-        
-        "log_level": os.environ.get("MWV_LOG_LEVEL", "INFO"),
         "max_size_mb": int(os.environ.get("MWV_LOG_MAX_SIZE", 10)),
         "backup_count": int(os.environ.get("MWV_LOG_BACKUPS", 3)),
         "debug_force": os.environ.get("MWV_DEBUG_FORCE") == "1",
