@@ -1,3 +1,5 @@
+import sys
+import os
 from pathlib import Path
 
 # --- BOOTSTRAP: PATH & VERSION SSOT (v1.41.00) ---
