@@ -200,58 +200,8 @@ def get_tech_markers():
 
 
 @eel.expose
-def get_startup_report():
-    return api_reporting.get_startup_report()
-
-
-@eel.expose
 def get_system_forensics():
-    """
-    Global system forensics (v1.46.084).
-    Enforces PID differentiation and aggressive browser discovery.
-    """
-    import psutil
-    import os
-
-    be_pid = os.getpid()
-    forensics = {
-        "be": {"pid": be_pid},
-        "fe": {"pid": "N/A", "type": "Scanning..."},
-        "tools": {}
-    }
-
-    try:
-        targets = ['ffmpeg', 'ffplay', 'ffprobe', 'vlc', 'mediainfo', 'mkvmerge']
-        browser_sigs = ["chrome", "chromium", "msedge", "firefox", "safari", "opera"]
-        
-        # 1. Recursive Child Scan (PID differentiation enforced)
-        try:
-            parent = psutil.Process(be_pid)
-            for child in parent.children(recursive=True):
-                try:
-                    pid = child.pid
-                    if pid == be_pid: continue # Absolute Guard
-                    
-                    name = child.name().lower()
-                    
-                    # Browser check
-                    if any(b in name for b in browser_sigs):
-                        if forensics["fe"]["pid"] == "N/A":
-                            forensics["fe"]["pid"] = pid
-                            forensics["fe"]["type"] = child.name()
-
-                    # Tool check
-                    for t in targets:
-                        if t in name:
-                            if t not in forensics["tools"]: forensics["tools"][t] = []
-                            forensics["tools"][t].append(pid)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-        except: pass
-
-        # 2. Aggressive Global Scan (For detached browsers and tools)
-        if forensics["fe"]["pid"] == "N/A" or not forensics["tools"]:
-             potential_browsers = []
+    return api_testing.get_system_forensics()
              
              for proc in psutil.process_iter(['pid', 'name', 'create_time']):
                 try:
@@ -724,7 +674,6 @@ def start_app():
                 sys.exit(1)
 
     # 1. Environment Readiness (Centralized v1.46.136)
-    from api import frontend as api_frontend, testing as api_testing
     eel_mode = api_frontend.get_eel_mode()
     port = FRONTEND_SETTINGS["port"]
 
