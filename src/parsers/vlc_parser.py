@@ -2,7 +2,10 @@ import vlc
 import time
 from pathlib import Path
 from typing import Any
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_vlc")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -11,7 +14,6 @@ def get_capabilities() -> dict[str, Any]:
         "supported_tags": ["title", "artist", "album", "date", "genre", "track", "disc", "duration"],
         "supported_codecs": ["*"]
     }
-
 
 def get_settings_schema() -> dict[str, Any]:
     return {
@@ -22,26 +24,21 @@ def get_settings_schema() -> dict[str, Any]:
         }
     }
 
-
 def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None, mode: str = 'lightweight', settings: dict[str, Any] = None) -> dict[str, Any]:
     """
     @brief Extracts metadata using libvlc (python-vlc).
-    @details Extrahiert Metadaten mittels libvlc (python-vlc).
-    @param path Absolute path / Absoluter Pfad.
-    @param file_type Extension / Dateiendung.
-    @param tags Existing tags dictionary / Vorhandene Tags.
-    @param mode Extraction mode / Extraktionsmodus.
-    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
+    if filename is None:
+        filename = path.name
     if settings is None:
         settings = {}
 
     try:
+        # Note: --quiet helps suppress some VLCOutput but not all.
         instance = vlc.Instance("--no-xlib --quiet")
         media = instance.media_new(str(path))
         
-        # VLC parsing can be slow, but we don't have a direct timeout for media.parse()
-        # in some versions. We'll use the settings to potentially skip it if needed.
+        # VLC parsing can be slow.
         media.parse()  # Synchronous parse
         
         # Duration: reported in milliseconds
@@ -69,12 +66,12 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         if mode == 'full':
             if 'full_tags' not in tags:
                 tags['full_tags'] = {}
-            # Basic track stats
             tracks = media.get_tracks_info()
             if tracks:
                 tags['full_tags']['vlc_tracks'] = str(tracks)
 
-    except Exception:
-        pass
+    except Exception as e:
+        log.error(f"[VLC-Parser] Failed for {filename}: {e}", exc_info=True)
 
     return tags
+
