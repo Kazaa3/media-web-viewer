@@ -67,31 +67,29 @@ class ObjectDiscoveryEngine:
 
     def _analyze_folder_context(self, folder_path: str, items: List[Dict[str, Any]]) -> List[Any]:
         """
-        Analyzes a single folder to determine if it's an 'Object' (Album/Film).
+        Analyzes a single folder to determine if it's an 'Object' (Album/Film/Audiobook/Playlist).
         """
         folder_name = Path(folder_path).name
         
         # Split items into categories
         videos = [i for i in items if i.get('category') == 'video']
         audios = [i for i in items if i.get('category') == 'audio']
-        sidecars = [i for i in items if i.get('category') not in ['video', 'audio']]
+        playlists = [i for i in items if i.get('category') in ['playlists', 'playlist']]
+        sidecars = [i for i in items if i.get('category') not in ['video', 'audio', 'playlist', 'playlists']]
         
         discovered = []
         
         # --- A. Film Object Detection ---
         if videos:
             if len(videos) == 1:
-                # Potential single فیلم with sidecars
-                obj = FilmObject(name=videos[0]['name'], path=folder_path)
+                obj = create_forensic_object("film", name=videos[0]['name'], path=folder_path)
                 obj.items = [videos[0]['id']]
                 self._enrich_film_sidecars(obj, items)
                 discovered.append(obj)
             else:
-                # Potential multiple versions
-                # Group by base name
                 base_groups = self._group_by_base_name(videos)
                 for base_name, group in base_groups.items():
-                    obj = FilmObject(name=base_name, path=folder_path)
+                    obj = create_forensic_object("film", name=base_name, path=folder_path)
                     obj.items = [i['id'] for i in group]
                     for item in group:
                         version = self._extract_version_info(item['name'], "film")
@@ -100,13 +98,37 @@ class ObjectDiscoveryEngine:
                     self._enrich_film_sidecars(obj, items)
                     discovered.append(obj)
                     
-        # --- B. Album Object Detection ---
+        # --- B. Audiobook & Album Detection ---
         if audios and not videos:
-            # Group by Album Tag
-            album_title = audios[0].get('tags', {}).get('album', folder_name)
-            obj = AlbumObject(name=album_title, path=folder_path)
-            obj.items = [i['id'] for i in audios]
-            self._enrich_album_sidecars(obj, items)
+            # 1. Detect M4B (Single-file Audiobook)
+            m4b_items = [i for i in audios if str(i['path']).lower().endswith('.m4b')]
+            if m4b_items:
+                for m4b in m4b_items:
+                    obj = create_forensic_object("audiobook", name=m4b['name'], path=m4b['path'])
+                    obj.items = [m4b['id']]
+                    discovered.append(obj)
+                # Remove M4B from generic audio processing
+                audios = [i for i in audios if not str(i['path']).lower().endswith('.m4b')]
+
+            if audios:
+                # 2. Heuristic: Audiobook Folder vs Album
+                is_likely_audiobook = any(k in folder_name.lower() for k in ["hörbuch", "audiobook", "book", "lesung"])
+                is_likely_album = any(i.get('tags', {}).get('album') for i in audios)
+
+                if is_likely_audiobook and not is_likely_album:
+                    obj = create_forensic_object("audiobook", name=folder_name, path=folder_path)
+                else:
+                    album_title = audios[0].get('tags', {}).get('album', folder_name)
+                    obj = create_forensic_object("album", name=album_title, path=folder_path)
+                
+                obj.items = [i['id'] for i in audios]
+                self._enrich_album_sidecars(obj, items)
+                discovered.append(obj)
+
+        # --- C. Playlist Discovery ---
+        for pl in playlists:
+            obj = create_forensic_object("playlist", name=pl['name'], path=pl['path'])
+            obj.items = [pl['id']]
             discovered.append(obj)
             
         return discovered

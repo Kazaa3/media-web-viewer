@@ -231,8 +231,14 @@ GLOBAL_MEDIA_TAXONOMY = {
     "mix":             {"label": "Mix / DJ-Set",        "desc": "Continuous audio performance",    "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    
-    # --- HIGH-RES & MULTICHANNEL (v1.53.005) ---
+    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+
+    # --- LITERARY & ORDERED MEDIA (v1.54.003) ---
+    "audiobook":       {"label": "Hörbuch / Audiobook",  "desc": "Literary spoken word",           "ext": ALL_AUDIO_EXTENSIONS|{".m4b"}, "type": "category", "parent": "audio"},
+    "podcast":         {"label": "Podcast",             "desc": "Serial digital talk",            "ext": ALL_AUDIO_EXTENSIONS, "type": "category", "parent": "audio"},
+    "playlist":        {"label": "Playlist / Mix",      "desc": "Ordered forensic sequence",      "ext": PLAYLIST_EXTENSIONS,  "type": "category"},
     "dsd":             {"label": "High-Res (DSD)",       "desc": "Direct Stream Digital (Audiophile)", "ext": DSD_EXTENSIONS,      "type": "category", "parent": "audio"},
     "mehrkanal":       {"label": "Mehrkanal (Surround)", "desc": "Multichannel (5.1/7.1/Atmos)",   "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},
     "multichannel":    {"label": "Multichannel (Alias)", "desc": "Alias for Mehrkanal",            "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},

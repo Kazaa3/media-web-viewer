@@ -33,7 +33,31 @@ class ObjectRelease:
     assets: List[ObjectAsset] = field(default_factory=list)
 
 @dataclass
-class MediaObject:
+class MediaStream:
+    """
+    Represents an internal track within a media container (MKV, MP4, M4B).
+    """
+    index: int
+    stream_type: str  # video, audio, subtitle
+    codec: str = ""
+    language: str = "und"
+    title: str = ""
+    is_default: bool = False
+    is_forced: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class MediaChapter:
+    """
+    Represents an internal time marker (Chapter) within a container.
+    """
+    id: int
+    start_time: float
+    end_time: float
+    title: str = ""
+
+@dataclass
+class ObjectAsset:
     """
     Base class for virtual grouping entities (Forensic SSOT).
     Represents a collection of files (versions, sidecars) that form a single logical asset.
@@ -51,6 +75,10 @@ class MediaObject:
     releases: List[ObjectRelease] = field(default_factory=list)
     global_assets: List[ObjectAsset] = field(default_factory=list)
 
+    # [v1.54.003] Forensic Topology
+    streams: List[MediaStream] = field(default_factory=list)
+    chapters: List[MediaChapter] = field(default_factory=list)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -62,7 +90,9 @@ class MediaObject:
             "subtype": self.subtype,
             "metadata": self.metadata,
             "releases": [r.__dict__ for r in self.releases],
-            "global_assets": [a.__dict__ for a in self.global_assets]
+            "global_assets": [a.__dict__ for a in self.global_assets],
+            "streams": [s.__dict__ for s in self.streams],
+            "chapters": [c.__dict__ for c in self.chapters]
         }
 
 @dataclass
@@ -91,10 +121,41 @@ class AlbumObject(MediaObject):
     def __post_init__(self):
         self.category = "audio"
 
+@dataclass
+class AudiobookObject(MediaObject):
+    """
+    Specialized entity for Literary Media (M4B, MP3 Books).
+    Supports internal chapters, Nero/Quicktime markers, and narrator metadata.
+    """
+    subtype: str = "AUDIOBOOK_OBJECT"
+    narrator: str = ""
+    author: str = ""
+    series: str = ""
+    volume: Optional[int] = None
+    
+    def __post_init__(self):
+        self.category = "audio"
+
+@dataclass
+class PlaylistObject(MediaObject):
+    """
+    Specialized entity for ordered sequences of media items.
+    """
+    subtype: str = "PLAYLIST_OBJECT"
+    ordered_items: List[int] = field(default_factory=list) # Member IDs in sequence
+    loop_mode: str = "none" # none, all, single
+    
+    def __post_init__(self):
+        self.category = "audio" # Default to audio, can be mixed
+
 def create_forensic_object(obj_type: str, **kwargs) -> MediaObject:
     """Factory function for creating specialized objects."""
     if obj_type.lower() == "film":
         return FilmObject(**kwargs)
     elif obj_type.lower() == "album":
         return AlbumObject(**kwargs)
+    elif obj_type.lower() == "audiobook":
+        return AudiobookObject(**kwargs)
+    elif obj_type.lower() == "playlist":
+        return PlaylistObject(**kwargs)
     return MediaObject(**kwargs)

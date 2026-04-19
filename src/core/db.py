@@ -823,9 +823,18 @@ def set_item_parent(item_id: int, parent_id: int) -> bool:
 
 def insert_media_object(obj_dict: Dict[str, Any]) -> Optional[int]:
     """
-    Inserts a virtual 'Object' record (Film/Album container) into the DB.
+    Inserts a virtual 'Object' record (Film/Album/Audiobook/Playlist) into the DB.
     """
-    # Map the object dict to the media table schema
+    # [v1.54.003] Serialize High-Fidelity Topology
+    # We pack everything into tags/full_tags for forensic persistence
+    metadata = obj_dict.get('metadata', {}).copy()
+    metadata.update({
+        'streams': obj_dict.get('streams', []),
+        'chapters': obj_dict.get('chapters', []),
+        'releases': obj_dict.get('releases', []),
+        'global_assets': obj_dict.get('global_assets', [])
+    })
+
     media_dict = {
         'name': obj_dict.get('name'),
         'path': obj_dict.get('path'),
@@ -834,8 +843,8 @@ def insert_media_object(obj_dict: Dict[str, Any]) -> Optional[int]:
         'subtype': obj_dict.get('subtype', 'OBJECT'),
         'duration': '',
         'is_transcoded': 0,
-        'tags': json.dumps(obj_dict.get('metadata', {})),
-        'full_tags': json.dumps(obj_dict.get('metadata', {})),
+        'tags': json.dumps(metadata),
+        'full_tags': json.dumps(metadata),
     }
     return insert_media(media_dict)
     """
