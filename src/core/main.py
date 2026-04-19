@@ -14,24 +14,21 @@ if str(_root) not in sys.path:
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-# --- EARLY GEVENT PATCHING (v1.46.136) ---
-# Must occur before any other imports to avoid lock collisions
-try:
-    from gevent import monkey
-    monkey.patch_all()
-except ImportError:
-    pass
+# (gevent monkey-patching moved to bootstrap)
 
 from src.core import api_core_app, api_tools, api_transcoding, api_parsing
 
 from src.core.config_master import PORT_CLEANUP_CMD
 
-if __name__ == "__main__":
-    import subprocess
-    # 1. Flash Burn (Instant Port Cleanup - v1.46.135 Centralized)
-    if PORT_CLEANUP_CMD:
-        subprocess.run(PORT_CLEANUP_CMD, shell=True)
-    # 2. Environment Shield
+    # 2. Early Monkey Patching (v1.46.136 Stability)
+    try:
+        from gevent import monkey
+        monkey.patch_all()
+        print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
+    except ImportError:
+        pass
+
+    # 3. Environment Shield
     api_core_app.ensure_stable_environment()
 
 # --- 1. Path Forensics Done ---
