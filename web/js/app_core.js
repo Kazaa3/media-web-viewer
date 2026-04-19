@@ -220,42 +220,57 @@ window.hydrateCategoryDropdown = function (branchId) {
     const ui = window.CONFIG?.ui_settings;
     const allCategories = ui?.library_category_map;
     const supportMap = ui?.branch_architecture_registry;
+    const modeRegistry = ui?.library_filter_mode_registry;
+    const hierarchy = ui?.library_category_hierarchy;
 
-    // Normalize branchId for lookup
+    const currentMode = window.activeLibraryFilterMode || 'route';
+    console.log(`[HYDRATION] Hydrating dropdown. Branch: ${branchId} | Mode: ${currentMode.toUpperCase()}`);
+
+    // 1. Resolve supported IDs for this branch
     let targetBranch = branchId.toLowerCase();
     if (targetBranch === 'player') targetBranch = 'media';
     if (targetBranch === 'explorer') targetBranch = 'database';
 
-    console.log(`[HYDRATION] Hydrating dropdown for branch: ${branchId} (Normalized: ${targetBranch})`);
-
     let supportedIds = supportMap ? (supportMap[targetBranch] || supportMap[window.CONFIG?.branch_id] || null) : null;
-
-    // [v1.45.305] SAFETY FAILOVER: If still null, default to full multimedia set for the forensic workstation
-    if (!supportedIds) {
-        console.warn(`[HYDRATION] Architecture lookup failed for ${targetBranch}. Using multimedia failover.`);
-        supportedIds = supportMap ? supportMap["multimedia"] : null;
-    }
-
-    console.log(`[HYDRATION] Resolved supported IDs:`, supportedIds);
+    if (!supportedIds) supportedIds = supportMap ? supportMap["multimedia"] : null;
 
     if (!allCategories || !Array.isArray(allCategories)) {
         console.warn("[HYDRATION] No library_category_map found in config.");
         return;
     }
 
-    console.log(`[HYDRATION] Syncing Category Map for Branch: ${targetBranch.toUpperCase()}`);
+    // 2. Filter by Branch Architecture STRETCH THEN by Mode Registry
+    let filtered = supportedIds
+        ? allCategories.filter(cat => supportedIds.includes(cat.id))
+        : allCategories;
+
+    // Filter by Current Mode (v1.53)
+    if (modeRegistry && modeRegistry[currentMode]) {
+        const modeIds = modeRegistry[currentMode];
+        filtered = filtered.filter(cat => modeIds.includes(cat.id));
+    }
+
+    // 3. Apply Hierarchical Labels (v1.53)
+    const processed = filtered.map(item => {
+        let label = item.label;
+        // Check if this item is a sub-category in any parent
+        if (currentMode === 'category' && hierarchy) {
+            for (const [parent, children] of Object.entries(hierarchy)) {
+                if (children.includes(item.id)) {
+                    label = `↳ ${label}`;
+                    break;
+                }
+            }
+        }
+        return { ...item, displayLabel: label };
+    });
 
     // Preserve existing selection if possible
     const currentVal = select.value;
 
-    // Filter by Branch Architecture
-    const filtered = supportedIds
-        ? allCategories.filter(cat => supportedIds.includes(cat.id))
-        : allCategories;
-
-    // Clear and Fill
-    select.innerHTML = filtered.map(item => `
-        <option value="${item.id}">${item.label}</option>
+    // 4. Render Options
+    select.innerHTML = processed.map(item => `
+        <option value="${item.id}">${item.displayLabel}</option>
     `).join('');
 
     if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
