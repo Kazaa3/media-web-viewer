@@ -703,24 +703,22 @@ def ensure_singleton():
 
 # _SINGLETON_LOCK = ensure_singleton()
 # --- End of Startup Block ---
-# SESSION_ID stable and already logged
-session_port = GLOBAL_CONFIG["port"]
-# 4. Bandwidth Optimization (v1.41.00)
-if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
-    log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
-    GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
-    GLOBAL_CONFIG["fast_scan"] = True
+def log_session_diagnostics():
+    """Logs the consolidated workstation session identity (v1.46.136)."""
+    # 4. Bandwidth Optimization (v1.41.00)
+    if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
+        log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
+        GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
+        GLOBAL_CONFIG["fast_scan"] = True
 
-# 4. Environment & Session Diagnostics (v1.41.00)
-env_type = "Conda" if os.environ.get("CONDA_PREFIX") else "Venv" if os.environ.get("VIRTUAL_ENV") else "System"
-log.info(f"[System] Booting from {env_type} (Dotenv Loaded: {_DOTENV_LOADED})")
-log.info(f"[System] Session: {SESSION_ID} | PID: {os.getpid()} | Port: {session_port}")
-log.info(f"[System] Active Database: {get_active_db_path()}")
+    # 4. Environment & Session Diagnostics (v1.41.00)
+    env_type = "Conda" if os.environ.get("CONDA_PREFIX") else "Venv" if os.environ.get("VIRTUAL_ENV") else "System"
+    log.info(f"[System] Booting from {env_type} (Dotenv Loaded: {_DOTENV_LOADED})")
+    log.info(f"[System] Session: {SESSION_ID} | PID: {os.getpid()} | Port: {EEL_SETTINGS['port']}")
+    log.info(f"[System] Active Database: {get_active_db_path()}")
 
-if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
-    log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
-    GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
-    GLOBAL_CONFIG["fast_scan"] = True
+if __name__ == "__main__":
+    log_session_diagnostics()
 
 
 @eel.expose
