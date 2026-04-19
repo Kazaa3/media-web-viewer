@@ -3,8 +3,12 @@ import os
 from pathlib import Path
 
 # --- [v1.41.100-SUPER-STABLE] High-Priority Bootstrap Guard ---
+# NOTE: This block intentionally calculates paths locally.
+# config_master.py cannot be imported yet — sys.path is not set up.
+# After this block, all code uses PROJECT_ROOT / SRC_DIR from config_master.
 _file = Path(__file__).resolve()
-_src = _root / "src"
+_root = _file.parent.parent.parent  # src/core -> src -> PROJECT_ROOT
+_src  = _root / "src"
 
 # Forced Path Injection (Forensic Reset)
 if str(_root) not in sys.path:

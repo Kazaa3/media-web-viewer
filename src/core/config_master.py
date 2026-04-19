@@ -91,6 +91,8 @@ except ImportError:
 # All other scripts MUST import PROJECT_ROOT from here.
 MAIN_FILE = Path(__file__).resolve()
 PROJECT_ROOT = MAIN_FILE.parent.parent.parent  # src/core -> src -> PROJECT_ROOT
+ROOT_DIR     = PROJECT_ROOT                    # Canonical alias
+SRC_DIR      = PROJECT_ROOT / "src"            # Source directory
 APP_DATA_DIR = str(PROJECT_ROOT)
 
 # --- SSOT: KEY DIRECTORY REGISTRY (v1.46.132) ---
@@ -1380,6 +1382,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     # --- STORAGE REGISTRY (v1.46.132 Centralized SSOT) ---
     "storage_registry": {
         "project_root":             str(PROJECT_ROOT),
+        "root_dir":                 str(ROOT_DIR),
+        "src_dir":                  str(SRC_DIR),
         "data_dir":                 str(DATA_DIR),
         "media_dir":                str(MEDIA_DIR),
         "test_dir":                 str(TEST_DIR),
