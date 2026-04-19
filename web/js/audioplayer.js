@@ -646,7 +646,7 @@ function renderAudioQueue() {
                         <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
                             <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center;">
                                 <span class="provenance-badge ${item.is_diag ? 'diag' : (mockFlag ? 'mock' : 'real')}">${item.is_diag ? '[D]' : (mockFlag ? '[M]' : '[R]')}</span>
-                                ${isVideo ? '<span class="provenance-badge video">[V]</span>' : ''}
+                                ${item.mock_stage ? `<span style="font-size: 10px; font-weight: 800; color: var(--accent-color); opacity: 0.8; margin-left: -2px; margin-right: 6px; background: rgba(0, 122, 255, 0.1); padding: 2px 4px; border-radius: 4px;">S${item.mock_stage}</span>` : ''}
                                 <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${item.name || 'Untitled'}</span>
                             </div>
                             <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary);">
