@@ -6,7 +6,8 @@ import psutil
 from pathlib import Path
 from src.core.eel_shell import eel
 
-from src.core.config_master import PROJECT_ROOT, SRC_DIR
+from typing import Dict, Any
+from src.core.config_master import PROJECT_ROOT, SRC_DIR, GLOBAL_CONFIG
 from src.core.logger import get_logger
 
 log = get_logger("api_core_app")

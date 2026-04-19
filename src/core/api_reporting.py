@@ -33,8 +33,6 @@ def get_startup_report():
         return profiler.get_report()
     return {"status": "error", "message": "Profiler not initialized"}
 
-    return {"status": "error", "message": "Profiler not initialized"}
-
 @eel.expose
 def get_global_health_audit():
     """Aggregates all 14 diagnostic layers into a Readiness Score."""
@@ -71,9 +69,6 @@ def get_global_health_audit():
         log.error(f"[Forensic-HLT] Health Audit Failed: {e}")
         return {"status": "error", "message": str(e)}
 
-        log.error(f"[Forensic-HLT] Health Audit Failed: {e}")
-        return {"status": "error", "message": str(e)}
-
 @eel.expose
 def get_db_stats():
     """Returns statistical information about the database content."""
@@ -81,8 +76,6 @@ def get_db_stats():
     stats["active_db"] = str(db.get_active_db_path())
     stats["db_exists"] = os.path.exists(db.DB_FILENAME)
     stats["project_root"] = str(PROJECT_ROOT)
-    return stats
-
     return stats
 
 # --- Forensic Suite ---
@@ -147,9 +140,6 @@ def get_storage_forensics():
                 results["skipped_files"] += 1
                 
     all_files.sort(key=lambda x: x["size"], reverse=True)
-    results["largest_files"] = all_files[:max_report_count]
-    return results
-
     results["largest_files"] = all_files[:max_report_count]
     return results
 
@@ -242,8 +232,6 @@ def get_security_forensics():
         }
     }
 
-    }
-
 @eel.expose
 def prune_ghost_items(item_ids: List[str]) -> Dict[str, Any]:
     """Safely prunes ghost items from the database."""
@@ -293,8 +281,6 @@ def get_hardware_forensics():
     hw_info = hardware_detector.get_capabilities()
     return {"status": "ok", "hardware": hw_info}
 
-    return {"status": "ok", "hardware": hw_info}
-
 @eel.expose
 def check_database_resilience():
     """Performs forensic library resilience audit."""
@@ -313,8 +299,6 @@ def check_database_resilience():
         results["status"] = "error"
     return results
 
-    return results
-
 @eel.expose
 def get_library_forensics():
     """Unified Forensic Bridge for library statistics."""
@@ -327,20 +311,14 @@ def get_library_forensics():
         ext_stats[ext] = ext_stats.get(ext, 0) + 1
     return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
 
-    return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
-
 @eel.expose
 def get_state_forensics():
     """Forensic State Persistence Audit."""
     return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
 
-    return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
-
 @eel.expose
 def get_net_ping():
     """Sub-millisecond bridge ping."""
-    return {"status": "ok", "timestamp": time.time()}
-
     return {"status": "ok", "timestamp": time.time()}
 
 @eel.expose
