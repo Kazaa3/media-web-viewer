@@ -114,6 +114,15 @@ def apply_library_filters(all_media: List[Dict],
             dropped_reasons["search_mismatch"] += 1
             continue
 
+        # --- [v1.54.005] VIRTUAL CATEGORY RESOLUTION ---
+        if genre == "all_audio_releases":
+            if item.get('type') == 'object' and item.get('category') == 'audio':
+                filtered.append(item)
+                continue
+            else:
+                dropped_reasons["genre_mismatch"] += 1
+                continue
+
         item_genre = item.get('tags', {}).get('genre', '').lower()
         if genre != "all" and genre.lower() not in item_genre:
             dropped_reasons["genre_mismatch"] += 1

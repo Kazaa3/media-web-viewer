@@ -108,12 +108,12 @@ class FilmObject(MediaObject):
         self.category = "video"
 
 @dataclass
-class AudioObject(MediaObject):
+class AudioRelease(MediaObject):
     """
     Specialized entity for Music collections (Albums, Singles, OST, etc.).
     Supports multiple releases (CD, Digital, SACD), CUE files, and EAC logs.
     """
-    subtype: str = "AUDIO_OBJECT"
+    subtype: str = "AUDIO_RELEASE_OBJECT"
     is_gapless: bool = False
     has_cue: bool = False
     has_log: bool = False
@@ -153,7 +153,7 @@ def create_forensic_object(obj_type: str, **kwargs) -> MediaObject:
     if obj_type.lower() == "film":
         return FilmObject(**kwargs)
     elif obj_type.lower() == "audio":
-        return AudioObject(**kwargs)
+        return AudioRelease(**kwargs)
     elif obj_type.lower() == "audiobook":
         return AudiobookObject(**kwargs)
     elif obj_type.lower() == "sequence":

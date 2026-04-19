@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 from src.core.objects import (
-    FilmObject, AudioObject, AudiobookObject, SequenceObject, create_forensic_object
+    FilmObject, AudioRelease, AudiobookObject, SequenceObject, create_forensic_object
 )
 from src.parsers.format_utils import natural_sort_key
 
@@ -166,7 +166,7 @@ class ObjectDiscoveryEngine:
             elif ext in SIDECAR_EXTENSIONS["covers"]:
                 obj.covers.append(item['path'])
 
-    def _enrich_audio_sidecars(self, obj: AudioObject, all_items: List[Dict[str, Any]]):
+    def _enrich_audio_sidecars(self, obj: AudioRelease, all_items: List[Dict[str, Any]]):
         """Identifies CUE, Log, and Playlists for Audio Collections."""
         for item in all_items:
             ext = str(item.get('extension', '')).lower()

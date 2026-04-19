@@ -230,17 +230,18 @@ GLOBAL_MEDIA_TAXONOMY = {
     "podcast":         {"label": "Podcast",             "desc": "Digital talk series",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "mix":             {"label": "Mix / DJ-Set",        "desc": "Continuous audio performance",    "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
-    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
-    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
-    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
-    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
-    "single":          {"label": "Single / 7\"",        "desc": "Single song release",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
-    "maxi":            {"label": "Maxi / 12\"",        "desc": "Extended single release",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "album"},
+    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "sampler":         {"label": "Sampler",             "desc": "Various Artist Collection",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "soundtrack":      {"label": "Soundtrack",          "desc": "Film/Game Score",                "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "ost":             {"label": "OST",                 "desc": "Original Sound Track",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "single":          {"label": "Single / 7\"",        "desc": "Single song release",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "maxi":            {"label": "Maxi / 12\"",        "desc": "Extended single release",        "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
 
-    # --- LITERARY & ORDERED MEDIA (v1.54.004) ---
+    # --- LITERARY & ORDERED MEDIA (v1.54.005) ---
     "audiobook":       {"label": "Hörbuch / Audiobook",  "desc": "Literary spoken word",           "ext": ALL_AUDIO_EXTENSIONS|{".m4b"}, "type": "category", "parent": "audio"},
     "podcast":         {"label": "Podcast",             "desc": "Serial digital talk",            "ext": ALL_AUDIO_EXTENSIONS, "type": "category", "parent": "audio"},
     "playlist":        {"label": "Playlist / Mix",      "desc": "Ordered forensic sequence",      "ext": PLAYLIST_EXTENSIONS,  "type": "category"},
+    "all_audio_releases": {"label": "Alle Audio Releases / All Objects", "desc": "Filter for all grouped objects", "ext": set(), "type": "category"},
     "dsd":             {"label": "High-Res (DSD)",       "desc": "Direct Stream Digital (Audiophile)", "ext": DSD_EXTENSIONS,      "type": "category", "parent": "audio"},
     "mehrkanal":       {"label": "Mehrkanal (Surround)", "desc": "Multichannel (5.1/7.1/Atmos)",   "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},
     "multichannel":    {"label": "Multichannel (Alias)", "desc": "Alias for Mehrkanal",            "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},
@@ -1293,8 +1294,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             
             # --- Forensic Categories ---
             {"id": "audio",           "label": GLOBAL_MEDIA_TAXONOMY["audio"]["label"]},
+            {"id": "all_audio_releases", "label": GLOBAL_MEDIA_TAXONOMY["all_audio_releases"]["label"]},
             {"id": "album",           "label": GLOBAL_MEDIA_TAXONOMY["album"]["label"]},
             {"id": "single",          "label": GLOBAL_MEDIA_TAXONOMY["single"]["label"]},
+            {"id": "maxi",            "label": GLOBAL_MEDIA_TAXONOMY["maxi"]["label"]},
             {"id": "hörbuch",         "label": GLOBAL_MEDIA_TAXONOMY["hörbuch"]["label"]},
             {"id": "sampler",         "label": GLOBAL_MEDIA_TAXONOMY["sampler"]["label"]},
             {"id": "compilation",     "label": GLOBAL_MEDIA_TAXONOMY["compilation"]["label"]},
@@ -1328,9 +1331,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         "library_filter_mode_registry": {
             "route":    ["all", "audio_native", "audio_transcode", "video_native", "video_hd", "video_pal", "video_ntsc", "video_iso", "unknown"],
-            "category": ["all", "audio", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "mix", "soundtrack", "klassik", "video", "film", "series", "documentation", "bilder", "epub", "games", "archives", "docs", "nfo", "disk_images", "spiel", "beigabe", "supplements", "unbekannt"],
+            "category": ["all", "audio", "all_audio_releases", "album", "single", "maxi", "hörbuch", "sampler", "compilation", "podcast", "mix", "soundtrack", "klassik", "video", "film", "series", "documentation", "bilder", "epub", "games", "archives", "docs", "nfo", "disk_images", "spiel", "beigabe", "supplements", "unbekannt"],
             "items":    ["all", "audio_native", "video_native", "bilder", "archives", "epub", "docs", "video_iso"],
-            "objects":  ["all", "album", "single", "hörbuch", "soundtrack", "podcast", "klassik", "film", "series", "documentation"],
+            "objects":  ["all", "all_audio_releases", "album", "single", "maxi", "hörbuch", "soundtrack", "podcast", "klassik", "film", "series", "documentation", "sampler", "sequence"],
             "context":  ["all", "audio", "video", "unknown"]
         },
 
@@ -1340,9 +1343,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
 
         "branch_architecture_registry": {
-            "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
-            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "archives", "supplements", "nfo", "spiel", "beigabe"],
-            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
+            "audio":      ["all", "audio", "audio_native", "audio_transcode", "all_audio_releases", "album", "single", "maxi", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "all_audio_releases", "album", "single", "maxi", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "archives", "supplements", "nfo", "spiel", "beigabe"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "all_audio_releases", "album", "single", "maxi", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "supplements", "unbekannt"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
             "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "klassik", "video", "video_iso", "series", "documentation", "bilder", "pictures", "epub", "docs", "documents", "archives", "supplements", "nfo", "unknown", "disk_images", "spiel", "games", "beigabe", "unbekannt"], 
