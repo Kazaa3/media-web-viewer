@@ -2,10 +2,8 @@ import sys
 import os
 from pathlib import Path
 
-# --- [v1.41.100-SUPER-STABLE] High-Priority Bootstrap Guard ---
-# NOTE: This block intentionally calculates paths locally.
-# config_master.py cannot be imported yet — sys.path is not set up.
-# After this block, all code uses PROJECT_ROOT / SRC_DIR from config_master.
+# --- [v1.46.132-PROFESSIONAL] High-Priority Bootstrap Guard ---
+# NOTE: This block intentionally calculates paths locally for sys.path discovery.
 _file = Path(__file__).resolve()
 _root = _file.parent.parent.parent  # src/core -> src -> PROJECT_ROOT
 _src  = _root / "src"
@@ -16,29 +14,14 @@ if str(_root) not in sys.path:
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-
-def ensure_stable_environment():
-    """Ensures we are running in the correct .venv (v1.35.68 Restoration)."""
-    if os.environ.get("MWV_AUTO_REEXEC") == "1":
-        return
-    for v in [_root / ".venv", _root / ".venv_run"]:
-        if v.exists():
-            venv_python = v / "bin" / "python"
-            if venv_python.exists() and os.path.abspath(sys.executable) != os.path.abspath(str(venv_python)):
-                print(f"STDOUT: [Guard] Switching to Environment: {venv_python}", flush=True)
-                env = os.environ.copy()
-                env["MWV_AUTO_REEXEC"] = "1"
-                env["PYTHONPATH"] = f"{_root}:{_src}:{env.get('PYTHONPATH', '')}"
-                os.execve(str(venv_python), [str(venv_python), str(_file)] + sys.argv[1:], env)
-                sys.exit(0)
-
+from src.core import api_core_app, api_tools, api_transcoding, api_parsing
 
 if __name__ == "__main__":
     import subprocess
     # 1. Flash Burn (Instant Port Cleanup)
     subprocess.run("fuser -k 8345/tcp > /dev/null 2>&1", shell=True)
     # 2. Environment Shield
-    ensure_stable_environment()
+    api_core_app.ensure_stable_environment()
 
 # --- 1. Path Forensics Done ---
 
@@ -165,39 +148,8 @@ except ImportError as e:
 
 @eel.expose
 def shutdown_backend():
-    """
-    Nuclear Shutdown Sequence (v1.41.164).
-    Ensures all child processes and threads are forcefully terminated.
-    """
-    log.warning("☢️ [BACKEND] CRITICAL: RECEIVED NUCLEAR SHUTDOWN SIGNAL.")
-
-    try:
-        from src.core.process_manager import ProcessController
-        from pathlib import Path
-
-        # Initialize ProcessController for emergency cleanup
-        pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
-
-        log.info("[SHUTDOWN] Purging project process tree...")
-        pc.kill_stale_instances(current_pid=os.getpid())
-
-        log.info("[SHUTDOWN] Releasing locks...")
-        pc.release_lock()
-
-    except Exception as e:
-        log.error(f"[SHUTDOWN] Cleanup error: {e}")
-
-    log.warning("☢️ [BACKEND] [SHUTDOWN-VERIFIED] PURGING ENVIRONMENT. BYE.")
-
-    # [v1.41.169] Forensic Log Flush with Bootstrap Safety
-    try:
-        import time
-        import signal
-
-        # Check if we have a real logger with handlers to flush
-        if hasattr(log, 'handlers'):
-            for handler in log.handlers:
-                try:
+    """Nuclear Shutdown Sequence (Delegated to api_core_app)."""
+    api_core_app.shutdown_application()
                     handler.flush()
                 except Exception:
                     pass
