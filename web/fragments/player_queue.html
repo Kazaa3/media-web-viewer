@@ -190,21 +190,9 @@
 
 <script>
     /**
-     * [v1.53] Toggle Library Filter Mode (Route vs. Category)
+     * [v1.53.001] Navigation Recovery
+     * (Note: toggleLibraryFilterMode logic moved to app_core.js)
      */
-    window.activeLibraryFilterMode = window.activeLibraryFilterMode || 'route';
-    function toggleLibraryFilterMode() {
-        window.activeLibraryFilterMode = (window.activeLibraryFilterMode === 'category') ? 'route' : 'category';
-        
-        const label = document.getElementById('lib-filter-mode-label');
-        if (label) label.innerText = window.activeLibraryFilterMode.toUpperCase();
-        
-        console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()}`);
-        
-        if (typeof hydrateCategoryDropdown === 'function') {
-            hydrateCategoryDropdown('media'); // Re-populate based on new mode
-        }
-    }
 
     /**
      * Switch Player Sub-Views (v1.34 Master)

@@ -1245,7 +1245,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "audio": ["album", "single", "hörbuch", "soundtrack", "podcast", "klassik"],
             "video": ["film", "series", "documentation"]
         },
-        },
 
         "branch_architecture_registry": {
             "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],

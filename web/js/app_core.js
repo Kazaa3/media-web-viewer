@@ -297,9 +297,38 @@ window.hydrateCategoryDropdown = function (branchId) {
 
              console.info(`[UI-NAV] Filter Change: ${newFilter}. Triggering Pulse...`);
              if (typeof setLibraryFilter === 'function') setLibraryFilter(newFilter);
-             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-         };
     });
+};
+
+/**
+ * [v1.53.001] toggleLibraryFilterMode
+ * Switches the active filter lens between 'route' (Technical) 
+ * and 'category' (Contextual/Metadata) globally.
+ */
+window.activeLibraryFilterMode = window.activeLibraryFilterMode || 'route';
+window.toggleLibraryFilterMode = function() {
+    window.activeLibraryFilterMode = (window.activeLibraryFilterMode === 'category') ? 'route' : 'category';
+    
+    console.info(`[UI-NAV] Filter Mode Toggled: ${window.activeLibraryFilterMode.toUpperCase()}`);
+    
+    if (typeof window.hydrateCategoryDropdown === 'function') {
+        const branchId = window.CONFIG?.active_branch || 'media';
+        window.hydrateCategoryDropdown(branchId);
+    }
+};
+
+/**
+ * [v1.53.001] handleLibrarySearch
+ * Global bridge for the forensic discovery search.
+ */
+window.handleLibrarySearch = function(query) {
+    console.info(`[UI-NAV] Global Search Pulse: "${query}"`);
+    window.activeLibrarySearchQuery = query;
+    if (typeof updateLibrarySearch === 'function') {
+        updateLibrarySearch(query);
+    } else if (typeof renderLibrary === 'function') {
+        renderLibrary();
+    }
 };
 
 /**
