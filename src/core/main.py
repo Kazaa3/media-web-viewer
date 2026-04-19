@@ -202,14 +202,6 @@ def get_tech_markers():
 @eel.expose
 def get_system_forensics():
     return api_testing.get_system_forensics()
-             
-             for proc in psutil.process_iter(['pid', 'name', 'create_time']):
-                try:
-                    pid = proc.info['pid']
-                    if pid == be_pid: continue # Absolute Guard
-                    
-                    name = proc.info['name'].lower()
-                    
                     # Global Browser Detection
                     if any(b in name for b in browser_sigs):
                         potential_browsers.append({
