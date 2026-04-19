@@ -14,22 +14,7 @@ if str(_root) not in sys.path:
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-# (gevent monkey-patching moved to bootstrap)
-
-from src.core import api_core_app, api_tools, api_transcoding, api_parsing
-
 from src.core.config_master import PORT_CLEANUP_CMD
-
-    # 2. Early Monkey Patching (v1.46.136 Stability)
-    try:
-        from gevent import monkey
-        monkey.patch_all()
-        print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
-    except ImportError:
-        pass
-
-    # 3. Environment Shield
-    api_core_app.ensure_stable_environment()
 
 # --- 1. Path Forensics Done ---
 
@@ -7963,16 +7948,34 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    # 1. Initialize Forensic Environment
+    import subprocess
+    # 1. Flash Burn (Instant Port Cleanup - v1.46.135 Centralized)
+    if PORT_CLEANUP_CMD:
+        subprocess.run(PORT_CLEANUP_CMD, shell=True)
+
+    # 2. Early Monkey Patching (v1.46.136 Stability)
+    # Must occur as early as possible after main imports
+    try:
+        from gevent import monkey
+        monkey.patch_all()
+        print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
+    except ImportError:
+        pass
+
+    # 3. Environment Shield
+    from src.core import api_core_app
+    api_core_app.ensure_stable_environment()
+
+    # 4. Initialize Forensic Environment (Assets & Directories)
     launch_eel_server()
     if not bootstrap_core_settings():
         log.critical("[Bootstrap] Core settings failure. Aborting.")
         sys.exit(1)
         
-    # 2. Log Session Details
+    # 5. Log Session Details
     log_session_diagnostics()
     
-    # 3. Start Eel Application
+    # 6. Start Eel Application
     start_app()
 
     log.info("[Main] Entering keepalive loop.")
