@@ -2,9 +2,9 @@ import sys
 import os
 from pathlib import Path
 
-# Add src to sys.path
-PROJECT_ROOT = Path("/home/xc/#Coding/gui_media_web_viewer")
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
+# Dynamic Path Discovery (v1.46.132)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from core import db
 
