@@ -14,7 +14,7 @@ from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_c
 from src.core import db
 
 # Project Root Resolution (Consistent with main.py)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, DATA_DIR, MEDIA_DIR, LOGS_DIR
 
 # Specialized Lazy Config Proxy (Shim for PARSER_CONFIG)
 # In a full-scale refactor, this would be centralized.

@@ -7,7 +7,7 @@ import subprocess
 import shutil
 import eel
 from src.core.logger import get_logger
-from src.core.config_master import (
+from src.core.config_master import (, MEDIA_DIR
     GLOBAL_CONFIG,
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
@@ -39,7 +39,7 @@ def get_default_scan_dir() -> Path:
     """
     Return the project default scan directory (Centralized v1.35.98).
     """
-    return Path(GLOBAL_CONFIG.get("scan_media_dir", str(Path(__file__).resolve().parent.parent.parent / "media")))
+    return Path(GLOBAL_CONFIG.get("scan_media_dir", str(MEDIA_DIR)))
 
 # Use Centralized Config (v1.41.00)
 PARSER_CONFIG = GLOBAL_CONFIG

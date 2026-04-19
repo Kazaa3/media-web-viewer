@@ -60,7 +60,7 @@ try:
 except (ImportError, AttributeError):
     # Fallback for cyclic initialization (v1.41.111)
     GLOBAL_CONFIG = {}
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, DATA_DIR, MEDIA_DIR, LOGS_DIR
     APP_DATA_DIR = str(PROJECT_ROOT)
     print("STDOUT: [Logger-Bridge] Warning: Initializing with fallback config due to cyclic import.")
 

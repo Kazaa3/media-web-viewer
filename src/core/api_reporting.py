@@ -20,7 +20,7 @@ from src.core import db, hardware_detector
 from src.core.api_library import apply_library_filters
 
 # Project Root Resolution
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, DATA_DIR, MEDIA_DIR, LOGS_DIR
 log = logging.getLogger("api_reporting")
 
 # --- Specialized Reports ---

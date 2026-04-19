@@ -4,7 +4,6 @@ from pathlib import Path
 
 # --- [v1.41.100-SUPER-STABLE] High-Priority Bootstrap Guard ---
 _file = Path(__file__).resolve()
-_root = _file.parent.parent.parent
 _src = _root / "src"
 
 # Forced Path Injection (Forensic Reset)
@@ -3373,7 +3372,7 @@ def get_sys_overview(force_refresh=False):
 # Konfiguration
 # 1. Ort fr den automatischen Bibliotheks-Scan
 # Standardmig aus PARSER_CONFIG laden (sync)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# PROJECT_ROOT imported from config_master (SSOT)
 SCAN_MEDIA_DIR = GLOBAL_CONFIG.get("scan_media_dir", str(PROJECT_ROOT / "media"))
 BROWSER_DEFAULT_DIR = GLOBAL_CONFIG.get("browser_default_dir", str(Path.home()))
 # Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.

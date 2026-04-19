@@ -1,9 +1,10 @@
+from src.core.config_master import PROJECT_ROOT
 import json
 from pathlib import Path
 
 def test_dict_branding_in_i18n():
     """Verify that 'dict' is the official app title in all supported languages."""
-    i18n_path = Path(__file__).resolve().parent.parent.parent.parent / "web" / "i18n.json"
+    i18n_path = PROJECT_ROOT / "web" / "i18n.json"
     assert i18n_path.exists(), f"i18n.json not found at {i18n_path}"
     
     with open(i18n_path, 'r', encoding='utf-8') as f:
@@ -16,7 +17,7 @@ def test_dict_branding_in_i18n():
 
 def test_dict_branding_in_main_py():
     """Verify that 'dict' is mentioned in the main entry point as branding."""
-    main_path = Path(__file__).resolve().parent.parent.parent.parent / "src" / "core" / "main.py"
+    main_path = PROJECT_ROOT / "src" / "core" / "main.py"
     assert main_path.exists()
     
     with open(main_path, 'r', encoding='utf-8') as f:

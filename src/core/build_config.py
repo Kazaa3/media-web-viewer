@@ -10,7 +10,7 @@ from pathlib import Path
 
 # --- PROJECT PATH CALCULATION ---
 MAIN_FILE = Path(__file__).resolve()
-PROJECT_ROOT = MAIN_FILE.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, DATA_DIR, MEDIA_DIR, LOGS_DIR
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 
 def get_current_version() -> str:
