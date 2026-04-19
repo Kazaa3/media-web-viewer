@@ -18,7 +18,7 @@ def start_vlc_bridge(file_path, port=8080):
     @return True if started.
     """
     if not os.path.exists(file_path):
-        log.error(f"[VLC] File not found: {file_path}")
+        log.error(f"[VLC-Bridge] File not found: {file_path}")
         return False
 
     # Pull configuration (Phase 9 Centralization)
@@ -28,7 +28,7 @@ def start_vlc_bridge(file_path, port=8080):
     password = flags.get("http_password", "admin")
     sout_template = flags.get("sout_template", "#transcode{vcodec=h264,vb=800,scale=auto,acodec=aac,ab=128,channels=2,samplerate=44100}:std{access=livehttp,mux=mpegts,dst=web/streams/vlc/vlc.m3u8}")
 
-    log.info(f"[VLC] Starting Bridge for {file_path} on port {port} (Trace: {password[:1]}***)")
+    log.info(f"[VLC-Bridge] Starting Bridge for {file_path} on port {port} (Trace: {password[:1]}***)")
 
     # VLC command for HTTP control + HLS streaming
     cmd = [
@@ -62,7 +62,7 @@ def send_vlc_command(command, port=8080):
         response = requests.get(url, auth=("", password), timeout=2)
         return response.json()
     except Exception as e:
-        log.error(f"[VLC] Command {command} failed: {e}", exc_info=True)
+        log.error(f"[VLC-Bridge] Command {command} failed: {e}", exc_info=True)
         return {"error": str(e)}
 
 def stop_vlc_bridge(port=8080):

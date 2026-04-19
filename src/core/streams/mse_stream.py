@@ -3,7 +3,11 @@ import os
 import threading
 from src.core.hardware_detector import get_best_hw_encoder # type: ignore
 from src.core.logger import get_logger
-log = get_logger("streams.mse_stream")
+from src.core.config_master import GLOBAL_CONFIG
+from src.core.streams.utils import get_base_ffmpeg_args
+
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("streams_mse")
 
 from typing import Dict
 # Global dict to track active streaming processes
@@ -28,11 +32,19 @@ def start_mse_stream(file_path, stream_id, audio_idx=0, subs_idx=None, start_tim
     stop_mse_stream(stream_id)
 
     encoder = get_best_hw_encoder()
-    log.info(f"[MSE] Starting stream {stream_id} (Seek: {start_time}s, Audio: {audio_idx}) using {encoder}")
+    
+    # Pull configuration (Phase 9 Centralization)
+    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {}).get("video", {})
+    mse_cfg = reg.get("streaming_params", {}).get("mse", {})
+    
+    preset = mse_cfg.get("preset", "ultrafast")
+    tune = mse_cfg.get("tune", "zerolatency")
+    movflags = mse_cfg.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
 
-    # FFmpeg command for FragMP4 remuxing
-    # -ss BEFORE -i for fast seeking
-    cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
+    log.info(f"[MSE] Starting {stream_id} using {encoder} (Seek: {start_time}s, A:{audio_idx})")
+
+    # Use centralized base args (v1.46.132)
+    cmd = get_base_ffmpeg_args(encoder)
     
     if float(start_time) > 0:
         cmd.extend(["-ss", str(start_time)])
@@ -40,19 +52,19 @@ def start_mse_stream(file_path, stream_id, audio_idx=0, subs_idx=None, start_tim
     cmd.extend(["-i", str(file_path)])
     
     # Mapping
-    cmd.extend(["-map", "0:v:0"]) # Always first video track
-    cmd.extend(["-map", f"0:a:{audio_idx}"])
+    cmd.extend(["-map", "0:v:0"]) 
+    cmd.extend(["-map", f"0:{audio_idx}"])
     if subs_idx is not None:
-        cmd.extend(["-map", f"0:s:{subs_idx}"])
+        cmd.extend(["-map", f"0:{subs_idx}"])
     
     # Encoding / Remuxing
     cmd.extend([
         "-c:v", encoder if encoder != "libx264" else "libx264",
-        "-preset", "ultrafast",
-        "-tune", "zerolatency",
+        "-preset", preset,
+        "-tune", tune,
         "-c:a", "aac", "-b:a", "128k",
         "-f", "mp4",
-        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+        "-movflags", movflags,
         "pipe:1"
     ])
 
@@ -65,7 +77,7 @@ def start_mse_stream(file_path, stream_id, audio_idx=0, subs_idx=None, start_tim
         
         return process
     except Exception as e:
-        log.error(f"[MSE] Failed to start FFmpeg: {e}")
+        log.error(f"[MSE] Failed to start FFmpeg for {stream_id}: {e}", exc_info=True)
         return None
 
 def _monitor_process(stream_id, process):
@@ -86,3 +98,4 @@ def stop_mse_stream(stream_id):
                 process.kill()
         return True
     return False
+
