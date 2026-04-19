@@ -185,7 +185,75 @@ def load_playlist(input_path: str):
         log.error(f"[Playlist] Load failed: {e}")
         return []
 
-# --- Forensic & Reporting Bridge ---
+@eel.expose
+def move_item_to(old_index: int, new_index: int):
+    """Move an item from old_index to new_index within CURRENT_PLAYLIST."""
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    try:
+        o, n = int(old_index), int(new_index)
+        if not CURRENT_PLAYLIST or o < 0 or o >= len(CURRENT_PLAYLIST) or n < 0:
+            return {"status": "error", "message": "Index out of range"}
+        
+        length = len(CURRENT_PLAYLIST)
+        if n > length: n = length
+        if o == n or (o == n - 1 and o < n):
+            return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+        item = CURRENT_PLAYLIST.pop(o)
+        if n > len(CURRENT_PLAYLIST): n = len(CURRENT_PLAYLIST)
+        CURRENT_PLAYLIST.insert(n, item)
+
+        if CURRENT_INDEX == o: CURRENT_INDEX = n
+        else:
+            if o < CURRENT_INDEX <= n: CURRENT_INDEX -= 1
+            elif n <= CURRENT_INDEX < o: CURRENT_INDEX += 1
+
+        return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def _matches_key(it, key):
+    if not isinstance(it, dict): return False
+    for f in ('name', 'filename', 'path', 'id'):
+        if it.get(f) == key: return True
+    tags = it.get('tags') or {}
+    if tags.get('title') == key: return True
+    for f in ('name', 'filename', 'path'):
+        v = it.get(f)
+        if v and isinstance(v, str) and key in v: return True
+    return False
+
+@eel.expose
+def move_item_up_by_key(key: str):
+    global CURRENT_PLAYLIST
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        if _matches_key(it, key):
+            return move_item_up(idx)
+    return {"status": "error", "message": "item not found"}
+
+@eel.expose
+def move_item_down_by_key(key: str):
+    global CURRENT_PLAYLIST
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        if _matches_key(it, key):
+            return move_item_down(idx)
+    return {"status": "error", "message": "item not found"}
+
+def _extract_key(item_obj: dict) -> str:
+    if not isinstance(item_obj, dict): return ""
+    for k in ['id', 'path', 'filepath', 'url', 'key']:
+        if item_obj.get(k): return str(item_obj[k])
+    return ""
+
+@eel.expose
+def move_item_up_by_obj(item_obj):
+    return move_item_up_by_key(_extract_key(item_obj))
+
+@eel.expose
+def move_item_down_by_obj(item_obj):
+    return move_item_down_by_key(_extract_key(item_obj))
+
+# --- Forensic & Reporting Bridge (v1.46.135) ---
 
 def get_playlist_forensics():
     """Playlist Forensic Audit: Integrity & Repair."""

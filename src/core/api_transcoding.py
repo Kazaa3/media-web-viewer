@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Generator
 
 from src.core.config_master import (
-    GLOBAL_CONFIG, PROJECT_ROOT, LOGS_DIR, 
+    GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT, LOGS_DIR, 
     PROGRAM_REGISTRY, MEDIA_DIR
 )
 from src.core.logger import get_logger
@@ -67,7 +67,7 @@ def log_process_stderr(process: subprocess.Popen, name: str):
                     decoded_line = line.decode(errors='replace').strip()
                     log.info(f" [{name}] {decoded_line}")
                     if log_handle:
-                        log_handle.write(f"{time.strftime('%H:%M:%S')} - {decoded_line}\n")
+                        log_handle.write(f"{time.strftime(DEFAULT_TIME_FORMAT)} - {decoded_line}\n")
                 except Exception:
                     pass
         finally:

@@ -253,7 +253,8 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
     else:
         format_str = '%(asctime)s [%(levelname)s] [%(name)s] %(message)s'
 
-    date_fmt = REGISTRY.get("log_datefmt", "%H:%M:%S")
+    from src.core.config_master import DEFAULT_TIME_FORMAT
+    date_fmt = REGISTRY.get("log_datefmt", DEFAULT_TIME_FORMAT)
     formatter = logging.Formatter(format_str, datefmt=date_fmt)
 
     # --- 2. Initialize Handlers ---

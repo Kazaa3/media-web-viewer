@@ -733,7 +733,7 @@ def start_app():
 
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
 
-    eel_mode = 'chrome'
+    eel_mode = FRONTEND_SETTINGS["mode"]
     if "--ng" in sys.argv:
         eel_mode = False
     elif "--n" in sys.argv or GLOBAL_CONFIG.get("connectionless"):
@@ -767,7 +767,15 @@ def start_app():
         start_page = 'shell_master.html' if evolution_mode in ['rebuild', 'bridge', 'test_ref'] else 'app.html'
 
         print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
-        eel.start(start_page, block=False, port=port, mode=eel_mode, **eel_kwargs)
+        # Use centralized FRONTEND_SETTINGS and WINDOW_SIZE
+        eel.start(
+            start_page, 
+            block=False, 
+            port=FRONTEND_SETTINGS["port"], 
+            mode=eel_mode, 
+            size=WINDOW_SIZE,
+            cmdline_args=FRONTEND_SETTINGS["cmdline_args"]
+        )
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
         if profiler:
             profiler.end_phase("Eel-Engine-Start")
