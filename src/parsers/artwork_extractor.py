@@ -151,7 +151,7 @@ class ArtworkExtractor:
         
         args = [ffmpeg_bin, "-i", str(path)] + ext_cfg + ["-y", str(out_path)]
         
-        return self._run_ffmpeg(args, timeout=timeout)
+        return self._run_ffmpeg(args, timeout=timeout, log_tag="extract_embedded_streams")
 
     def _extract_video_thumbnail(self, path: Path, out_path: Path) -> bool:
         """
@@ -176,7 +176,7 @@ class ArtworkExtractor:
             "-ss", f"{offset:02d}", # Formatted offset
         ] + flags + ["-vf", formatted_vf, "-y", str(out_path)]
         
-        return self._run_ffmpeg(args, timeout=timeout)
+        return self._run_ffmpeg(args, timeout=timeout, log_tag="extract_video_thumbnail")
 
     def _find_local_art(self, path: Path, out_path: Path) -> bool:
         """
@@ -238,31 +238,64 @@ class ArtworkExtractor:
 
         return False
 
-    def _run_ffmpeg(self, cmd: list, timeout: int) -> bool:
+    def _run_ffmpeg(self, cmd: list, timeout: int, log_tag: str = "generic") -> bool:
         """
         Helper to run ffmpeg commands and verify output.
+        (v1.46.132 Granular Logging)
         """
-        # The output file is usually the last argument
         out_path = Path(cmd[-1])
+        
+        # Determine log redirection (Forensic Phase 7)
+        log_cfg = GLOBAL_CONFIG.get("logging_registry", {})
+        enable_granular = log_cfg.get("enable_granular_transcoder_logs", False)
+        log_dir = Path(log_cfg.get("transcoding_log_dir", str(PROJECT_ROOT / "logs" / "transcoding")))
+        
+        std_out = subprocess.DEVNULL
+        std_err = subprocess.PIPE
+        
+        if enable_granular:
+            try:
+                log_dir.mkdir(parents=True, exist_ok=True)
+                log_file = log_dir / f"{log_tag}.log"
+                # We use append mode for streams, but maybe write for short tasks? 
+                # User asked for "steerable" logs. We'll use append to keep history but maybe truncate?
+                # Decision: Write (overwrite) for specific extraction tasks to keep them clean.
+                log_handle = open(log_file, "w", encoding="utf-8")
+                std_out = log_handle
+                std_err = log_handle
+                log_handle.write(f"--- FFmpeg Execution Start: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                log_handle.write(f"Command: {' '.join(cmd)}\n\n")
+            except Exception as e:
+                log.debug(f"[Artwork-Log-Internal] Failed to setup granular log: {e}")
+                log_handle = None
+        else:
+            log_handle = None
+
         try:
-            # We must use check=True to raise error on non-zero exit
             result = subprocess.run(
                 cmd, 
-                stdout=subprocess.DEVNULL, 
-                stderr=subprocess.PIPE, # Capture stderr for debugging if needed
+                stdout=std_out, 
+                stderr=std_err,
                 timeout=timeout,
                 check=True
             )
-            # Verify the file was actually created and is not empty
             return out_path.exists() and out_path.stat().st_size > 0
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, Exception) as e:
-            # log.debug(f"FFmpeg failed: {e}")
+            # If we captured stderr in PIPE but didn't use a log file, we might want to log it
+            if not log_handle and hasattr(e, 'stderr') and e.stderr:
+                log.debug(f"FFmpeg failed: {e.stderr.decode(errors='replace')}")
+            
             if out_path.exists():
                 try:
-                    out_path.unlink() # Clean up failed/empty output
-                except Exception:
-                    pass
+                    out_path.unlink()
+                except Exception: pass
             return False
+        finally:
+            if log_handle:
+                try:
+                    log_handle.write(f"\n--- FFmpeg Execution End: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                    log_handle.close()
+                except Exception: pass
 
 # Singleton instance
 extractor = ArtworkExtractor()

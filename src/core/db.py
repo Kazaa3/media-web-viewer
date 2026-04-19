@@ -149,6 +149,39 @@ def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[s
 import threading
 _DB_INIT_LOCK = threading.Lock()
 _INIT_IN_PROGRESS = False
+_ROOT_CLEANED = False
+
+def cleanup_legacy_root_files():
+    """
+    Identifies and removes 0MB legacy leak files from the project root.
+    (v1.46.132 Forensic Cleanup)
+    """
+    global _ROOT_CLEANED
+    if _ROOT_CLEANED:
+        return
+        
+    try:
+        from src.core.config_master import PROJECT_ROOT
+        legacy_names = ["logging", "media.db", "media_library.db", "media_viewer.db"]
+        
+        for name in legacy_names:
+            target = PROJECT_ROOT / name
+            if target.exists() and target.is_file():
+                # Only remove if 0MB (leak) or if we are sure it's legacy
+                size = target.stat().st_size
+                if size == 0:
+                    try:
+                        target.unlink()
+                        log.info(f"[ROOT-CLEANUP] Deleted 0MB legacy file: {name}")
+                    except Exception as e:
+                        log.debug(f"[ROOT-CLEANUP] Could not delete {name}: {e}")
+                else:
+                    log.warning(f"[ROOT-CLEANUP] Skipping non-empty legacy candidate: {name} ({size} bytes)")
+        
+        _ROOT_CLEANED = True
+    except Exception as e:
+        log.error(f"[ROOT-CLEANUP] Critical error during cleanup: {e}")
+
 
 def init_db(depth: int = 0):
     """
@@ -178,6 +211,8 @@ def init_db(depth: int = 0):
             
             if depth == 0:
                 log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
+                # Surgical Cleanup (Forensic Phase 7)
+                cleanup_legacy_root_files()
 
             # Always ensure the directory exists
             DB_DIR.mkdir(parents=True, exist_ok=True)

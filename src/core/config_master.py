@@ -264,8 +264,14 @@ elif DEFAULT_DB_USER.exists():
 else:
     SELECTED_DB_PATH = str(DEFAULT_DB_PROJ)
 
-# Final Path Enforcement (v1.41.00 Strings for JSON parity)
-SELECTED_DB_PATH = str(SELECTED_DB_PATH)
+# Final Path Enforcement (v1.46.132 Absolute Path Safety)
+_selected_path = Path(SELECTED_DB_PATH)
+if not _selected_path.is_absolute():
+    # Relative to PROJECT_ROOT by default for portability
+    SELECTED_DB_PATH = str((PROJECT_ROOT / _selected_path).resolve())
+else:
+    SELECTED_DB_PATH = str(_selected_path.resolve())
+
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime
@@ -532,7 +538,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ".venv_selenium": "selenium",
             ".venv_build": "build"
         },
-        "max_buffer_size": 10000        # For UI Log Buffer
+        "max_buffer_size": 10000,       # For UI Log Buffer
+        "transcoding_log_dir": str(PROJECT_ROOT / "logs" / "transcoding"),
+        "enable_granular_transcoder_logs": True
     },
 
     # --- EXTRACTION & TRANSCODING PROFILES (v1.46.131) ---

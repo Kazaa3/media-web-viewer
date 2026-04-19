@@ -5205,17 +5205,48 @@ def vlc_hls_live_proxy(filename):
 
 def log_process_stderr(process, name):
     """
-    @brief Helper to stream process stderr to the master log in the background.
+    @brief Helper to stream process stderr to the master log and optionally specialized log files.
+    (v1.46.132 Granular Logging)
     """
     if not process or not process.stderr:
         return
 
+    # Determine granular logging destinations (Forensic Phase 7)
+    log_cfg = GLOBAL_CONFIG.get("logging_registry", {})
+    enable_granular = log_cfg.get("enable_granular_transcoder_logs", False)
+    log_dir = Path(log_cfg.get("transcoding_log_dir", str(PROJECT_ROOT / "logs" / "transcoding")))
+    
+    log_handle = None
+    if enable_granular:
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            # Normalize name for filename safety
+            safe_name = name.lower().replace("-", "_").replace(" ", "_")
+            log_handle = open(log_dir / f"{safe_name}.log", "a", encoding="utf-8")
+            log_handle.write(f"\n--- Process Log Start [{name}]: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        except Exception as e:
+            log.debug(f"[Log-Process-Internal] Failed to setup specialized log for {name}: {e}")
+
     def log_thread():
-        for line in process.stderr:
-            try:
-                log.info(f" [{name}] {line.decode().strip()}")
-            except BaseException:
-                pass
+        try:
+            for line in process.stderr:
+                try:
+                    decoded_line = line.decode(errors='replace').strip()
+                    # 1. Master Log
+                    log.info(f" [{name}] {decoded_line}")
+                    # 2. Granular Log File
+                    if log_handle:
+                        log_handle.write(f"{time.strftime('%H:%M:%S')} - {decoded_line}\n")
+                except Exception:
+                    pass
+        finally:
+            if log_handle:
+                try:
+                    log_handle.write(f"--- Process Log End [{name}]: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                    log_handle.close()
+                except Exception:
+                    pass
+
     import threading
     threading.Thread(target=log_thread, daemon=True).start()
 
@@ -6840,11 +6871,16 @@ def stream_to_mediamtx(file_path, protocol="hls"):
 
         log.info(f"[mediamtx] Spawning FFmpeg push: {' '.join(ffmpeg_cmd)}")
 
-        # Start the push process in the background
-        # Use stdout/stderr=DEVNULL to avoid clogging the buffers
-        proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL, start_new_session=True)
+        # Start the push process in the background (v1.46.132 Granular Logging)
+        proc = subprocess.Popen(
+            ffmpeg_cmd, 
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE, 
+            start_new_session=True
+        )
+        log_process_stderr(proc, f"MediaMTX-Push-{safe_name}")
         ACTIVE_SUBPROCESSES.append(proc)
+
         
         # [v1.46.089] Forensic PID Tracking
         ACTIVE_FORENSIC_PROCESSES[proc.pid] = f"FFmpeg {protocol.upper()} Push ({safe_name})"
