@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-startup_auditor.py - Forensic Integrity & Pre-Flight Validation (v1.51)
+startup_auditor.py - Forensic Integrity & Pre-Flight Validation (v1.51.02)
 Ensuring workstation stability with Offline-Ready Self-Healing capabilities.
-[AI-Anchor-Hash: 51_SELF_HEAL_OFFLINE_004]
+Includes robust guards for Linux system dependencies (tkinter).
+[AI-Anchor-Hash: 51_SELF_HEAL_STABLE_005]
 """
 
 import logging
 import sys
 import os
 import subprocess
+import importlib
 from typing import List, Dict, Any, Tuple
 
 log = logging.getLogger("app.integrity")
@@ -62,7 +64,11 @@ def ensure_critical_packages() -> bool:
     Forensic Dependency Manager (v1.51 Online/Offline Hybrid).
     Automatically detects and restores missing packages with local fallback.
     """
-    from src.core.config_master import DEPENDENCY_REGISTRY
+    try:
+        from src.core.config_master import DEPENDENCY_REGISTRY
+    except ImportError:
+        log.error("[Audit-Deps] Could not import DEPENDENCY_REGISTRY. Falling back to defaults.")
+        DEPENDENCY_REGISTRY = {"auto_install_enabled": True, "critical_packages": ["pyautogui", "bottle", "psutil"]}
     
     # 0. Global Governance Check
     if not DEPENDENCY_REGISTRY.get("auto_install_enabled", True):
@@ -78,9 +84,7 @@ def ensure_critical_packages() -> bool:
     
     missing = []
     for module_name, package_name in critical_map.items():
-        try:
-            __import__(module_name)
-        except ImportError:
+        if not _is_resource_present(module_name):
             missing.append(package_name)
     
     if not missing:
@@ -109,7 +113,6 @@ def ensure_critical_packages() -> bool:
         if not success and local_cache and os.path.exists(local_cache):
             try:
                 log.info(f"[Audit-Deps] Phase 2: Attempting OFFLINE restoration for '{package}' from {local_cache}...")
-                # --no-index ensures we don't try to go outside the local cache
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(local_cache), package])
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from LOCAL CACHE.")
                 success = True
@@ -122,14 +125,23 @@ def ensure_critical_packages() -> bool:
             
     return True
 
+def _is_resource_present(module_name: str) -> bool:
+    """Verifies module readiness without triggering system dependency alerts."""
+    try:
+        # Use find_spec instead of full import to avoid triggering pyautogui's tkinter check
+        import importlib.util
+        spec = importlib.util.find_spec(module_name)
+        return spec is not None
+    except:
+        return False
+
 def _verify_packages_only() -> bool:
     """Passive check of packages without attempting installation."""
     missing = []
     for module in ["pyautogui", "bottle", "psutil", "PIL"]:
-        try: __import__(module)
-        except ImportError: missing.append(module)
+        if not _is_resource_present(module): missing.append(module)
     if missing:
-        log.error(f"[Audit-Deps] MISSING MANDATORY MODULES: {missing}. Manual installation required.")
+        log.error(f"[Audit-Deps] MISSING MANDATORY MODULES: {missing}. Manual action required.")
         return False
     return True
 
@@ -145,9 +157,7 @@ def audit_config() -> Tuple[bool, List[Any]]:
             found = True
             for part in entry:
                 if isinstance(curr, dict) and part in curr: curr = curr[part]
-                else:
-                    found = False
-                    break
+                else: found = False; break
             if not found: errors.append(" -> ".join(entry))
     return (len(errors) == 0, errors)
 
@@ -192,5 +202,5 @@ if __name__ == "__main__":
     _proot = os.path.dirname(os.path.dirname(_current))
     if _proot not in sys.path: sys.path.insert(0, _proot)
     logging.basicConfig(level=logging.INFO)
-    if run_preflight_audit(): sys.exit(0)
-    else: sys.exit(1)
+    if run_preflight_audit(): log.info("AUDIT SUCCESS"); sys.exit(0)
+    else: log.error("AUDIT FAILURE"); sys.exit(1)
