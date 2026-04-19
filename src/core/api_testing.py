@@ -5,7 +5,7 @@ import json
 import re
 import subprocess
 import threading
-import eel
+from src.core.eel_shell import eel
 from pathlib import Path
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT, FORENSIC_TOOLS_LIST, get_tool_metadata
 from src.core.logger import get_logger

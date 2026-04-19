@@ -1,7 +1,7 @@
 import os
 import re
 import time
-import eel
+from src.core.eel_shell import eel
 from pathlib import Path
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT
 from src.core.logger import get_logger

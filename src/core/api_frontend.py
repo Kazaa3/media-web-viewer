@@ -1,7 +1,7 @@
 import sys
 import shutil
 import os
-import eel
+from src.core.eel_shell import eel
 from pathlib import Path
 from src.core.config_master import GLOBAL_CONFIG, EEL_SETTINGS, LAUNCH_PROFILE
 from src.core.logger import get_logger
