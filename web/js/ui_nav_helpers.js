@@ -2114,3 +2114,19 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+/**
+ * [v1.54.018] updateWorkstationIdentity (SSOT Persistence)
+ * Synchronizes the browser document title with the backend configuration.
+ */
+window.updateWorkstationIdentity = function() {
+    const config = window.CONFIG || {};
+    const version = config.version || 'v1.54.018';
+    const release = config.ui_evolution_mode === 'rebuild' ? 'MASTER' : 'STABLE';
+    
+    console.info(`[UI-NAV] Synchronizing Identity: ${version} (${release})`);
+    document.title = `Media Viewer ${version} - ${release}`;
+};
+
+// Initial Sync
+window.updateWorkstationIdentity();

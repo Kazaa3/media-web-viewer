@@ -136,3 +136,31 @@ def generate_standardized_audit():
     except Exception as e:
         log.error(f"[Audit] Global audit failed: {e}")
         return {"status": "error", "message": str(e)}
+
+# --- Rescue & Recovery Operations (Migrated from main.py v1.54.018) ---
+
+@eel.expose
+def kill_stale_and_restart():
+    """ Kills all project-related processes and restarts. """
+    from src.core.process_manager import ProcessController
+    log.info(f"[RESTART] Using ProcessController for emergency cleanup. Root: {PROJECT_ROOT}")
+    pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
+    pc.kill_stale_instances(current_pid=os.getpid())
+    log.warning("[RESTART] Executing os.execl...")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+@eel.expose
+def trigger_factory_reset():
+    """ Exposed wrapper to perform a database reset from the UI. """
+    log.warning("[System] Factory reset triggered via Eel.")
+    from src.core.db import factory_reset
+    return factory_reset()
+
+@eel.expose
+def trigger_db_reconnect():
+    """ Exposed wrapper to re-initialize the database connection. """
+    log.warning("[System] Database Reconnect triggered via Eel.")
+    from src.core.db import init_db
+    init_db()
+    return True
