@@ -2755,7 +2755,7 @@ def nuclear_restart():
     import subprocess
     from pathlib import Path
 
-    script_path = Path("/home/xc/#Coding/gui_media_web_viewer/scripts/reboot_mwv.sh")
+    script_path = PROJECT_ROOT / "scripts" / "reboot_mwv.sh"
     log.warning(f"[REBOOT] NUCLEAR RESTART TRIGGERED. PID: {os.getpid()}")
 
     try:

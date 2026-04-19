@@ -5,8 +5,9 @@ from pathlib import Path
 import sqlite3
 import time
 
-# Add project root to sys.path
-root = Path("/home/xc/#Coding/gui_media_web_viewer").resolve()
+# Dynamic Path Discovery (v1.46.132)
+script_dir = Path(__file__).resolve().parent
+root = script_dir.parent
 sys.path.insert(0, str(root))
 
 # Force lightweight environment BEFORE imports
