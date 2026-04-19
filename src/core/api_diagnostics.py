@@ -1,10 +1,5 @@
-import sys
-import os
-import time
-import socket
-import json
-import logging
 from pathlib import Path
+import platform
 from datetime import datetime
 from unittest.mock import MagicMock
 
@@ -164,3 +159,151 @@ def trigger_db_reconnect():
     from src.core.db import init_db
     init_db()
     return True
+
+# --- Enhanced Orchestration & Diagnostics (Migrated from main.py v1.54.018) ---
+
+@eel.expose
+def rtt_ping(data):
+    """ Multi-stage RTT Ping for verification. """
+    size = len(json.dumps(data))
+    is_heartbeat = isinstance(data, dict) and data.get("type") == "heartbeat"
+    if is_heartbeat:
+        GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
+    else:
+        log.info(f"[RTT] Ping received ({size} bytes). Data types: {type(data).__name__}")
+    
+    # Sanitization wrapper is internal (simplified version here)
+    return {
+        "status": "pong",
+        "timestamp": time.time(),
+        "received_size": size,
+        "echo": data,
+        "is_heartbeat": is_heartbeat
+    }
+
+@eel.expose
+def log_js_error(error_data):
+    """ Logs JavaScript errors OR toast messages from the frontend. """
+    if error_data.get('type') == 'TOAST':
+        log.info(f"[JS-TOAST] {error_data.get('message')}")
+    else:
+        log.error(f"[JS-ERROR] {json.dumps(error_data)}")
+    return {"status": "error_logged"}
+
+@eel.expose
+def run_video_transcode_diagnostic(file_path=None):
+    """ Executes a real-time probe of the video transcoding/remuxing pipelines. """
+    from src.core import db
+    import requests
+    target_path = file_path
+    if not target_path:
+        items = db.get_library()
+        if items: target_path = items[0]['path']
+        else: return {"status": "error", "error": "No media found in library to test."}
+
+    log.info(f"[Diagnostic] Testing video pipeline for: {target_path}")
+    results = []
+    base_url = GLOBAL_CONFIG['network_settings'].get('api_root', f"http://{GLOBAL_CONFIG['network_settings']['host']}:{GLOBAL_CONFIG['network_settings']['port']}")
+    encoded_path = requests.utils.quote(target_path)
+    endpoints = [
+        {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
+        {"name": "Transcode (Safe)", "url": f"{base_url}/stream/via/transcode/{encoded_path}"}
+    ]
+    atom_cfg = GLOBAL_CONFIG.get("atom_detection", {"atoms": ["ftyp", "moof", "mdat", "moov"], "header_limit": 4096})
+
+    for ep in endpoints:
+        ep_result = {"name": ep['name'], "status": "unknown", "details": ""}
+        try:
+            r = requests.get(ep['url'], stream=True, timeout=15)
+            if r.status_code == 200:
+                chunk = next(r.iter_content(chunk_size=1024), b'')
+                atoms = [a.encode() if isinstance(a, str) else a for a in atom_cfg["atoms"]]
+                limit = atom_cfg["header_limit"]
+                found = [a.decode() if isinstance(a, bytes) else a for a in atoms if a in chunk[:limit]]
+                if found:
+                    ep_result["status"] = "success"
+                    ep_result["details"] = f"Valid MP4 atoms found: {', '.join(found)}"
+                else:
+                    ep_result["status"] = "failed"
+                    ep_result["details"] = f"No valid MP4 atoms in start of stream."
+            else:
+                ep_result["status"] = "failed"
+                ep_result["details"] = f"HTTP Error {r.status_code}"
+            r.close()
+        except Exception as e:
+            ep_result["status"] = "error"
+            ep_result["details"] = str(e)
+        results.append(ep_result)
+    return {"status": "complete", "results": results, "target": target_path}
+
+@eel.expose
+def get_gevent_status():
+    """ Returns the status of gevent patching and version info. """
+    try:
+        import gevent
+        from gevent import monkey
+        import greenlet
+        return {
+            "active": True,
+            "version": gevent.__version__,
+            "greenlet": greenlet.__version__,
+            "patched": {
+                "socket": monkey.is_module_patched("socket"),
+                "threading": monkey.is_module_patched("threading")
+            }
+        }
+    except ImportError:
+        return {"active": False, "error": "gevent not installed"}
+
+@eel.expose
+def get_active_video_workers():
+    """ Video Health: Live Worker Audit. """
+    import psutil
+    workers = []
+    try:
+        cwd = os.getcwd()
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                name = (proc.info.get('name') or "").lower()
+                cmdline = " ".join(proc.info.get('cmdline') or []).lower()
+                if 'ffmpeg' in name or 'mkvmerge' in name:
+                    workers.append({
+                        "pid": proc.info['pid'],
+                        "name": proc.info['name'],
+                        "is_workspace": cwd in cmdline
+                    })
+            except (psutil.NoSuchProcess, psutil.AccessDenied): continue
+        return {"status": "ok", "workers": workers}
+    except Exception as e:
+        log.error(f"[Forensic-VID] Worker Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def get_hydration_stats():
+    """ Forensic Hydration Sync: Returns raw counts for DB Index vs Backend Cache. """
+    from src.core import db
+    import sqlite3
+    results = {"db_index": 0, "backend_cache": 0, "status": "ok"}
+    try:
+        conn = sqlite3.connect(db.DB_FILENAME)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM media")
+        results["db_index"] = cursor.fetchone()[0]
+        conn.close()
+        items = db.get_library()
+        results["backend_cache"] = len(items)
+        return results
+    except Exception as e:
+        log.error(f"[Forensic-DBI] Audit failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+@eel.expose
+def set_log_level(level):
+    """ Dynamically updates the application log level. """
+    import logging
+    valid_levels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR}
+    if level in valid_levels:
+        logging.getLogger().setLevel(valid_levels[level])
+        log.warning(f"[System] Log level changed to {level}.")
+        return {"status": "success", "level": level}
+    return {"status": "error", "message": f"Invalid level: {level}"}

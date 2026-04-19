@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, cast
 from urllib.parse import unquote
+from src.core.eel_shell import eel
 
 # --- Forensic Handshake Imports ---
 from src.core.config_master import (
@@ -32,6 +33,9 @@ def get_startup_report():
         return profiler.get_report()
     return {"status": "error", "message": "Profiler not initialized"}
 
+    return {"status": "error", "message": "Profiler not initialized"}
+
+@eel.expose
 def get_global_health_audit():
     """Aggregates all 14 diagnostic layers into a Readiness Score."""
     try:
@@ -67,6 +71,10 @@ def get_global_health_audit():
         log.error(f"[Forensic-HLT] Health Audit Failed: {e}")
         return {"status": "error", "message": str(e)}
 
+        log.error(f"[Forensic-HLT] Health Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def get_db_stats():
     """Returns statistical information about the database content."""
     stats = db.get_db_stats()
@@ -75,8 +83,11 @@ def get_db_stats():
     stats["project_root"] = str(PROJECT_ROOT)
     return stats
 
+    return stats
+
 # --- Forensic Suite ---
 
+@eel.expose
 def get_storage_forensics():
     """Storage Forensic Audit: Volume Discovery (v1.46.101 Align)."""
     media_path = PROJECT_ROOT / "media"
@@ -139,6 +150,10 @@ def get_storage_forensics():
     results["largest_files"] = all_files[:max_report_count]
     return results
 
+    results["largest_files"] = all_files[:max_report_count]
+    return results
+
+@eel.expose
 def get_process_forensics():
     """Forensic Child Process Audit (v1.37.35)."""
     try:
@@ -153,6 +168,10 @@ def get_process_forensics():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def get_api_forensics(exposed_registry: List[Dict]):
     """Forensic Internal API Registry & Documentation (v1.37.39)."""
     return {"status": "ok", "registry": exposed_registry, "total_endpoints": len(exposed_registry)}
@@ -207,6 +226,10 @@ def get_routing_suite_report():
         "total": len(items)
     }
 
+        "total": len(items)
+    }
+
+@eel.expose
 def get_security_forensics():
     """Forensic Security & Authority Audit (v1.37.38)."""
     db_path = db.get_active_db_path()
@@ -219,6 +242,9 @@ def get_security_forensics():
         }
     }
 
+    }
+
+@eel.expose
 def prune_ghost_items(item_ids: List[str]) -> Dict[str, Any]:
     """Safely prunes ghost items from the database."""
     if not item_ids or not isinstance(item_ids, list):
@@ -232,6 +258,10 @@ def prune_ghost_items(item_ids: List[str]) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def kill_stalled_ffmpeg_streams() -> Dict[str, Any]:
     """Purges all FFmpeg/mkvmerge processes associated with the project."""
     project_fragment = "gui_media_web_viewer"
@@ -254,11 +284,18 @@ def kill_stalled_ffmpeg_streams() -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def get_hardware_forensics():
     """Forensic Hardware Acceleration & Driver Audit."""
     hw_info = hardware_detector.get_capabilities()
     return {"status": "ok", "hardware": hw_info}
 
+    return {"status": "ok", "hardware": hw_info}
+
+@eel.expose
 def check_database_resilience():
     """Performs forensic library resilience audit."""
     results = {"status": "ok", "sqlite_health": "unknown", "fs_parity": {"total_items": 0, "ghost_count": 0, "ghost_items": []}}
@@ -276,6 +313,9 @@ def check_database_resilience():
         results["status"] = "error"
     return results
 
+    return results
+
+@eel.expose
 def get_library_forensics():
     """Unified Forensic Bridge for library statistics."""
     db_items = db.get_library() or []
@@ -287,14 +327,23 @@ def get_library_forensics():
         ext_stats[ext] = ext_stats.get(ext, 0) + 1
     return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
 
+    return {"status": "success", "total": len(db_items), "categories": cat_stats, "formats": ext_stats}
+
+@eel.expose
 def get_state_forensics():
     """Forensic State Persistence Audit."""
     return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
 
+    return {"status": "ok", "version": GLOBAL_CONFIG.get("version"), "debug": GLOBAL_CONFIG.get("debug_mode")}
+
+@eel.expose
 def get_net_ping():
     """Sub-millisecond bridge ping."""
     return {"status": "ok", "timestamp": time.time()}
 
+    return {"status": "ok", "timestamp": time.time()}
+
+@eel.expose
 def terminate_worker_process(pid):
     """Surgical Termination for Background Workers."""
     try:
@@ -307,6 +356,10 @@ def terminate_worker_process(pid):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def get_environment_forensics():
     """Forensic Software Stack & Environment Audit."""
     return {"status": "ok", "python": sys.version, "platform": platform.platform()}
