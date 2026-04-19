@@ -1,9 +1,21 @@
 from pathlib import Path
 
 # --- BOOTSTRAP: PATH & VERSION SSOT (v1.41.00) ---
-_root = Path(__file__).resolve().parent.parent.parent
-PROJECT_ROOT = _root
+# --- [v1.46.135] CORE INFRASTRUCTURE SSOT ---
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+SRC_DIR      = PROJECT_ROOT / "src"
 
+# Hardcoded Logic Centralization
+PORT_CLEANUP_CMD     = "fuser -k 8345/tcp > /dev/null 2>&1"
+DEFAULT_TIME_FORMAT  = "%H:%M:%S"
+WINDOW_SIZE          = (1440, 900)
+FRONTEND_SETTINGS    = {
+    "port": 8345,
+    "mode": "chrome",
+    "cmdline_args": ["--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required"]
+}
+
+# --- Core Path Registry (v1.35.94 SSOT) ---
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
@@ -1453,10 +1465,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     ],
     "mutagen_prefer_albumartist": True,
     "ffmpeg_deep_analysis": False,
-    "browser_flags": [
-        "--no-sandbox", 
-        "--disable-gpu", 
-        f"--window-size={int(os.environ.get('MWV_WIDTH', 1550))},{int(os.environ.get('MWV_HEIGHT', 800))}"
+    "browser_flags": FRONTEND_SETTINGS["cmdline_args"] + [
+        f"--window-size={WINDOW_SIZE[0]},{WINDOW_SIZE[1]}"
     ],
     
     # Storage & Paths
@@ -1594,6 +1604,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- Version Files ---
         "pyproject_file":           str(PROJECT_ROOT / "pyproject.toml"),
         "version_file":             str(PROJECT_ROOT / "VERSION"),
+        # --- Forensic Resource Registry (v1.46.135) ---
+        "media_resource_registry": {
+            "media_dir":              str(PROJECT_ROOT / "media"),
+            "mock_dir":               str(PROJECT_ROOT / "data" / "mocks"),
+            "mock_db":                str(PROJECT_ROOT / "data" / "mock_database.db"),
+            "forensic_samples":       str(PROJECT_ROOT / "media" / "forensic_samples"),
+            "test_iso":               str(PROJECT_ROOT / "media" / "test_images" / "win10_recovery.iso"),
+            "reference_audio":        str(PROJECT_ROOT / "media" / "reference" / "sinewave_1khz.wav"),
+            "reference_video":        str(PROJECT_ROOT / "media" / "reference" / "colorbars_h264.mp4")
+        },
         "benchmarks_file":          str(PROJECT_ROOT / "benchmarks.json"),
 
         # --- Reference Media (Test Assets) ---

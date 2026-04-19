@@ -3,12 +3,12 @@ import os
 from pathlib import Path
 
 # Setup path
-_root = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, PROGRAM_REGISTRY, BROWSER_REGISTRY, MEDIA_RESOURCE_REGISTRY, GLOBAL_CONFIG
+_root = PROJECT_ROOT
 sys.path.insert(0, str(_root))
 sys.path.insert(0, str(_root / "src"))
 
 try:
-    from src.core.config_master import PROGRAM_REGISTRY, BROWSER_REGISTRY, MEDIA_RESOURCE_REGISTRY, GLOBAL_CONFIG
     from src.core import api_tools, api_transcoding, api_core_app, api_parsing
     
     print("SUCCESS: All API modules and registries loaded.")
