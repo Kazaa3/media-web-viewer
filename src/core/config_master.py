@@ -534,6 +534,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
         "max_buffer_size": 10000        # For UI Log Buffer
     },
+
+    # --- EXTRACTION & TRANSCODING PROFILES (v1.46.131) ---
+    "extraction_settings": {
+        "embedded_artwork": ["-map", "0:v", "-c:v", "copy", "-vframes", "1"],
+        "video_thumbnail": {
+            "flags": ["-vframes", "1"],
+            "vf_scale": "scale=w={width}:h={height}:force_original_aspect_ratio=decrease"
+        }
+    },
     
     # --- UI & NAVIGATION REGISTRY (v1.37.52 Centralized) ---
     "ui_settings": {

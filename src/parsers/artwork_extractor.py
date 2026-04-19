@@ -146,13 +146,12 @@ class ArtworkExtractor:
         # 1. Broad stream mapping (picks first attached pic)
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
+        ext_cfg = GLOBAL_CONFIG.get("extraction_settings", {}).get("embedded_artwork", [])
         timeout = art_cfg.get("ffmpeg_timeout_sec", 5)
         
-        return self._run_ffmpeg([
-            ffmpeg_bin, "-i", str(path),
-            "-map", "0:v", "-c:v", "copy", "-vframes", "1",
-            "-y", str(out_path)
-        ], timeout=timeout)
+        args = [ffmpeg_bin, "-i", str(path)] + ext_cfg + ["-y", str(out_path)]
+        
+        return self._run_ffmpeg(args, timeout=timeout)
 
     def _extract_video_thumbnail(self, path: Path, out_path: Path) -> bool:
         """
@@ -160,17 +159,24 @@ class ArtworkExtractor:
         """
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         art_cfg = GLOBAL_CONFIG.get("artwork_settings", {})
+        ext_cfg = GLOBAL_CONFIG.get("extraction_settings", {}).get("video_thumbnail", {})
+        
         offset = art_cfg.get("thumbnail_offset_sec", 7)
         res = art_cfg.get("thumbnail_resolution", "480:480")
+        width, height = res.split(':')
+        
         timeout = art_cfg.get("ffmpeg_timeout_sec", 8) 
         
-        return self._run_ffmpeg([
+        flags = ext_cfg.get("flags", ["-vframes", "1"])
+        vf_scale = ext_cfg.get("vf_scale", "scale=w={width}:h={height}:force_original_aspect_ratio=decrease")
+        formatted_vf = vf_scale.format(width=width, height=height)
+        
+        args = [
             ffmpeg_bin, "-i", str(path),
             "-ss", f"{offset:02d}", # Formatted offset
-            "-vframes", "1",
-            "-vf", f"scale=w={res.split(':')[0]}:h={res.split(':')[1]}:force_original_aspect_ratio=decrease",
-            "-y", str(out_path)
-        ], timeout=timeout)
+        ] + flags + ["-vf", formatted_vf, "-y", str(out_path)]
+        
+        return self._run_ffmpeg(args, timeout=timeout)
 
     def _find_local_art(self, path: Path, out_path: Path) -> bool:
         """
