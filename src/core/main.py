@@ -189,7 +189,8 @@ def get_tech_markers():
 
 @eel.expose
 def get_system_forensics():
-    return api_testing.get_system_forensics()
+    """Returns the full environment inventory for the technical HUD."""
+    return api_testing.get_environment_inventory()
 
 
 @eel.expose
