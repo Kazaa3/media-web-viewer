@@ -4508,6 +4508,12 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             'type': 'folder', 'media_type': cat, 'nfo_parsed': 1 if nfo_data else 0
                         })
                         count_indexed += 1
+                        
+                        # Atomic Batch Commit (v1.46.102)
+                        if len(collected_items) >= batch_size:
+                            log.info(f"[DB-SCAN] Batch Commit (Folder): {len(collected_items)} items...")
+                            db.insert_media_batch(collected_items)
+                            collected_items = []
 
                 # 3. Individual Files (Standard Pass)
                 for filename in files:
@@ -4550,15 +4556,15 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             'extension': ext
                         })
                         count_indexed += 1
+                    except Exception as e:
+                        exc = None if log_compact else True
+                        log.error(f"[Scan-Index-Error] Fatal crash indexing '{filename}': {e}", exc_info=exc)
 
                     # 4. Atomic Batch Commit (v1.46.102)
                     if len(collected_items) >= batch_size:
                         log.info(f"[DB-SCAN] Batch Commit: {len(collected_items)} items...")
                         db.insert_media_batch(collected_items)
                         collected_items = []
-                    except Exception as e:
-                        exc = None if log_compact else True
-                        log.error(f"[Scan-Index-Error] Fatal crash indexing '{filename}': {e}", exc_info=exc)
 
         # 6. Final Sync
         if collected_items:
