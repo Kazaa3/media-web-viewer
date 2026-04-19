@@ -22,6 +22,33 @@
 
     <div class="context-menu-divider"></div>
 
+    <!-- General Media Action Cluster -->
+    <div class="context-menu-section" id="context-menu-section-general">
+        <div class="context-menu-header">Allgemeine Aktionen</div>
+        
+        <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">
+            <span style="font-size: 14px; margin-right: 8px;">▶️</span>
+            <span>Im Web Player abspielen</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('queue_add')">
+            <span style="font-size: 14px; margin-right: 8px;">➕</span>
+            <span>Zur Queue hinzufügen</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('edit_metadata')">
+            <span style="font-size: 14px; margin-right: 8px;">📝</span>
+            <span>Metadaten Editieren</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('open_fs')">
+            <span style="font-size: 14px; margin-right: 8px;">📁</span>
+            <span>Im Dateisystem öffnen</span>
+        </div>
+    </div>
+
+    <div class="context-menu-divider"></div>
+
     <!-- External Player Cluster -->
     <div class="context-menu-section" id="context-menu-section-external">
         <div class="context-menu-header">Externe Player</div>

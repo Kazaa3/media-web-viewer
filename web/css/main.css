@@ -1891,7 +1891,8 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     transition: width var(--transition-fluid);
     flex-shrink: 0;
 }

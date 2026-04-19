@@ -1390,6 +1390,22 @@ async function handleContextMenuAction(mode) {
         return;
     }
 
+    if (mode === 'queue_add' && typeof addToQueue === 'function') {
+        addToQueue(item);
+        return;
+    }
+
+    if (mode === 'edit_metadata') {
+        if (typeof switchTab === 'function') switchTab('edit');
+        setTimeout(() => { if (typeof openEditForm === 'function') openEditForm(item); }, 200);
+        return;
+    }
+
+    if (mode === 'open_fs' && typeof eel !== "undefined") {
+        eel.open_in_explorer(item.path)();
+        return;
+    }
+
     if ((mode === 'vlc_embedded' || mode === 'vlc_interactive') && typeof eel.open_video === 'function') {
         if (typeof showToast === 'function') showToast('Starte VLC HLS zu MSE...', 2000);
         const res = await eel.open_video(item.path, 'vlc', 'vlc_embedded')();
