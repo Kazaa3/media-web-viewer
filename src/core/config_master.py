@@ -104,13 +104,14 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "v1.46.090-EVO-STABLE"
+    # [v1.53.001] Professional Tri-Block Versioning
+    VERSION = "v1.53.001"
 
-# --- v1.46.001 Registry (Tri-Digit Forensic Evolution) ---
+# --- v1.53.001 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
 APP_VERSION_FRONTEND = f"{VERSION}-MASTER-FINAL"
 APP_VERSION_BACKEND = f"{VERSION}-SUBTYPE-ALIGN"
-# Created with MWV v1.46.017-MASTER
+# Created with MWV v1.53.001-MASTER
 APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
@@ -173,6 +174,36 @@ PLAYLIST_EXTENSIONS = {'.m3u', '.m3u8'}
 # These constants define the technical handling requirements for archive files.
 # Use uppercase as per architectural standard.
 ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}
+
+# --- [v1.53.001] GLOBAL MEDIA TAXONOMY (The Master SSOT) ---
+# Centralized registry for all media classification, handling, and UI labeling.
+GLOBAL_MEDIA_TAXONOMY = {
+    # --- TECHNICAL ROUTES (Focus: Handling & Pipeline) ---
+    "audio_native":    {"label": "Audio (Native)",      "desc": "Lossless/Standard Chrome-ready", "ext": AUDIO_NATIVE,      "type": "route"},
+    "audio_transcode": {"label": "Audio (Transcode)",   "desc": "Requires backend transcoding",   "ext": AUDIO_TRANSCODE,   "type": "route"},
+    "video_native":    {"label": "Video (Native)",      "desc": "Direct browser playback",        "ext": VIDEO_NATIVE,      "type": "route"},
+    "video_hd":        {"label": "Video (HD/2K/4K)",    "desc": "High-bitrate MKV/MP4",           "ext": VIDEO_HD_TRANSCODE, "type": "route"},
+    "video_pal":       {"label": "Video (PAL/SD)",      "desc": "Legacy European Broadcast",       "ext": VIDEO_PAL_TRANSCODE,"type": "route"},
+    "video_ntsc":      {"label": "Video (NTSC/SD)",     "desc": "Legacy US/Japan Broadcast",      "ext": VIDEO_NTSC_TRANSCODE,"type": "route"},
+    "video_iso":       {"label": "Disk-Image (Video)",  "desc": "ISO/IMG Container",              "ext": DVD_ISO_TRANSCODE,  "type": "route"},
+    
+    # --- CONTEXTUAL CATEGORIES (Focus: Content & Metadata) ---
+    "album":           {"label": "Album",               "desc": "Standard discography item",      "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "single":          {"label": "Single / EP",         "desc": "Short-form release",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "hörbuch":         {"label": "Hörbuch / Audiobook", "desc": "Spoken word narrative",           "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "podcast":         {"label": "Podcast",             "desc": "Digital talk series",            "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
+    
+    "film":            {"label": "Film / Movie",        "desc": "Feature-length motion picture",  "ext": ALL_VIDEO_EXTENSIONS,"type": "category", "parent": "video"},
+    "series":          {"label": "Serie / TV-Show",     "desc": "Episodic narrative",             "ext": ALL_VIDEO_EXTENSIONS,"type": "category", "parent": "video"},
+    "documentation":   {"label": "Dokumentation",       "desc": "Fact-based reporting",           "ext": ALL_VIDEO_EXTENSIONS,"type": "category", "parent": "video"},
+    
+    "bilder":          {"label": "Bilder / Pictures",   "desc": "Static visual assets",           "ext": PICTURE_EXTENSIONS,    "type": "category"},
+    "epub":            {"label": "E-Book",              "desc": "Digital literature",              "ext": EBOOK_EXTENSIONS,      "type": "category"},
+    "games":           {"label": "Spiel / Games",       "desc": "Interactive software",           "ext": {".exe", ".iso", ".bat"},"type": "category"},
+    "archives":        {"label": "Archiv",              "desc": "Compressed packages",            "ext": ARCHIVE_EXTENSIONS,    "type": "category"},
+}
 
 try:
     from dotenv import load_dotenv
@@ -602,8 +633,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "branch_id": os.environ.get("MWV_BRANCH", "extended"),
-    "orchestrator_version": "v1.46.017-MASTER",
-    "build_id": "STABLE-FORENSIC-2026-04-12",
+    "orchestrator_version": "v1.53.001-MASTER",
+    "build_id": "EVO-FORENSIC-2026-04-19",
     "build_link_template": str(DIST_DIR / "MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe"),
     "release_channel": "development",
     
@@ -1174,49 +1205,46 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             ]
         },
 
+        # --- [v1.53.001] GLOBAL MEDIA TAXONOMY (Frontend Mount) ---
+        "media_taxonomy": GLOBAL_MEDIA_TAXONOMY,
+
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
         "library_category_map": [
             {"id": "all",             "label": "ALLE MEDIEN"},
+            # Routes
+            {"id": "audio_native",    "label": GLOBAL_MEDIA_TAXONOMY["audio_native"]["label"]},
+            {"id": "audio_transcode", "label": GLOBAL_MEDIA_TAXONOMY["audio_transcode"]["label"]},
+            {"id": "video_native",    "label": GLOBAL_MEDIA_TAXONOMY["video_native"]["label"]},
+            {"id": "video_hd",        "label": GLOBAL_MEDIA_TAXONOMY["video_hd"]["label"]},
+            {"id": "video_pal",       "label": GLOBAL_MEDIA_TAXONOMY["video_pal"]["label"]},
+            # Categories
             {"id": "audio",           "label": "AUDIO (Gruppe)"},
-            {"id": "audio_native",    "label": "audio_native"},
-            {"id": "audio_transcode", "label": "audio_transcode"},
-            {"id": "album",           "label": "album"},
-            {"id": "single",          "label": "single"},
-            {"id": "hörbuch",         "label": "hörbuch"},
-            {"id": "sampler",         "label": "sampler"},
-            {"id": "compilation",     "label": "compilation"},
-            {"id": "podcast",         "label": "podcast"},
-            {"id": "soundtrack",      "label": "soundtrack"},
-            {"id": "klassik",         "label": "klassik"},
+            {"id": "album",           "label": GLOBAL_MEDIA_TAXONOMY["album"]["label"]},
+            {"id": "single",          "label": GLOBAL_MEDIA_TAXONOMY["single"]["label"]},
+            {"id": "hörbuch",         "label": GLOBAL_MEDIA_TAXONOMY["hörbuch"]["label"]},
+            {"id": "soundtrack",      "label": GLOBAL_MEDIA_TAXONOMY["soundtrack"]["label"]},
+            {"id": "podcast",         "label": GLOBAL_MEDIA_TAXONOMY["podcast"]["label"]},
+            {"id": "klassik",         "label": GLOBAL_MEDIA_TAXONOMY["klassik"]["label"]},
             {"id": "video",           "label": "VIDEO (Gruppe)"},
-            {"id": "video_iso",       "label": "iso-image"},
-            {"id": "series",          "label": "serie"},
-            {"id": "documentation",   "label": "dokumentation"},
-            {"id": "bilder",          "label": "bilder"},
-            {"id": "pictures",        "label": "bilder"},
-            {"id": "epub",            "label": "epub"},
-            {"id": "ebooks",          "label": "ebooks"},
-            {"id": "docs",            "label": "dokumente"},
-            {"id": "documents",       "label": "dokumente"},
-            {"id": "archives",        "label": "archiv"},
-            {"id": "disk_images",     "label": "disk_images"},
-            {"id": "spiel",           "label": "spiel / games"},
-            {"id": "games",           "label": "spiel / games"},
-            {"id": "beigabe",         "label": "beigabe"},
-            {"id": "supplements",     "label": "supplements"},
-            {"id": "nfo",             "label": "nfo"},
-            {"id": "unknown",         "label": "unbekannt"},
-            {"id": "unbekannt",       "label": "unbekannt"}
+            {"id": "film",            "label": GLOBAL_MEDIA_TAXONOMY["film"]["label"]},
+            {"id": "series",          "label": GLOBAL_MEDIA_TAXONOMY["series"]["label"]},
+            {"id": "documentation",   "label": GLOBAL_MEDIA_TAXONOMY["documentation"]["label"]},
+            {"id": "bilder",          "label": GLOBAL_MEDIA_TAXONOMY["bilder"]["label"]},
+            {"id": "epub",            "label": GLOBAL_MEDIA_TAXONOMY["epub"]["label"]},
+            {"id": "games",           "label": GLOBAL_MEDIA_TAXONOMY["games"]["label"]},
+            {"id": "archives",        "label": GLOBAL_MEDIA_TAXONOMY["archives"]["label"]},
+            {"id": "unknown",         "label": "unbekannt"}
         ],
 
         "library_filter_mode_registry": {
-            "route":    ["all", "audio_native", "audio_transcode", "video", "video_iso", "bilder", "docs", "archives", "unknown"],
-            "category": ["all", "audio", "album", "single", "hörbuch", "sampler", "podcast", "soundtrack", "klassik", "video", "series", "documentation", "bilder", "epub", "games"]
+            "route":    ["all", "audio_native", "audio_transcode", "video_native", "video_hd", "video_pal", "unknown"],
+            "category": ["all", "audio", "album", "single", "hörbuch", "soundtrack", "podcast", "klassik", "video", "film", "series", "documentation", "bilder", "epub", "games"]
         },
 
         "library_category_hierarchy": {
-            "audio": ["album", "single", "hörbuch", "sampler", "compilation", "podcast", "soundtrack", "klassik"],
-            "video": ["series", "documentation", "video_iso"]
+            "audio": ["album", "single", "hörbuch", "soundtrack", "podcast", "klassik"],
+            "video": ["film", "series", "documentation"]
+        },
         },
 
         "branch_architecture_registry": {

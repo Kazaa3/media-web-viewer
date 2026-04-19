@@ -118,7 +118,11 @@ def _restore_packages(packages: List[str], registry: Dict) -> bool:
         if not offline_enforced:
             try:
                 log.info(f"[Audit-Deps] PHASE-1 [ONLINE]: Installing '{package}'...")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "--timeout", "10", package])
+                # [v1.53.001] Linux Stabilization: Use --break-system-packages to bypass PEP 668 in forensic environments
+                cmd = [sys.executable, "-m", "pip", "install", "--timeout", "10", package]
+                if sys.platform == "linux":
+                    cmd.append("--break-system-packages")
+                subprocess.check_call(cmd)
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from Repository.")
                 success = True
             except: pass
@@ -127,7 +131,10 @@ def _restore_packages(packages: List[str], registry: Dict) -> bool:
         if not success and local_cache and os.path.exists(local_cache):
             try:
                 log.info(f"[Audit-Deps] PHASE-2 [LOCAL]: Installing '{package}' from Cache...")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(local_cache), package])
+                cmd = [sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(local_cache), package]
+                if sys.platform == "linux":
+                    cmd.append("--break-system-packages")
+                subprocess.check_call(cmd)
                 log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from LOCAL CACHE.")
                 success = True
             except: pass
