@@ -1075,6 +1075,45 @@ async function showStartupDashboard() {
     }
 }
 
+/**
+ * [v1.54.014] Forensic Sentinel Heartbeat
+ * Periodically audits the DOM and forces recovery if stalls are detected.
+ */
+function initForensicHeartbeat() {
+    console.info(">>> [SENTINEL] Initializing Forensic Sentinel Heartbeat (v1.54.014)...");
+    
+    setInterval(() => {
+        if (typeof window.runDomAudit !== 'function') return;
+        
+        const report = window.runDomAudit();
+        console.debug(`[SENTINEL-PULSE] Health: ${report.healthyCount}/${report.total}`);
+        
+        // Check for Hydration Stall (H-9)
+        const hydPoint = report.points.find(p => p.id === 'H-9');
+        if (hydPoint && hydPoint.res.healthy === false) {
+            console.warn(`!!! [SENTINEL] HYDRATION STALL DETECTED: ${hydPoint.res.text}. Triggering Recovery...`);
+            
+            if (typeof eel !== 'undefined' && typeof eel.log_ui_event === 'function') {
+                eel.log_ui_event('FORENSIC-STALL', 'AUTO-RECOVERY-TRIGGERED', hydPoint.res.text)();
+            }
+
+            // Recovery Pulse: Forced Refresh + Re-render
+            if (typeof refreshLibrary === 'function') refreshLibrary();
+            
+            // Re-assert active tab visibility
+            const activeTab = localStorage.getItem('mwv_active_tab') || 'player';
+            if (typeof switchTab === 'function') switchTab(activeTab);
+            
+            if (typeof showToast === 'function') showToast("Forensic Sentinel: Reactivating Stalled Viewport...", "warn");
+        }
+    }, 10000); // 10s Evaluation Cycle
+}
+
+// Global initialization hook
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initForensicHeartbeat, 8000); // Wait for boot grace period
+});
+
 // Map globally for sidebar access
 /**
  * triggerModuleHydration (v1.45.100)

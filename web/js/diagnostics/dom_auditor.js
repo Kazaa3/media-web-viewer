@@ -39,9 +39,11 @@ window.runDomAudit = function() {
 
     const summary = document.getElementById('audit-summary-text');
     if (summary) {
-        summary.innerText = `STATUS: ${healthyCount}/7 HEALTHY`;
-        summary.style.color = (healthyCount === 7) ? '#00ff7f' : '#ffa500';
+        summary.innerText = `STATUS: ${healthyCount}/${auditPoints.length} HEALTHY`;
+        summary.style.color = (healthyCount === auditPoints.length) ? '#00ff7f' : '#ffa500';
     }
+
+    return { healthyCount, total: auditPoints.length, points: auditPoints.map(p => ({ id: p.id, label: p.label, res: p.check() })) };
 };
 
 function checkVisibility(ids) {
