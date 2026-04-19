@@ -6150,47 +6150,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
         return {"error": str(e)}
 
 
-@eel.expose
-def save_playlist(media_names: list, output_path: str):
-    """
-    @brief Saves the current selection of media names to a JSON file.
-    """
-    try:
-        path = Path(output_path)
-        if not path.suffix:
-            path = path.with_suffix('.json')
-
-        import json
-        path.write_text(json.dumps(media_names, indent=4), encoding='utf-8')
-        return {"status": "ok", "path": str(path)}
-    except Exception as e:
-        log.error(f"[Save Playlist] Error: {e}")
-        return {"error": str(e)}
-
-
-@eel.expose
-def load_playlist(input_path: str):
-    """
-    @brief Loads a list of media names from a JSON file and returns full media objects.
-    """
-    try:
-        path = Path(input_path)
-        if not path.exists():
-            return {"error": "Playlist file not found"}
-
-        import json
-        media_names = json.loads(path.read_text(encoding='utf-8'))
-
-        items = []
-        for name in media_names:
-            item = db.get_media_by_name(name)
-            if item:
-                items.append(item)
-
-        return {"status": "ok", "items": items}
-    except Exception as e:
-        log.error(f"[Load Playlist] Error: {e}")
-        return {"error": str(e)}
+# (save/load_playlist moved to api_playlist)
 
 
 @eel.expose
