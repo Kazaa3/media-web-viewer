@@ -6,7 +6,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 # Project structure
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 sys.path.append(str(PROJECT_ROOT))
 
 def run_signoff():

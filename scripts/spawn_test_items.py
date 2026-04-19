@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 
 # Set up PYTHONPATH so we can import src.core.db
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 sys.path.append(str(PROJECT_ROOT))
 sys.path.append(str(PROJECT_ROOT / "src"))
 

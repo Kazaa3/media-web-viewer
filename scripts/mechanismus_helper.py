@@ -14,7 +14,7 @@ import time
 import threading
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 PACKAGES_DIR = PROJECT_ROOT / "packages"
 
 # Venv Mapping

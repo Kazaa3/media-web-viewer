@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 # Project Structure
-ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 INFRA = ROOT / "infra"
 REQUIREMENTS_DIR = INFRA
 
