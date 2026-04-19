@@ -154,6 +154,9 @@ def move_current_down():
     if CURRENT_INDEX < 0:
         return {"status": "error", "message": "no current item"}
     return move_item_down(CURRENT_INDEX)
+
+@eel.expose
+def remove_playlist_item(index: int):
     global CURRENT_PLAYLIST, CURRENT_INDEX
     try:
         idx = int(index)
