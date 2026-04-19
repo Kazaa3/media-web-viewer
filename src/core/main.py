@@ -1400,6 +1400,8 @@ def get_startup_info():
             enable_log = forensic_cfg.get("enable_pid_resolution_logging", True)
 
             current_process = psutil.Process(os.getpid())
+            # 4. PRC HEALTH
+            health_report["metrics"]["prc"] = "CLEAN" if api_tools.kill_stalled_forensic_processes() == 0 else "PROCESS_CLEANUP_ACTIVE"
             children = current_process.children(recursive=True)
             for child in children:
                 name = child.name().lower()
