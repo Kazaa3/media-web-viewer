@@ -43,6 +43,8 @@ function registerVjsComponents() {
             const buf = window._vjs_buffer || 0;
             const dropped = window._vjs_dropped || 0;
 
+            const brClass = window.getBitrateQualityClass ? window.getBitrateQualityClass(br + " kbps") : '';
+
             this.el().innerHTML = `
                 <div class="stats-header">SYSTEM METRICS</div>
                 <div class="stats-row"><span>Backend CPU</span><span class="stats-val">${cpu}%</span></div>
@@ -51,7 +53,7 @@ function registerVjsComponents() {
                 <div class="stats-row"><span>Net ↓ / ↑</span><span class="stats-val">${netRecv} / ${netSent} KB/s</span></div>
                 <div style="margin-top:10px;" class="stats-header">PLAYER METRICS</div>
                 <div class="stats-row"><span>Frames/s</span><span class="stats-val">${Math.round(fps)}</span></div>
-                <div class="stats-row"><span>Bitrate</span><span class="stats-val">${Math.round(br)} kbps</span></div>
+                <div class="stats-row"><span>Bitrate</span><span class="stats-val ${brClass}">${Math.round(br)} kbps</span></div>
                 <div class="stats-row"><span>Buffer</span><span class="stats-val">${buf}s</span></div>
                 <div class="stats-row"><span>Dropped</span><span class="stats-val">${dropped}</span></div>
                 <div style="margin-top:10px;" class="stats-header">ENGINE DETAILS</div>

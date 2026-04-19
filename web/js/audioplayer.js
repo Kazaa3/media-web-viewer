@@ -268,7 +268,15 @@ function playAudio(item, startTime = 0) {
     const codec = item.codec || (ext ? ext.slice(1).toUpperCase() : '-');
     document.querySelectorAll('.synced-specs span').forEach(el => {
         if (el.id.includes('codec')) el.innerText = codec;
-        if (el.id.includes('bitrate')) el.innerText = item.bitrate || '-';
+        if (el.id.includes('bitrate')) {
+            el.innerText = item.bitrate || '-';
+            // [v1.53.004] Apply Phase 13 Quality Marker
+            if (window.getBitrateQualityClass) {
+                el.classList.remove('quality-high', 'quality-std', 'quality-low');
+                const qClass = window.getBitrateQualityClass(item.bitrate);
+                if (qClass) el.classList.add(qClass);
+            }
+        }
         if (el.id.includes('samplerate')) el.innerText = item.samplerate || '-';
         if (el.id.includes('bitdepth')) el.innerText = item.bitdepth || '-';
     });
