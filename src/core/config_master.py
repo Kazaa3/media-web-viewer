@@ -446,6 +446,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_pid_resolution_logging": True
     },
 
+    # --- PARSER LIMITS & CONSTRAINTS (v1.46.102) ---
+    "parser_limits": {
+        "max_tag_length": 1024,
+        "max_chapters": 500,
+        "heavy_parser_skip_size_mb": 500,
+        "enable_semantic_validation": True,
+        "log_truncation_warnings": True
+    },
+
     # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),

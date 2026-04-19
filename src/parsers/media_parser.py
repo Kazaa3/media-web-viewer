@@ -31,17 +31,24 @@ UNIVERSAL_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["unive
 
 def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
     """
-    @brief Sanitizes metadata to prevent memory bloat or UI lag.
+    @brief Sanitizes metadata to prevent memory bloat or UI lag (v1.46.102).
     """
+    limits = GLOBAL_CONFIG.get("parser_limits", {})
+    max_len = limits.get("max_tag_length", 1024)
+    max_chaps = limits.get("max_chapters", 500)
+    enable_log = limits.get("log_truncation_warnings", True)
+
     for key, value in tags.items():
-        if isinstance(value, str) and len(value) > MAX_TAG_LEN:
-            log.warning(f"Truncating long tag '{key}' ({len(value)} chars)")
-            tags[key] = value[:MAX_TAG_LEN] + "..."
+        if isinstance(value, str) and len(value) > max_len:
+            if enable_log:
+                log.warning(f"[Parser-Sanitize] Truncating long tag '{key}' ({len(value)} chars)")
+            tags[key] = value[:max_len] + "..."
     
     if "chapters" in tags and isinstance(tags["chapters"], list):
-        if len(tags["chapters"]) > MAX_CHAPTERS:
-            log.warning(f"Truncating excessive chapters ({len(tags['chapters'])} -> {MAX_CHAPTERS})")
-            tags["chapters"] = tags["chapters"][:MAX_CHAPTERS]
+        if len(tags["chapters"]) > max_chaps:
+            if enable_log:
+                log.warning(f"[Parser-Sanitize] Truncating excessive chapters ({len(tags['chapters'])} -> {max_chaps})")
+            tags["chapters"] = tags["chapters"][:max_chaps]
             
     return tags
 
@@ -58,7 +65,8 @@ def get_file_magic(path: Path, length: int = 16, offset: int = 0) -> bytes:
             if offset > 0:
                 f.seek(offset)
             return f.read(length)
-    except Exception:
+    except Exception as e:
+        log.debug(f"[Parser-Magic] Failed to read magic for {path.name}: {e}")
         return b""
 
 def validate_semantic_consistency(tags: dict[str, Any], filename: str):
@@ -319,9 +327,12 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
                 
                 if step_name in ["pymediainfo", "pycdlib", "isoparser"]:
                     # Optimization: Skip heavy parsers for very large ISO files
-                    # They tend to cause extreme memory spikes during full/deep scans
-                    if file_type == ".iso" and path_obj.stat().st_size > 500 * 1024 * 1024:
-                        logging.info(f"Skipping {step_name} for large ISO: {filename}")
+                    # They tend to cause extreme memory spikes during full/deep scans (Centralized v1.46.102)
+                    limits = GLOBAL_CONFIG.get("parser_limits", {})
+                    heavy_skip_mb = limits.get("heavy_parser_skip_size_mb", 500)
+                    
+                    if file_type == ".iso" and path_obj.stat().st_size > heavy_skip_mb * 1024 * 1024:
+                        log.info(f"[Parser-Audit] Skipping heavy parser '{step_name}' for large ISO: {filename} (> {heavy_skip_mb}MB)")
                         parser_times[step_name] = time.time() - t0
                         success = True
                         continue

@@ -1436,17 +1436,21 @@ def get_startup_info():
     """Returns dual-PID forensic info, startup metrics, and background process registry (v1.46.090)."""
     global FRONTEND_PROCESS_ID
     
-    # 1. Resolve Frontend PID (Heuristic: Look for Chromium children of current process)
+    # 1. Resolve Frontend PID (Centralized v1.46.101)
     if not FRONTEND_PROCESS_ID:
         try:
+            forensic_cfg = GLOBAL_CONFIG.get("forensic_settings", {})
+            browser_targets = forensic_cfg.get("browser_process_names", ["chrome", "chromium"])
+            enable_log = forensic_cfg.get("enable_pid_resolution_logging", True)
+
             current_process = psutil.Process(os.getpid())
             children = current_process.children(recursive=True)
             for child in children:
                 name = child.name().lower()
-                # Local heuristics for most browsers used with Eel
-                if any(x in name for x in ['chrome', 'chromium', 'electron', 'brave', 'opera']):
+                if any(x in name for x in browser_targets):
                     FRONTEND_PROCESS_ID = child.pid
-                    log.info(f"[Forensic-PID] Resolved Frontend: {name} (PID: {FRONTEND_PROCESS_ID})")
+                    if enable_log:
+                        log.info(f"[Forensic-PID] Resolved Frontend: {name} (PID: {FRONTEND_PROCESS_ID})")
                     break
         except Exception as e:
             log.warning(f"[Forensic-PID] Failed to resolve FE PID: {e}")
@@ -4439,6 +4443,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         enable_size_skip = scan_settings.get("enable_size_skipping", True)
         min_size = scan_settings.get("min_size_kb", 1) * 1024
         max_size = scan_settings.get("max_size_mb", 50000) * 1024 * 1024
+        batch_size = scan_settings.get("batch_commit_size", 250)
         log_compact = scan_settings.get("log_compact_errors_only", True)
         log_unsupported = scan_settings.get("log_unsupported_extensions", False)
 
@@ -4545,11 +4550,17 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             'extension': ext
                         })
                         count_indexed += 1
+
+                    # 4. Atomic Batch Commit (v1.46.102)
+                    if len(collected_items) >= batch_size:
+                        log.info(f"[DB-SCAN] Batch Commit: {len(collected_items)} items...")
+                        db.insert_media_batch(collected_items)
+                        collected_items = []
                     except Exception as e:
                         exc = None if log_compact else True
                         log.error(f"[Scan-Index-Error] Fatal crash indexing '{filename}': {e}", exc_info=exc)
 
-        # 6. Atomic Commit
+        # 6. Final Sync
         if collected_items:
             log.info(f"[DB-SCAN] Finalizing batch of {len(collected_items)} items...")
             db.insert_media_batch(collected_items)
