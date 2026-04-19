@@ -3,12 +3,13 @@ import os
 import time
 import requests # type: ignore
 from src.core.logger import get_logger
-log = get_logger("streams.vlc_bridge")
+from src.core.config_master import GLOBAL_CONFIG
 
 # Global dict to track vlc processes
+log = get_logger("streams_vlc_bridge")
 VLC_PROCESSES = {}
 
-def start_vlc_bridge(file_path, port=8080, password="admin"):
+def start_vlc_bridge(file_path, port=8080):
     """
     @brief Starts VLC with HTTP interface and HLS streaming for interactive playback.
     @details Essential for DVD/Blu-ray menus and advanced Atmos/Surround.
@@ -20,38 +21,48 @@ def start_vlc_bridge(file_path, port=8080, password="admin"):
         log.error(f"[VLC] File not found: {file_path}")
         return False
 
-    log.info(f"[VLC] Starting Bridge for {file_path} on port {port}")
+    # Pull configuration (Phase 9 Centralization)
+    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {}).get("video", {})
+    flags = reg.get("orchestration_flags", {}).get("vlc_bridge", {})
+    
+    password = flags.get("http_password", "admin")
+    sout_template = flags.get("sout_template", "#transcode{vcodec=h264,vb=800,scale=auto,acodec=aac,ab=128,channels=2,samplerate=44100}:std{access=livehttp,mux=mpegts,dst=web/streams/vlc/vlc.m3u8}")
+
+    log.info(f"[VLC] Starting Bridge for {file_path} on port {port} (Trace: {password[:1]}***)")
 
     # VLC command for HTTP control + HLS streaming
-    # We use -I http for the web interface and --sout for the stream
     cmd = [
         "vlc",
         "-I", "http",
         "--http-port", str(port),
         "--http-password", password,
         str(file_path),
-        "--sout", f"#transcode{{vcodec=h264,vb=800,scale=auto,acodec=aac,ab=128,channels=2,samplerate=44100}}:std{{access=livehttp,mux=mpegts,dst=web/streams/vlc/vlc.m3u8}}"
+        "--sout", sout_template
     ]
 
     try:
-        # Ensure output directory exists
-        os.makedirs("web/streams/vlc", exist_ok=True)
+        # Ensure output directory exists (Centralized Path)
+        out_dir = Path("web/streams/vlc")
+        out_dir.mkdir(parents=True, exist_ok=True)
         
         process = subprocess.Popen(cmd)
         VLC_PROCESSES[port] = process
         return True
     except Exception as e:
-        log.error(f"[VLC] Failed to start bridge: {e}")
+        log.error(f"[VLC] Failed to start bridge: {e}", exc_info=True)
         return False
 
-def send_vlc_command(command, port=8080, password="admin"):
+def send_vlc_command(command, port=8080):
     """Sends a control command to the VLC HTTP interface."""
+    reg = GLOBAL_CONFIG.get("media_pipeline_registry", {}).get("video", {})
+    password = reg.get("orchestration_flags", {}).get("vlc_bridge", {}).get("http_password", "admin")
+    
     url = f"http://127.0.0.1:{port}/requests/status.json?command={command}"
     try:
         response = requests.get(url, auth=("", password), timeout=2)
         return response.json()
     except Exception as e:
-        log.error(f"[VLC] Command {command} failed: {e}")
+        log.error(f"[VLC] Command {command} failed: {e}", exc_info=True)
         return {"error": str(e)}
 
 def stop_vlc_bridge(port=8080):
@@ -66,3 +77,4 @@ def stop_vlc_bridge(port=8080):
                 process.kill()
         return True
     return False
+
