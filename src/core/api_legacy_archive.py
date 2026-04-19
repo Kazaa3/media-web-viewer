@@ -7877,3 +7877,909 @@ def get_forensic_thresholds():
 
 @eel.expose
 
+
+
+# === [MULTI-BASELINE DEEP SWEEP ARCHIVE] ===
+# These functions were recovered from multiple historical baselines (v1.34-v1.54).
+
+@eel.expose
+def get_environment_info(force_refresh=False):
+    """
+    @brief Returns comprehensive information about the Python environment.
+    @details Gibt detaillierte Informationen über die Python-Umgebung zurück,
+             inklusive aktuelle Umgebung, System Python Installationen, und Conda Umgebungen.
+    @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
+    """
+    import platform
+    import subprocess
+    import json
+
+    now = time.time()
+    if not force_refresh and _ENV_INFO_CACHE["data"] is not None:
+        if (now - float(_ENV_INFO_CACHE["ts"])) <= _ENV_INFO_CACHE_TTL_SECONDS:
+            return _ENV_INFO_CACHE["data"]
+
+    # ===== Current Environment =====
+    # Check if we're in a virtual environment (venv/virtualenv)
+    in_venv = sys.prefix != sys.base_prefix
+    venv_path = sys.prefix if in_venv else None
+
+    # Get VIRTUAL_ENV environment variable (more reliable for venv)
+    venv_env = os.environ.get('VIRTUAL_ENV', None)
+
+    # Check for Conda environment
+    conda_env_name = os.environ.get('CONDA_DEFAULT_ENV', None)
+    conda_prefix = os.environ.get('CONDA_PREFIX', None)
+    in_conda = conda_env_name is not None or conda_prefix is not None
+
+    # Determine active runtime environment type and path
+    # Priority: active interpreter/venv > conda shell context > system
+    env_type = None
+    env_path = None
+    env_name = None
+
+    if in_venv or venv_env:
+        env_type = "venv"
+        env_path = venv_path or venv_env
+        env_name = Path(env_path).name if env_path else None
+    elif in_conda:
+        env_type = "conda"
+        env_path = conda_prefix
+        env_name = conda_env_name
+    else:
+        env_type = "system"
+
+    # Build current environment info
+    current_env = {
+        "type": env_type,
+        "name": env_name,
+        "path": env_path,
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+    }
+
+    # ===== Alternative Environments Discovery =====
+
+    def _get_conda_environments():
+        """Get list of available Conda environments."""
+        environments = []
+        try:
+            # Main conda call with reduced timeout (3s)
+            result = subprocess.run(
+                ["conda", "env", "list", "--json"],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+            if result.returncode == 0:
+                try:
+                    data = json.loads(result.stdout)
+                    for env_path in data.get("envs", []):
+                        try:
+                            env_name = Path(env_path).name
+                            env_python = Path(env_path) / "bin" / "python"
+
+                            # Check existence and version with timeout (1s)
+                            if env_python.exists():
+                                v_result = subprocess.run(
+                                    [str(env_python), "--version"],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1
+                                )
+                                version = v_result.stdout.strip() or v_result.stderr.strip()
+                                is_recommended = False
+
+                                environments.append({
+                                    "name": env_name,
+                                    "path": env_path,
+                                    "version": version,
+                                    "recommended": is_recommended
+                                })
+                        except (subprocess.TimeoutExpired, Exception):
+                            continue
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            pass
+        return sorted(environments, key=lambda x: x["name"])
+
+    def _get_system_pythons():
+        """Get list of system Python installations."""
+        pythons = []
+        search_paths = ["/usr/bin", "/usr/local/bin", "/opt/python"]
+        seen_versions = set()
+
+        for search_path in search_paths:
+            try:
+                search_dir = Path(search_path)
+                if not search_dir.exists():
+                    continue
+
+                # Use a specific glob to avoid listing too many files
+                for python_exe in search_dir.glob("python3*"):
+                    try:
+                        if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                            continue
+
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+
+                        if version and version not in seen_versions:
+                            seen_versions.add(version)
+                            pythons.append({
+                                "path": str(python_exe),
+                                "version": version
+                            })
+                    except (subprocess.TimeoutExpired, Exception):
+                        pass
+            except Exception:
+                pass
+
+        return sorted(pythons, key=lambda x: x["version"])
+
+    def _get_packages_fallback():
+        """Fallback method to get packages if pip list fails."""
+        packages = []
+        try:
+            from importlib import metadata
+            for dist in metadata.distributions():
+                name = dist.metadata.get("Name") or dist.metadata.get("name")
+                version = dist.version
+                if not name:
+                    continue
+                packages.append({
+                    "name": name,
+                    "version": version
+                })
+            packages = sorted(packages, key=lambda x: x["name"].lower())
+        except Exception:
+            try:
+                import pkg_resources
+                for dist in pkg_resources.working_set:
+                    packages.append({
+                        "name": dist.project_name,
+                        "version": dist.version
+                    })
+                packages = sorted(packages, key=lambda x: x["name"].lower())
+            except Exception:
+                pass
+        return packages
+
+    def _get_installed_packages():
+        """Get list of installed packages in current environment."""
+        packages = []
+        source = "none"
+
+        def _parse_columns_output(raw_text: str):
+            parsed = []
+            lines = [line.strip()
+                     for line in (raw_text or "").splitlines() if line.strip()]
+            if not lines:
+                return parsed
+            for line in lines:
+                if line.lower().startswith("package") and "version" in line.lower():
+                    continue
+                if set(line) <= set("- "):
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    parsed.append({"name": parts[0], "version": parts[1]})
+            return parsed
+
+        try:
+            # Primary method: pip list --format=json (timeout 5s)
+            result = subprocess.run([sys.executable,
+                                     "-m",
+                                     "pip",
+                                     "list",
+                                     "--format=json",
+                                     "--disable-pip-version-check"],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=5)
+            if result.returncode == 0:
+                try:
+                    packages_data = json.loads(result.stdout)
+                    packages = sorted(
+                        packages_data, key=lambda x: x.get(
+                            "name", "").lower())
+                    source = "pip_list_json"
+                except (json.JSONDecodeError, TypeError, KeyError):
+                    logging.warning(
+                        "Failed to parse pip list JSON - falling back")
+                    packages = _get_packages_fallback()
+                    source = "importlib_or_pkg_resources"
+            else:
+                # Fallback 1: pip list (columns)
+                try:
+                    fallback_result = subprocess.run(
+                        [sys.executable, "-m", "pip", "list", "--format=columns", "--disable-pip-version-check"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    if fallback_result.returncode == 0:
+                        packages = sorted(
+                            _parse_columns_output(fallback_result.stdout),
+                            key=lambda x: x.get("name", "").lower()
+                        )
+                        if packages:
+                            source = "pip_list_columns"
+                except Exception:
+                    pass
+
+                # Fallback 2: importlib/pkg_resources
+                if not packages:
+                    packages = _get_packages_fallback()
+                    source = "importlib_or_pkg_resources"
+        except (subprocess.TimeoutExpired, Exception) as e:
+            logging.warning(
+                f"pip list failed ({
+                    type(e).__name__}) - using importlib fallback")
+            packages = _get_packages_fallback()
+            source = "importlib_or_pkg_resources"
+
+        return packages, source
+
+    def _find_local_venvs():
+        """Find local venv directories in common locations using Multi-Venv Strategy."""
+        venvs = []
+        
+        # Strategy definition: Detailed multi-venv concept
+        VENV_STRATEGY = {
+            ".venv_core": {
+                "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
+                "role": "CORE"
+            },
+            ".venv_run": {
+                "purpose": "Optimierte Laufzeitumgebung für den Anwenderbetrieb.",
+                "role": "RUN"
+            },
+            ".venv_build": {
+                "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
+                "role": "BUILD"
+            },
+            ".venv_dev": {
+                "purpose": "Entwicklungsumgebung mit Lintern (flake8, pyre).",
+                "role": "DEV"
+            },
+            ".venv_testbed": {
+                "purpose": "Isolierte Umgebung für Integrations-Tests.",
+                "role": "TEST"
+            },
+            ".venv_selenium": {
+                "purpose": "Umgebung für E2E Browser-Tests.",
+                "role": "E2E"
+            }
+        }
+
+        try:
+            # Discovery of subsidiary venvs based on strategy
+            for vname, info in VENV_STRATEGY.items():
+                venv_path = PROJECT_ROOT / vname
+                exists = venv_path.exists() and (venv_path / "bin" / "python").exists()
+                
+                version = None
+                if exists:
+                    python_exe = venv_path / "bin" / "python"
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                    except (subprocess.TimeoutExpired, Exception):
+                        version = "unknown"
+                
+                venvs.append({
+                    "name": vname,
+                    "path": str(venv_path),
+                    "exists": exists,
+                    "version": version,
+                    "is_current": str(venv_path) == env_path,
+                    "purpose": info["purpose"],
+                    "role": info["role"]
+                })
+
+            # Add legacy/default 'venv' if it exists
+            default_venv = PROJECT_ROOT / "venv"
+            if default_venv.exists() and (default_venv / "bin" / "python").exists():
+                if not any(v["name"] == "venv" for v in venvs):
+                    python_exe = default_venv / "bin" / "python"
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                    except (subprocess.TimeoutExpired, Exception):
+                        version = "unknown"
+                        
+                    venvs.append({
+                        "name": "venv",
+                        "path": str(default_venv),
+                        "exists": True,
+                        "version": version,
+                        "is_current": str(default_venv) == env_path,
+                        "purpose": "Standard Fallback-Umgebung.",
+                        "role": "FALLBACK"
+                    })
+        except Exception as e:
+            logging.debug(f"Error finding local venvs: {e}")
+
+        return venvs
+
+    def _get_mediainfo_status():
+        """Get runtime status for pymediainfo (python) and mediainfo (system)."""
+        cli_path = shutil.which("mediainfo")
+        pymediainfo_available = False
+        pymediainfo_version = None
+
+        try:
+            import pymediainfo  # type: ignore
+            pymediainfo_available = True
+            pymediainfo_version = getattr(pymediainfo, "__version__", None)
+        except Exception:
+            pymediainfo_available = False
+
+        mediainfo_cli_version = None
+        if cli_path:
+            try:
+                result = subprocess.run(
+                    [cli_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                output = result.stdout or ""
+                match = re.search(r"v(\d+\.\d+(?:\.\d+)*)", output)
+                mediainfo_cli_version = match.group(1) if match else None
+            except Exception:
+                mediainfo_cli_version = None
+
+        return {
+            "pymediainfo_available": pymediainfo_available,
+            "pymediainfo_version": pymediainfo_version,
+            "mediainfo_cli_available": bool(cli_path),
+            "mediainfo_cli_path": cli_path,
+            "mediainfo_cli_version": mediainfo_cli_version,
+        }
+
+    def _get_runtime_tools_status():
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        vlc_cli_path = shutil.which("vlc")
+        mkvinfo_path = shutil.which("mkvinfo")
+        mkvmerge_path = shutil.which("mkvmerge")
+        mkvinfo_version = None
+        mkvmerge_version = None
+        python_mkv_available = False
+        python_mkv_version = None
+        try:
+            import pymkv
+            python_mkv_available = True
+            python_mkv_version = getattr(pymkv, "__version__", None)
+        except Exception:
+            python_mkv_available = False
+        if mkvinfo_path:
+            try:
+                mkvinfo_result = subprocess.run(
+                    [mkvinfo_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (mkvinfo_result.stdout or "").splitlines()[
+                    0] if mkvinfo_result.stdout else ""
+                match = re.search(r"mkvinfo v(\S+)", first_line)
+                mkvinfo_version = match.group(1) if match else None
+            except Exception:
+                mkvinfo_version = None
+        if mkvmerge_path:
+            try:
+                mkvmerge_result = subprocess.run(
+                    [mkvmerge_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (mkvmerge_result.stdout or "").splitlines()[
+                    0] if mkvmerge_result.stdout else ""
+                match = re.search(r"mkvmerge v(\S+)", first_line)
+                mkvmerge_version = match.group(1) if match else None
+            except Exception:
+                mkvmerge_version = None
+
+        browser_candidates = [
+            ("google-chrome", "google-chrome"),
+            ("google-chrome-stable", "google-chrome-stable"),
+            ("chromium", "chromium"),
+            ("chromium-browser", "chromium-browser"),
+            ("firefox", "firefox"),
+        ]
+
+        browser_name = None
+        browser_path = None
+        browser_version = None
+        for candidate_name, binary in browser_candidates:
+            found = shutil.which(binary)
+            if found:
+                browser_name = candidate_name
+                browser_path = found
+                break
+
+        if browser_path:
+            try:
+                browser_result = subprocess.run(
+                    [browser_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (browser_result.stdout or "").splitlines()[
+                    0] if browser_result.stdout else ""
+                match = re.search(r"(\d+\.\d+(?:\.\d+){1,3})", first_line)
+                browser_version = match.group(1) if match else None
+            except Exception:
+                browser_version = None
+
+        mutagen_available = False
+        mutagen_version = None
+        try:
+            import mutagen  # type: ignore
+            mutagen_available = True
+            mutagen_version = getattr(
+                mutagen, "version_string", None) or getattr(
+                mutagen, "__version__", None)
+        except Exception:
+            mutagen_available = False
+
+        python_vlc_available = bool(globals().get("HAS_VLC", False))
+        python_vlc_version = None
+        if python_vlc_available:
+            try:
+                python_vlc_version = getattr(vlc, "__version__", None)
+            except Exception:
+                python_vlc_version = None
+
+        ffmpeg_version = None
+        if ffmpeg_path:
+            try:
+                ffmpeg_result = subprocess.run(
+                    [ffmpeg_path, "-version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (ffmpeg_result.stdout or "").splitlines()[
+                    0] if ffmpeg_result.stdout else ""
+                match = re.search(
+                    r"ffmpeg version\s+([^\s]+)",
+                    first_line,
+                    re.IGNORECASE)
+                ffmpeg_version = match.group(1) if match else None
+            except Exception:
+                ffmpeg_version = None
+
+        ffprobe_version = None
+        if ffprobe_path:
+            try:
+                ffprobe_result = subprocess.run(
+                    [ffprobe_path, "-version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (ffprobe_result.stdout or "").splitlines()[
+                    0] if ffprobe_result.stdout else ""
+                match = re.search(
+                    r"ffprobe version\s+([^\s]+)",
+                    first_line,
+                    re.IGNORECASE)
+                ffprobe_version = match.group(1) if match else None
+            except Exception:
+                ffprobe_version = None
+
+        vlc_cli_version = None
+        if vlc_cli_path:
+            try:
+                vlc_result = subprocess.run(
+                    [vlc_cli_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (vlc_result.stdout or "").splitlines()[
+                    0] if vlc_result.stdout else ""
+                match = re.search(r"(\d+\.\d+(?:\.\d+){1,3})", first_line)
+                vlc_cli_version = match.group(1) if match else None
+            except Exception:
+                vlc_cli_version = None
+
+        return {
+            "ffmpeg_cli_available": bool(ffmpeg_path),
+            "ffmpeg_cli_path": ffmpeg_path,
+            "ffmpeg_cli_version": ffmpeg_version,
+            "ffprobe_cli_available": bool(ffprobe_path),
+            "ffprobe_cli_path": ffprobe_path,
+            "ffprobe_cli_version": ffprobe_version,
+            "mkvinfo_cli_available": bool(mkvinfo_path),
+            "mkvinfo_cli_path": mkvinfo_path,
+            "mkvinfo_cli_version": mkvinfo_version,
+            "mkvmerge_cli_available": bool(mkvmerge_path),
+            "mkvmerge_cli_path": mkvmerge_path,
+            "mkvmerge_cli_version": mkvmerge_version,
+            "python_mkv_available": python_mkv_available,
+            "python_mkv_version": python_mkv_version,
+            "browser_available": bool(browser_path),
+            "browser_name": browser_name,
+            "browser_path": browser_path,
+            "browser_version": browser_version,
+            "vlc_cli_available": bool(vlc_cli_path),
+            "vlc_cli_path": vlc_cli_path,
+            "vlc_cli_version": vlc_cli_version,
+            "python_vlc_available": python_vlc_available,
+            "python_vlc_version": python_vlc_version,
+            "mutagen_available": mutagen_available,
+            "mutagen_version": mutagen_version,
+        }
+
+    # Discovery logic
+    # Discover available environments (cached/fast)
+    conda_envs = _get_conda_environments()
+    system_pythons = _get_system_pythons()
+    installed_packages, installed_packages_source = _get_installed_packages()
+    if not installed_packages:
+        installed_packages = _get_packages_fallback()
+        installed_packages_source = "importlib_or_pkg_resources"
+    local_venvs = _find_local_venvs()
+    mediainfo_status = _get_mediainfo_status()
+    tools_status = _get_runtime_tools_status()
+    requirements_status = _get_requirements_status()
+
+    # ===== Build Response =====
+    result = {
+        # Current Environment (Primary)
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+        "python_prefix": sys.prefix,
+        "python_base_prefix": sys.base_prefix,
+        "in_venv": in_venv,
+        "venv_path": venv_path or venv_env,
+        "in_conda": in_conda,
+        "conda_env_name": conda_env_name,
+        "conda_prefix": conda_prefix,
+        "has_conda_context": bool(conda_env_name or conda_prefix),
+        "env_type": env_type,
+        "env_path": env_path,
+        "env_name": env_name,
+        "platform": platform.platform(),
+        "platform_system": platform.system(),
+        "platform_release": platform.release(),
+
+        # Current Environment (Detailed)
+        "current_environment": current_env,
+
+        # Alternative Environments (Discovery Results)
+        "available_conda_environments": conda_envs,
+        "available_system_pythons": system_pythons,
+        "local_venvs": local_venvs,
+        "multi_venv_concept": "Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhängigkeiten.",
+
+        # Installed Packages
+        "installed_packages": installed_packages,
+        "package_count": len(installed_packages),
+        "installed_packages_source": installed_packages_source,
+        "mediainfo_status": mediainfo_status,
+        "tools_status": tools_status,
+        "requirements_status": requirements_status,
+
+        # Recommendations
+        "recommended_environment": {
+            "name": "venv_core",
+            "type": "venv",
+            "python_version": "3.14.2",
+            "reason": "Eigene venv für main.py empfohlen"
+        },
+        "default_scan_dir": SCAN_MEDIA_DIR,
+        "browse_default_dir": BROWSER_DEFAULT_DIR
+    }
+
+    # UI Trace Logging - capture what frontend receives
+    try:
+        trace_log_path = Path(__file__).parent / "logs" / \
+            "ui_trace_environment_info.log"
+        trace_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(trace_log_path, "a", encoding="utf-8") as f:
+            f.write(f"\n{'=' * 80}\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')
+                        }] get_environment_info() called\n")
+            f.write(f"force_refresh: {force_refresh}\n")
+            f.write(f"package_count: {len(installed_packages)}\n")
+            f.write(f"installed_packages_source: {
+                    installed_packages_source}\n")
+            f.write(f"requirements_status: {requirements_status}\n")
+            f.write(f"first_3_packages: {
+                    installed_packages[:3] if installed_packages else 'EMPTY'}\n")
+            f.write(f"env_type: {result.get('env_type')}\n")
+            f.write(f"python_executable: {result.get('python_executable')}\n")
+
+        # Also print to console for immediate visibility
+        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
+            installed_packages)}, source={installed_packages_source}, req={requirements_status}")
+    except Exception as e:
+        print(f"⚠️  UI-TRACE logging failed: {e}")
+
+    _ENV_INFO_CACHE["data"] = result
+    _ENV_INFO_CACHE["ts"] = time.time()
+    return result
+
+
+
+    def matches(it, key):
+        if not isinstance(it, dict):
+            return False
+        for f in ('name', 'filename', 'path', 'id'):
+            v = it.get(f)
+            if v and v == key:
+                return True
+        tags = it.get('tags') or {}
+        if tags.get('title') and tags.get('title') == key:
+            return True
+        for f in ('name', 'filename', 'path'):
+            v = it.get(f)
+            if v and isinstance(v, str) and key in v:
+                return True
+        return False
+
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        if matches(it, key):
+            print(f"[DEBUG] move_item_down_by_key: matched idx={
+                  idx} key={key} item={it}")
+            return move_item_down(idx)
+
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        try:
+            s = ' '.join(str(x) for x in it.values())
+            if key in s:
+                return move_item_down(idx)
+        except Exception:
+            continue
+
+    print(f"[DEBUG] move_item_down_by_key: no match for key={key}")
+    return {"status": "error", "message": "item not found"}
+
+
+
+def _extract_key_from_obj(item_obj: dict) -> str:
+    """Helper to extract a unique key (id or path) from a media item dictionary."""
+    if not isinstance(item_obj, dict):
+        return ""
+    # Try common keys
+    for k in ['id', 'path', 'filepath', 'url', 'key']:
+        if item_obj.get(k):
+            return str(item_obj[k])
+    return ""
+
+
+@eel.expose
+
+@eel.expose
+def list_feature_modal_items():
+    """
+    Returns feature modal items from logbook plus selected markdown files from the project root.
+    """
+    items = [
+        item for item in list_logbook_entries()
+        if item.get("filename") != "31_Project_Documentation.md"
+    ]
+
+    root_dir = Path(__file__).parent
+    root_docs = [
+        ("README.md", "README", "Project overview and quick start."),
+        ("DOCUMENTATION.md", "Documentation", "Detailed technical documentation."),
+        ("INSTALL.md", "Installation", "Installation and setup instructions."),
+        ("DEPENDENCIES.md", "Dependencies", "Dependency list and runtime requirements."),
+        ("LICENSE.md", "License", "License and legal information."),
+    ]
+
+    for filename, title, summary in root_docs:
+        path = root_dir / filename
+        if not path.exists():
+            continue
+        mtime = path.stat().st_mtime
+        items.append({
+            "name": filename,
+            "filename": filename,
+            "title": title,
+            "title_de": title,
+            "title_en": title,
+            "category": "Docs",
+            "summary": summary,
+            "summary_de": summary,
+            "summary_en": summary,
+            "status": "DOCS",
+            "source": "root",
+            "modified_ts": mtime,
+            "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mtime)),
+        })
+
+    return items
+
+
+@eel.expose
+
+    def _session_project_root(session: dict) -> Path | None:
+        cmdline = str(session.get('cmdline', '') or '')
+        if not cmdline:
+            return None
+
+        for token in cmdline.split():
+            token_clean = token.strip("'\"")
+            if token_clean.endswith('main.py'):
+                try:
+                    return Path(token_clean).resolve().parent
+                except Exception:
+                    return None
+        return None
+
+    same_project_sessions = [
+        s for s in existing_sessions
+        if _session_project_root(s) == current_project_root
+    ]
+
+    if existing_sessions and not same_project_sessions:
+        logging.info(
+            "[Session] Ignoring running sessions from other project/install paths. "
+            f"Current project root: {current_project_root}"
+        )
+
+    # Check for existing sessions of this project (same root path)
+    existing_sessions = same_project_sessions
+    if existing_sessions and os.environ.get("MWV_FORCE_NEW_SESSION") != "1":
+        existing = existing_sessions[0]
+        existing_url = f"http://localhost:{existing['port']}/app.html"
+
+        if is_session_url_reachable(existing_url, timeout=0.8):
+            logging.warning(
+                f"[Session] Existing session detected (PID {
+                    existing['pid']}, port {
+                    existing['port']}). " "Skipping new window launch.")
+            logging.info(f"[Session] Existing session URL: {existing_url}")
+
+            if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
+                logging.info(
+                    "[Session] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
+            else:
+                try:
+                    if open_session_url(existing_url):
+                        logging.info("[Session] Opened existing session URL.")
+                except Exception as e:
+                    logging.warning(
+                        f"[Session] Failed to open existing session URL: {e}")
+
+            raise SystemExit(0)
+
+        logging.warning(
+            f"[Session] Ignoring stale session candidate (PID {
+                existing['pid']}, port {
+                existing['port']}) - URL unreachable.")
+
+    # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
+    # In einem Thread, damit die GUI sofort erscheint
+    import threading
+    threading.Thread(
+        target=lambda: scan_media(
+            dir_path=None,
+            clear_db=True),
+        daemon=True).start()
+
+    # Log environment info for GUI console
+    debug_log(f"[Startup] Environment Info: {get_environment_info_dict()}")
+
+    web_dir = str(PROJECT_ROOT / "web")
+    eel.init(web_dir)
+    logger.debug("websocket", f"Eel initialized with root: {web_dir}")
+
+    # GUI Console/Debug Tab: expose APIs for frontend
+    # Frontend should call get_debug_console(), get_environment_info_dict(),
+    # get_imprint_info()
+
+    if DEBUG_FLAGS["start"]:
+        debug_log("[Startup] Starting Eel UI...")
+
+    # Find a free port dynamically to allow multiple sessions
+    import socket
+
+    def find_free_port():
+        """Find and return a free port for this session."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.listen(1)
+            port = s.getsockname()[1]
+        return port
+
+    # Check for fixed port (useful for CI/Tests)
+    session_port = int(os.environ.get("MWV_PORT", 0))
+    if session_port == 0:
+        session_port = find_free_port()
+
+    # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
+    # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und
+    # sich sofort schließt.
+    try:
+        startup_duration = time.time() - STARTUP_TIME
+        logging.info(
+            f"[Startup-Trace] System ready for UI after {startup_duration:.2f}s.")
+        logger.debug(
+            "websocket",
+            f"Starting Eel server session on port {session_port}...")
+        eel.start(
+            "app.html",
+            mode=False,
+            size=(
+                1450,
+                800),
+            block=False,
+            port=session_port)
+
+        # Open browser explicitly after Eel starts with session-specific URL
+        session_url = f"http://localhost:{session_port}/app.html"
+        logging.info(f"[Session] Opening browser at {session_url}")
+
+        open_session_url(session_url)
+
+    except Exception as e:
+        logging.error(f"[Startup-Error] Failed to start session: {e}")
+
+    # Server am Leben halten (robust gegen temporäre Frontend-Disconnects)
+    while True:
+        try:
+            eel.sleep(1.0)
+        except KeyboardInterrupt:
+            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
+            raise
+        except BaseException as e:
+            logging.warning(
+                f"[WebSocket] keepalive recovered from base error: {
+                    type(e).__name__}: {e}")
+            time.sleep(1.0)
+
+    @eel.expose
+    def test_pyautogui():
+        """
+        Simple test for pyautogui integration.
+        Returns screen size and current mouse position.
+        """
+        try:
+            import pyautogui
+            screen_size = pyautogui.size()
+            mouse_pos = pyautogui.position()
+            return {
+                "status": "ok",
+                "screen_size": {
+                    "width": screen_size.width,
+                    "height": screen_size.height},
+                "mouse_position": {
+                    "x": mouse_pos.x,
+                    "y": mouse_pos.y}}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
