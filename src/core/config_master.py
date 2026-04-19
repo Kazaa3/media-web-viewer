@@ -135,14 +135,14 @@ if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
     # [v1.53.003-R3] Adaptive Environment Bootstrap
-    VERSION = "v1.53.003-R3"
+    VERSION = "v1.54.012"
 
 # --- v1.53.003-R3 Registry (Tri-Digit Forensic Evolution) ---
 APP_VERSION_CORE = VERSION
-APP_VERSION_FRONTEND = f"{VERSION}-MASTER-FINAL"
-APP_VERSION_BACKEND = f"{VERSION}-SUBTYPE-ALIGN"
+APP_VERSION_FRONTEND = f"{VERSION}" #"{VERSION}-MASTER-FINAL"
+APP_VERSION_BACKEND = f"{VERSION}" #"{VERSION}-SUBTYPE-ALIGN"
 # Created with MWV v1.53.003-R3-MASTER
-APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-STABLE"
+APP_VERSION_FULL = f"{APP_VERSION_CORE}" #"{APP_VERSION_CORE}-EVO-STABLE"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
 APP_VERSION = APP_VERSION_FULL
@@ -821,7 +821,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     },
 
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
-    "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
+    "ui_evolution_mode": "rebuild",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
     "unicode_safety_map": {
         "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 

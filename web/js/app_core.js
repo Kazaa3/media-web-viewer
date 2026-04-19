@@ -654,21 +654,34 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
 
-    // [v1.46.07] EMERGENCY BOOT WATCHDOG
+    // [v1.54.012] EMERGENCY BOOT WATCHDOG: Force Hydration on Hang
     setTimeout(() => {
+        const evolutionMode = window.CONFIG?.ui_evolution_mode || 'stable';
+        const needsRebuild = evolutionMode === 'rebuild';
+        
         if (!window.__PLAYER_INITIALIZED__) {
-            console.warn("!!! [WATCHDOG] Player hydration HANG detected. Forcing manual injection...");
+            console.warn(`!!! [WATCHDOG] Player hydration HANG detected (Mode: ${evolutionMode}). Forcing manual injection...`);
+            
+            // 1. Force state visibility
             if (typeof switchMainCategory === 'function') {
                 switchMainCategory('media');
             }
-            if (typeof FragmentLoader !== 'undefined') {
+            
+            // 2. Force fragment load if in rebuild mode
+            if (needsRebuild && typeof FragmentLoader !== 'undefined') {
                 FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
                     window.__PLAYER_INITIALIZED__ = true;
                     if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+                    console.info("[WATCHDOG] PLAYER HYDRATION RECOVERED.");
                 });
+            } else {
+                // Legacy fallback (v1.35)
+                window.__PLAYER_INITIALIZED__ = true;
+                const container = document.getElementById('player-panel-container');
+                if (container) container.style.display = 'block';
             }
         }
-    }, 5000);
+    }, 4500); // 4.5s Forensic Grace Period
 
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');

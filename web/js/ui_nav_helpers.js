@@ -848,6 +848,33 @@ function switchMainCategory(category, btn) {
         'diagnostics': 'debug',
         'edit': 'edit',
         'reporting': 'reporting',
+        'database': 'database'
+    };
+
+    // Level 4: Tab Activation (v1.41.115 Handshake)
+    const activeTab = categoryDefaults[category] || category;
+    const evolutionMode = window.CONFIG?.ui_evolution_mode || 'stable';
+
+    console.debug(`[UI-NAV] Activating Tab: ${activeTab.toUpperCase()} (Evolution: ${evolutionMode.toUpperCase()})`);
+
+    // [v1.54.012] Force Hydration Pulse for Rebuild Mode
+    if (activeTab === 'player' && evolutionMode === 'rebuild') {
+        if (!window.__PLAYER_INITIALIZED__) {
+             console.info("[UI-NAV] Player NOT initialized. Forcing Fragment Load...");
+             if (typeof FragmentLoader !== 'undefined') {
+                 FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
+                     window.__PLAYER_INITIALIZED__ = true;
+                     if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+                 });
+             }
+        }
+    }
+
+    if (window.WindowManager && typeof window.WindowManager.activate === 'function') {
+        window.WindowManager.activate(activeTab);
+    } else if (typeof switchTab === 'function') {
+        switchTab(activeTab);
+    }
         'debug': 'debug',
         'tests': 'tests',
         'file': 'file',
