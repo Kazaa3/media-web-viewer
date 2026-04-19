@@ -6,6 +6,7 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime
+from unittest.mock import MagicMock
 
 # Robust Eel shell fallback
 try:
@@ -13,9 +14,7 @@ try:
 except ImportError:
     import eel
 
-# High-Fidelity Mocking of tkinter to satisfy PyAutoGUI/pymsgbox dependencies (v1.46.142)
-import sys
-from unittest.mock import MagicMock
+# High-Fidelity Mocking of tkinter to satisfy PyAutoGUI dependencies (v1.46.142 Workaround)
 mock_tk = MagicMock()
 mock_tk.TkVersion = 8.6
 if "tkinter" not in sys.modules:
@@ -24,6 +23,8 @@ if "tkinter.messagebox" not in sys.modules:
     sys.modules["tkinter.messagebox"] = MagicMock()
 
 import pyautogui
+
+from src.core.config_master import (
     GLOBAL_CONFIG, PROJECT_ROOT, 
     EEL_SETTINGS, FORENSIC_TOOLS_LIST,
     get_tool_metadata
@@ -62,12 +63,12 @@ def capture_workstation_screenshot():
     """
     Forensic UI Capture via PyAutoGUI.
     Saves a full-screen snapshot of the current workstation state.
+    Utilizes scrot fallback via mocked tkinter (v1.46.142).
     """
     try:
-        import pyautogui
         # Ensure display is available for Linux
         if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
-            return {"status": "error", "message": "No DISPLAY environment variable found."}
+             os.environ['DISPLAY'] = ':0' 
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"workstation_snapshot_{timestamp}.png"
@@ -78,8 +79,6 @@ def capture_workstation_screenshot():
         
         log.info(f"[Audit] Forensic screenshot saved: {filename}")
         return {"status": "ok", "path": str(filepath), "filename": filename}
-    except ImportError:
-        return {"status": "error", "message": "PyAutoGUI package not found."}
     except Exception as e:
         log.error(f"[Audit] Screenshot capture failed: {e}")
         return {"status": "error", "message": str(e)}
@@ -120,10 +119,12 @@ def generate_standardized_audit():
         liveness = verify_frontend_liveness()
         
         report = {
+            "version": "v1.46.142",
             "timestamp": datetime.now().isoformat(),
             "station_id": GLOBAL_CONFIG.get("station_id", "STATION_ALPHA"),
             "inventory": inventory,
             "connectivity": liveness,
+            "dom_audit": GLOBAL_CONFIG.get("last_dom_audit", "PENDING"),
             "status": "VALIDATED" if liveness["status"] == "HEALTHY" else "FAULTY"
         }
         
