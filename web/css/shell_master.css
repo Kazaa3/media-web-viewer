@@ -261,6 +261,15 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
     font-weight: 900 !important;
 }
 
+.master-header.elite-inversion .tool-icon-btn {
+    color: #000 !important;
+    opacity: 0.7 !important;
+}
+
+.master-header.elite-inversion .tool-icon-btn:hover {
+    opacity: 1 !important;
+}
+
 /* [v1.41.121] Header Slot Configuration */
 .master-header > .nav-cluster.primary-cluster {
     flex: 0 0 var(--header-left-width, auto);

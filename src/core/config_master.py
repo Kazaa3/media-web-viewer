@@ -1129,6 +1129,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "photo": { "label": "Photos Only", "filter": "photo", "icon": "image" },
                 "all":   { "label": "All Formats", "filter": "all",   "icon": "all" }
             },
+            "tools_orchestrator": {
+                "registry": {
+                    "vlc":         {"id": "vlc", "label": "VLC Media Player", "binary": "vlc"},
+                    "cvlc":        {"id": "cvlc", "label": "VLC CLI (Headless)", "binary": "cvlc"},
+                    "ffmpeg":      {"id": "ffmpeg", "label": "FFmpeg Core", "binary": "ffmpeg"},
+                    "ffprobe":     {"id": "ffprobe", "label": "FFprobe Analyzer", "binary": "ffprobe"},
+                    "ffplay":      {"id": "ffplay", "label": "FFplay (Simple)", "binary": "ffplay"},
+                    "mkvmerge":    {"id": "mkvmerge", "label": "MKVToolNix Merge", "binary": "mkvmerge"},
+                    "mediainfo":   {"id": "mediainfo", "label": "MediaInfo CLI", "binary": "mediainfo"}
+                },
+                "discovery_enabled": True,
+                "auto_fix_broken": False
+            },
             "watchdog": {
                 "tick_ms": 500,
                 "max_ticks": 12,
