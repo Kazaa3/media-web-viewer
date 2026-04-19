@@ -50,6 +50,27 @@ LOGGING_REGISTRY = {
     "enable_ui_console":    True
 }
 
+# --- FORENSIC AUDIT & AUTOMATION REGISTRY (v1.47.01) ---
+FORENSIC_AUDIT_REGISTRY = {
+    "enabled_engines": ["pyautogui", "selenium", "playwright"],
+    "paths": {
+        "tests":             str(PROJECT_ROOT / "tests"),
+        "reports":           str(PROJECT_ROOT / "logs" / "audit_reports"),
+        "scripts":           str(PROJECT_ROOT / "scripts")
+    },
+    "capabilities": {
+        "dom_audit":         True, 
+        "logging_audit":     True,
+        "screenshot_audit":  True,
+        "automation_audit":  True
+    },
+    "automation_settings": {
+        "playwright_script": "app_audit_playwright.py",
+        "selenium_script":   "test_selenium_session.py",
+        "timeout":           30
+    }
+}
+
 # --- Core Path Registry (v1.35.94 SSOT) ---
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():

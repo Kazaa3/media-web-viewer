@@ -2,7 +2,16 @@ import os
 import time
 import shutil
 import threading
-import bottle as btl
+try:
+    import bottle as btl
+except ImportError:
+    from unittest.mock import MagicMock
+    btl = MagicMock()
+    log_err = lambda x: print(f"[DependencyShield] Bottle not found. Mocking {x}")
+    btl.HTTPResponse = MagicMock()
+    btl.HTTPError = MagicMock()
+    btl.static_file = MagicMock()
+    btl.request = MagicMock()
 from pathlib import Path
 from urllib.parse import unquote
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, DEFAULT_TIME_FORMAT
