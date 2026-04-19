@@ -1,6 +1,10 @@
 import re
 from pathlib import Path
 from typing import Any
+from src.core.logger import get_logger
+
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_filename")
 
 
 def get_capabilities() -> dict[str, Any]:
@@ -48,9 +52,10 @@ def parse(
 
     try:
         if not tags.get('size'):
-            tags['size'] = f"{Path(path).stat().st_size / (1024 * 1024):.2f} MB"
-    except Exception:
-        pass
+            size_mb = Path(path).stat().st_size / (1024 * 1024)
+            tags['size'] = f"{size_mb:.2f} MB"
+    except Exception as e:
+        log.debug(f"[Filename-Parser] Stat failed for {filename}: {e}", exc_info=True)
 
     working_filename = filename
     
