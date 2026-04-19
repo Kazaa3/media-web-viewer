@@ -16,7 +16,7 @@ from src.core.config_master import (
     GLOBAL_CONFIG, DISK_IMAGE_EXTENSIONS
 )
 from src.core.models import get_allowed_internal_cats, audit_category_chain
-from src.core import db, hardware_detector
+from src.core import db, hardware_detector, api_tools
 from src.core.api_library import apply_library_filters
 
 # Project Root Resolution
@@ -51,9 +51,7 @@ def get_global_health_audit():
         media_dir = GLOBAL_CONFIG["storage_registry"]["media_dir"]
         health_report["metrics"]["vol"] = "MOUNTED" if os.path.exists(media_dir) else "DISCONNECTED"
         # 4. PRC HEALTH
-        parent = psutil.Process(os.getpid())
-        zombies = [c for c in parent.children(recursive=True) if c.status() == psutil.STATUS_ZOMBIE]
-        health_report["metrics"]["prc"] = "CLEAN" if len(zombies) == 0 else "ZOMBIE_DETECTED"
+        health_report["metrics"]["prc"] = "CLEAN" if api_tools.kill_stalled_forensic_processes() == 0 else "PROCESS_CLEANUP_ACTIVE"
         # 5. DRV HEALTH
         hw_enc = hardware_detector.get_best_hw_encoder()
         health_report["metrics"]["drv"] = "ACCEL_ACTIVE" if "h264_" in hw_enc and "libx264" not in hw_enc else "SOFTWARE_ONLY"
