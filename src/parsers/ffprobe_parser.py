@@ -2,7 +2,11 @@ import subprocess
 import json
 from pathlib import Path
 from typing import Any
+from src.core.config_master import GLOBAL_CONFIG
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_ffprobe")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -11,7 +15,6 @@ def get_capabilities() -> dict[str, Any]:
         "supported_tags": ["title", "artist", "album", "date", "genre", "track", "disc", "chapters", "duration", "bitrate"],
         "supported_codecs": ["h264", "hevc", "vp9", "mp3", "aac", "ac3", "flac", "vorbis", "opus", "..."]
     }
-
 
 def get_settings_schema() -> dict[str, Any]:
     return {
@@ -27,28 +30,19 @@ def get_settings_schema() -> dict[str, Any]:
         }
     }
 
-
 def parse(path, file_type, tags, filename=None, mode='lightweight', settings=None):
-    if filename is None:
-        filename = Path(path).name
     """
     @brief Extracts metadata using ffprobe CLI with JSON output.
-    @details Extrahiert Metadaten mittels ffprobe CLI mit JSON-Ausgabe.
-    @param path Absolute path / Absoluter Pfad.
-    @param file_type Extension / Dateiendung.
-    @param tags Existing tags dictionary / Vorhandene Tags.
-    @param mode Extraction mode / Extraktionsmodus.
-    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
-    if mode == 'full':
-        tags['full_tags']['ffprobe_json'] = {} # Placeholder if needed
-
+    if filename is None:
+        filename = Path(path).name
     if settings is None:
         settings = {}
 
     try:
+        bin_path = GLOBAL_CONFIG.get("program_paths", {}).get("ffprobe", "ffprobe")
         cmd = [
-            GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"),
+            bin_path,
             "-v", "quiet",
             "-print_format", "json",
             "-show_format",
@@ -56,16 +50,17 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             "-show_chapters"
         ]
         
-        # Add custom flags if any
         custom_flags = settings.get('cli_flags', '').split()
         if custom_flags:
             cmd.extend(custom_flags)
             
         cmd.append(str(path))
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=settings.get('timeout', 10))
+        timeout = settings.get('timeout', 10)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         
         if result.returncode != 0:
+            log.warning(f"[FFprobe-Parser] Failed with exit code {result.returncode} for {filename}")
             return tags
             
         data = json.loads(result.stdout)
@@ -88,7 +83,6 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             format_name = fmt['format_name'].split(',')[0].upper()
             raw_ext = file_type[1:].upper()
             
-            # Handle MOV/MP4 container variants
             if format_name == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V', 'ALAC'):
                 tags['container'] = raw_ext.lower()
             else:
@@ -123,12 +117,7 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         
         # Extract stream information (audio)
         streams = data.get('streams', [])
-        audio_stream = None
-        
-        for stream in streams:
-            if stream.get('codec_type') == 'audio':
-                audio_stream = stream
-                break
+        audio_stream = next((s for s in streams if s.get('codec_type') == 'audio'), None)
         
         if audio_stream:
             from .format_utils import format_codec, format_bitdepth, format_samplerate
@@ -185,12 +174,10 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             
             pix_fmt = video_stream.get('pix_fmt', '')
             if pix_fmt:
-                # Basic heuristic for chroma from pix_fmt (e.g. yuv420p)
                 if '420' in pix_fmt: tags['video_chroma'] = '4:2:0'
                 elif '422' in pix_fmt: tags['video_chroma'] = '4:2:2'
                 elif '444' in pix_fmt: tags['video_chroma'] = '4:4:4'
                 
-                # Basic bit depth heuristic from pix_fmt
                 if '10le' in pix_fmt or '10be' in pix_fmt: tags['video_bit_depth'] = '10 Bit'
                 elif '12le' in pix_fmt or '12be' in pix_fmt: tags['video_bit_depth'] = '12 Bit'
                 elif not tags.get('video_bit_depth'): tags['video_bit_depth'] = '8 Bit'
@@ -203,37 +190,18 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             tags['video_color_space'] = color_data['color_space']
             tags['video_hdr'] = color_data['hdr_format']
         
-        # Extract chapters
-        if not tags.get('chapters'):
+        # Extract chapters (Phase 9 Flag)
+        flags = GLOBAL_CONFIG.get("parser_registry", {}).get("feature_flags", {})
+        if flags.get("extract_chapters", True) and not tags.get('chapters'):
             chapters_data = data.get('chapters', [])
             if chapters_data:
                 ffprobe_chapters: list[dict[str, Any]] = []
-                
                 for idx, chap in enumerate(chapters_data):
                     chapter_dict: dict[str, Any] = {}
-                    
-                    # Start and end times
-                    if 'start_time' in chap:
-                        try:
-                            chapter_dict['start'] = float(chap['start_time'])
-                        except (ValueError, TypeError):
-                            chapter_dict['start'] = 0.0
-                    else:
-                        chapter_dict['start'] = 0.0
-                    
-                    if 'end_time' in chap:
-                        try:
-                            chapter_dict['end'] = float(chap['end_time'])
-                        except (ValueError, TypeError):
-                            chapter_dict['end'] = 0.0
-                    else:
-                        chapter_dict['end'] = 0.0
-                    
-                    # Chapter title
+                    chapter_dict['start'] = float(chap.get('start_time', 0.0))
+                    chapter_dict['end'] = float(chap.get('end_time', 0.0))
                     chap_tags = chap.get('tags', {})
-                    title = chap_tags.get('title') or chap_tags.get('TITLE') or f"Kapitel {idx + 1}"
-                    chapter_dict['title'] = title
-                    
+                    chapter_dict['title'] = chap_tags.get('title') or chap_tags.get('TITLE') or f"Kapitel {idx + 1}"
                     ffprobe_chapters.append(chapter_dict)
                 
                 if ffprobe_chapters:
@@ -242,10 +210,11 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                         x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
 
     except subprocess.TimeoutExpired:
-        pass
-    except json.JSONDecodeError:
-        pass
-    except Exception:
-        pass
+        log.warning(f"[FFprobe-Parser] Timeout expired for {filename}")
+    except json.JSONDecodeError as je:
+        log.error(f"[FFprobe-Parser] JSON decode failed for {filename}: {je}")
+    except Exception as e:
+        log.error(f"[FFprobe-Parser] Unexpected error for {filename}: {e}", exc_info=True)
 
     return tags
+
