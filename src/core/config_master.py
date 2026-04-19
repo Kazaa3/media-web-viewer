@@ -50,6 +50,15 @@ LOGGING_REGISTRY = {
     "enable_ui_console":    True
 }
 
+# Dependency & Self-Healing Governance (v1.51)
+DEPENDENCY_REGISTRY = {
+    "auto_install_enabled": True,    # Global Switch: Allow automated pip activity
+    "offline_mode_enforced": False,  # If True, strictly avoid internet and use local cache
+    "local_package_root": PROJECT_ROOT / "packages" / "packages",
+    "linux_cache_path": PROJECT_ROOT / "packages" / "packages" / "linux",
+    "critical_packages": ["pyautogui", "bottle", "psutil", "pillow"]
+}
+
 # --- FORENSIC AUDIT & AUTOMATION REGISTRY (v1.47.01) ---
 FORENSIC_AUDIT_REGISTRY = {
     "enabled_engines": ["pyautogui", "selenium", "playwright"],
