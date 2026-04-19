@@ -51,6 +51,12 @@ LOGGING_REGISTRY = {
 }
 
 # Dependency & Self-Healing Governance (v1.52 Global SSOT)
+DEPENDENCY_REGISTRY = {
+    "auto_install_enabled": True,    # Global Switch: Allow automated pip activity
+    "offline_mode_enforced": False,  # If True, strictly avoid internet and use local cache
+    "local_package_root": PROJECT_ROOT / "packages" / "packages",
+    "linux_cache_path": PROJECT_ROOT / "packages" / "packages" / "linux",
+    
     # Tiered Package Categorization (The Ultimate Forensic Stack)
     "package_groups": {
         "core":       [
@@ -74,7 +80,7 @@ LOGGING_REGISTRY = {
         "dev":        ".venv_dev"
     },
     
-    # --- CROSS-PLATFORM SYSTEM REQUIREMENTS (v1.53.004) ---
+    # --- CROSS-PLATFORM SYSTEM REQUIREMENTS (v1.53.005) ---
     "system_requirements": {
         "linux": [
             "python3-tk", "python3-dev", "ffmpeg", "libmediainfo0v5", 
@@ -145,8 +151,10 @@ from importlib.metadata import distributions
 
 # AUDIO CAPABILITIES
 AUDIO_NATIVE = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
-AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".dsf", ".dff", ".dsd", ".ac3", ".dts"}
-ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE
+AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".ac3", ".dts", ".thd"}
+DSD_EXTENSIONS = {".dsf", ".dff", ".dsd", ".sacd"}
+MULTICHANNEL_EXTENSIONS = {".ac3", ".dts", ".thd", ".eac3", ".dtshd", ".dtsma"}
+ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE | DSD_EXTENSIONS | MULTICHANNEL_EXTENSIONS
 AUDIO_EXTENSIONS = ALL_AUDIO_EXTENSIONS
 
 # VIDEO CAPABILITIES (Pipeline Categorization)
@@ -208,6 +216,11 @@ GLOBAL_MEDIA_TAXONOMY = {
     "soundtrack":      {"label": "Soundtrack / OST",    "desc": "Film or game score",             "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     "klassik":         {"label": "Klassik / Classical", "desc": "Fine arts performance",          "ext": ALL_AUDIO_EXTENSIONS,"type": "category", "parent": "audio"},
     
+    # --- HIGH-RES & MULTICHANNEL (v1.53.005) ---
+    "dsd":             {"label": "High-Res (DSD)",       "desc": "Direct Stream Digital (Audiophile)", "ext": DSD_EXTENSIONS,      "type": "category", "parent": "audio"},
+    "mehrkanal":       {"label": "Mehrkanal (Surround)", "desc": "Multichannel (5.1/7.1/Atmos)",   "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},
+    "multichannel":    {"label": "Multichannel (Alias)", "desc": "Alias for Mehrkanal",            "ext": MULTICHANNEL_EXTENSIONS,"type": "category", "parent": "audio"},
+
     "video":           {"label": "Video (Gruppe)",      "desc": "General video asset",             "ext": ALL_VIDEO_EXTENSIONS,"type": "category"},
     "film":            {"label": "Film",                "desc": "Feature-length motion picture",  "ext": ALL_VIDEO_EXTENSIONS,"type": "category", "parent": "video"},
     "series":          {"label": "Serie",               "desc": "Episodic narrative",             "ext": ALL_VIDEO_EXTENSIONS,"type": "category", "parent": "video"},

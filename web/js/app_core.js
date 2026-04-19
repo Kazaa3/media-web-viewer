@@ -91,6 +91,32 @@ window.currentPlaylist = window.currentPlaylist || [];
 window.playlistIndex = window.playlistIndex || 0;
 
 /**
+ * [v1.53.005] Phase 13 Diagnostic Visualization
+ * Resolves technical quality classification for UI markers.
+ */
+window.getBitrateQualityClass = function(bitrateStr) {
+    if (!bitrateStr || bitrateStr === '-') return '';
+    const val = parseInt(bitrateStr.replace(/[^0-9]/g, ''));
+    if (isNaN(val)) return '';
+    
+    // Classify by kbps (v1.53 Standard)
+    if (val >= 1000) return 'quality-high'; // Lossless/High-Res
+    if (val >= 320) return 'quality-high';
+    if (val >= 192) return 'quality-std';
+    return 'quality-low';
+};
+
+window.triggerAuditPulse = function() {
+    const sidebar = document.querySelector('.sidebar-lane') || document.querySelector('.workstation-lane-sidebar');
+    if (!sidebar) return;
+    
+    sidebar.classList.add('audit-pulse-active');
+    setTimeout(() => {
+        sidebar.classList.remove('audit-pulse-active');
+    }, 2000); // Standard Forensic Pulse Duration
+};
+
+/**
  * syncUiGeometry (v1.43)
  * Injects dimensions from GLOBAL_CONFIG into CSS variables.
  */
@@ -300,31 +326,6 @@ window.hydrateCategoryDropdown = function (branchId) {
     });
 };
 
-/**
- * [v1.53.004] Phase 13 Diagnostic Visualization
- * Resolves technical quality classification for UI markers.
- */
-window.getBitrateQualityClass = function(bitrateStr) {
-    if (!bitrateStr || bitrateStr === '-') return '';
-    const val = parseInt(bitrateStr.replace(/[^0-9]/g, ''));
-    if (isNaN(val)) return '';
-    
-    // Classify by kbps (v1.53 Standard)
-    if (val >= 1000) return 'quality-high'; // Lossless/High-Res
-    if (val >= 320) return 'quality-high';
-    if (val >= 192) return 'quality-std';
-    return 'quality-low';
-};
-
-window.triggerAuditPulse = function() {
-    const sidebar = document.querySelector('.sidebar-lane');
-    if (!sidebar) return;
-    
-    sidebar.classList.add('audit-pulse-active');
-    setTimeout(() => {
-        sidebar.classList.remove('audit-pulse-active');
-    }, 2000); // Standard Forensic Pulse Duration
-};
 
 /**
  * [v1.53.003] toggleLibraryFilterMode
