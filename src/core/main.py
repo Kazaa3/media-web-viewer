@@ -4695,6 +4695,11 @@ def video_remux_stream(item_id):
     return api_orchestrator.video_remux_stream(item_id)
 
 
+@eel.btl.route('/vlc_hls/<filename>')
+def vlc_hls_proxy(filename):
+    return api_orchestrator.vlc_hls_live_proxy(filename)
+
+
 # [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py
 # to support centralized on-the-fly transcoding and better mimetype handling.
 
@@ -4728,47 +4733,6 @@ def apply_large_file_protection(cmd, file_path):
     except Exception as e:
         log.error(f"[Protection] Error applying safety policies: {e}")
         return cmd, False
-
-
-    start_time = bottle.request.query.get('ss', '0')
-    audio_idx = bottle.request.query.get('audio_idx', '0')
-    subs_idx = bottle.request.query.get('subs_idx', None)
-
-    resolved_path = resolve_media_path(file_path)
-    if not os.path.exists(resolved_path):
-        # Fallback to DB lookup if path resolve failed (id or filename search)
-        from src.core import db
-        item = db.get_media_by_name(file_path)
-        if item:
-            resolved_path = item['path']
-        else:
-            return bottle.HTTPError(404, "File not found")
-
-    if not os.path.exists(resolved_path):
-        return bottle.HTTPError(404, "File not found")
-
-    # Pre-calculate stream metadata (v1.35.98 Scope Fix)
-    audio_exts = GLOBAL_CONFIG.get("player_settings", {}).get("audio_extensions", [])
-    low_path = str(resolved_path).lower()
-    is_audio = any(ext in low_path for ext in audio_exts)
-    profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
-    p_key = "transcode_audio_aac"  # default
-
-    if is_audio:
-        if ".opus" in low_path:
-            p_key = "transcode_audio_opus"
-        elif ".alac" in low_path or ".m4a" in low_path:
-            p_key = "transcode_audio_flac"
-        elif ".wma" in low_path:
-            p_key = "transcode_audio_wma"
-
-    # FFmpeg Streaming Flow (Delegated to api_transcoding v1.46.132)
-    return api_transcoding.get_transcode_stream(
-        resolved_path=resolved_path,
-        start_time=float(start_time),
-        audio_idx=int(audio_idx),
-        subs_idx=subs_idx if subs_idx and str(subs_idx).lower() != 'none' else None
-    )
 
 
 @eel.expose
@@ -6295,7 +6259,7 @@ def remux_mkv_batch(folder_path):
             continue
 
         try:
-            cmd = ["mkvmerge", str(vf), "-o", str(output)]
+            cmd = ["mkvmerge", "-o", str(output), str(vf)]
             subprocess.run(cmd, check=True, capture_output=True)
             results["success"] += 1
             log.info(f"Remux Erfolg: {vf.name} -> {output.name}")
@@ -6969,371 +6933,20 @@ def delete_test(filename):
 
 
 @eel.expose
-def get_logbook_entry(feature_name, source="logbuch"):
-    """
-    @brief Reads a markdown file from the logbook or the README.
-    @details Liest eine Markdown-Datei aus dem Logbuch oder die README ein.
-    @param feature_name Entry name or 'README' / Name des Eintrags oder 'README'.
-    @return Content string (Markdown) / Inhalts-String (Markdown).
-    """
-    root_dir = PROJECT_ROOT
-    if source == "root":
-        allowed_root_files = {
-            "README.md",
-            "DOCUMENTATION.md",
-            "INSTALL.md",
-            "DEPENDENCIES.md",
-            "LICENSE.md",
-        }
-        requested = feature_name if feature_name.endswith(".md") else f"{feature_name}.md"
-        if requested not in allowed_root_files:
-            return f"<h1>Error</h1><p>Root entry '{feature_name}' not allowed.</p>"
-        log_file = root_dir / requested
-    elif feature_name.upper() == "README" or feature_name.upper() == "README.MD":
-        log_file = root_dir / "README.md"
-    else:
-        # Search recursively in the root logbuch folder
-        log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = None
-
-        # Check if feature_name already has the full relative path
-        if "/" in feature_name:
-            # Try direct relative path
-            candidate = log_dir / feature_name
-            if not candidate.name.endswith(".md"):
-                candidate = candidate.with_suffix(".md")
-            if candidate.exists():
-                log_file = candidate
-
-        if not log_file:
-            # Fallback search
-            for f in log_dir.rglob("*.md"):
-                if f.stem == feature_name or f.name == feature_name:
-                    log_file = f
-                    break
-
-        if not log_file:
-            # Try to match the stem if re-numbered (e.g., search for
-            # "The_Modular_Heart" in "010_2026-03-13_The_Modular_Heart...")
-            for f in log_dir.rglob("*.md"):
-                if feature_name in f.name:
-                    log_file = f
-                    break
-
-        if not log_file or not log_file.exists():
-            return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
-
-    try:
-        content = log_file.read_text(encoding='utf-8')
-
-        # Bilingual splitting: <!-- lang-split -->
-        if "<!-- lang-split -->" in content:
-            parts = content.split("<!-- lang-split -->")
-            if len(parts) >= 2:
-                current_lang = get_language()
-                if current_lang.lower() == "en":
-                    return parts[1].strip()
-                else:
-                    return parts[0].strip()
-
-        # Fallback: Return original content if no split tag is present
-        return content
-    except Exception as e:
-        return f"<h1>Error</h1><p>{str(e)}</p>"
-
+def get_logbook_entry(*args, **kwargs):
+    return api_logbuch.get_logbook_entry(*args, **kwargs)
 
 @eel.expose
 def list_logbook_entries():
-    """
-    @brief Returns a list of all markdown files in the logbook folder with metadata.
-    @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurck.
-    @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
-    """
-    log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
-    if not log_dir.exists():
-        return []
-
-    entries = []
-
-    def _normalize_status(status_raw: str) -> str:
-        s = (status_raw or "").strip().upper()
-        if not s:
-            return "ACTIVE"
-        if any(
-            k in s for k in [
-                "COMPLETE",
-                "COMPLETED",
-                "DONE",
-                "ABGESCHLOSSEN",
-                "FERTIG"]):
-            return "COMPLETED"
-        if any(k in s for k in ["PLAN", "PLANNING", "IDEA"]):
-            return "PLAN"
-        if any(k in s for k in ["DOC", "DOCS", "DOCUMENTATION"]):
-            return "DOCS"
-        if any(k in s for k in ["BUG", "ISSUE", "FIXME"]):
-            return "BUG"
-        if any(
-            k in s for k in [
-                "ACTIVE",
-                "IN_PROGRESS",
-                "IN PROGRESS",
-                "TODO",
-                "TASK",
-                "OPEN"]):
-            return "ACTIVE"
-        return s
-    # Recursively find all markdown files
-    all_files = list(log_dir.rglob("*.md"))
-    all_files += list(log_dir.rglob("*.mmd"))
-
-    for f in sorted(all_files, key=lambda x: x.name):
-        try:
-            with open(f, 'r', encoding='utf-8') as fp:
-                # Mehr Zeilen lesen um alles zu finden
-                lines = [fp.readline() for _ in range(20)]
-                category = "Sonstiges"
-                summary = ""
-                status = "ACTIVE"  # Default
-                title = f.stem
-                pinned = False  # Default
-
-                title_de = ""
-                title_en = ""
-                summary_de = ""
-                summary_en = ""
-
-                for line in lines:
-                    line = line.strip()
-                    # Support both <!-- Tag: Value --> and Tag: Value formats
-                    content = line
-                    if "<!--" in line and "-->" in line:
-                        content = line.split("<!--")[1].split("-->")[0].strip()
-
-                    if ":" in content:
-                        key, val = content.split(":", 1)
-                        key = key.strip()
-                        val = val.strip()
-
-                        if key == "Category":
-                            category = val
-                        elif key == "Status":
-                            status = val
-                        elif key == "Pinned":
-                            pinned = val.lower() in ["true", "yes", "1"]
-                        elif key == "Title_DE":
-                            title_de = val
-                        elif key == "Title_EN":
-                            title_en = val
-                        elif key == "Summary_DE":
-                            summary_de = val
-                        elif key == "Summary_EN":
-                            summary_en = val
-                        elif key == "Summary":
-                            summary = val
-
-                    md_status_match = re.match(
-                        r'^\*\*Status:\*\*\s*(.+)$', line)
-                    if md_status_match:
-                        status = md_status_match.group(1).strip()
-
-                    if line.startswith("# "):
-                        title = line.replace("# ", "").strip()
-
-                # Special case for Known Issues
-                if f.name == "00_Known_Issues.md":
-                    category = "Bug"
-                    if status == "ACTIVE":
-                        status = "BUG"
-
-                # Fallbacks
-                if not title_de:
-                    title_de = title
-                if not title_en:
-                    title_en = title
-
-                # Bi-directional summary fallback
-                if not summary:
-                    summary = summary_de or summary_en
-                if not summary_de:
-                    summary_de = summary
-                if not summary_en:
-                    summary_en = summary
-
-                # Final Selection based on language
-                current_lang = get_language().lower()
-                final_title = title
-                final_summary = summary
-
-                if current_lang == "en":
-                    final_title = title_en or title
-                    final_summary = summary_en or summary
-                else:
-                    final_title = title_de or title
-                    final_summary = summary_de or summary
-
-                entries.append({
-                    "name": f.stem,
-                    "filename": f.name,
-                    "title": final_title,
-                    "title_de": title_de,
-                    "title_en": title_en,
-                    "category": category,
-                    "summary": summary,
-                    "summary_de": summary_de,
-                    "summary_en": summary_en,
-                    "status": _normalize_status(status),
-                    "pinned": pinned,
-                    "source": "logbuch",
-                    "modified_ts": f.stat().st_mtime,
-                    "modified_iso": time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT, time.localtime(f.stat().st_mtime)),
-                })
-        except Exception:
-            entries.append({
-                "name": f.stem,
-                "filename": f.name,
-                "title": f.stem,
-                "category": "Fehler",
-                "summary": "",
-                "status": "ERROR",
-                "source": "logbuch",
-                "modified_ts": 0,
-                "modified_iso": "",
-            })
-
-    return entries
-
+    return api_logbuch.list_logbook_entries()
 
 @eel.expose
-def read_file(filename, context='logbuch'):
-    """
-    @brief Reads the content of a file from a specific context.
-    @param filename Name of the file.
-    @param context Context/Folder (default: 'logbuch').
-    @return File content as string or None if error.
-    """
-    try:
-        if context == 'logbuch':
-            base_path = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
-        else:
-            # For security, only allow logbuch for now
-            return None
-
-        file_path = base_path / filename
-        if not file_path.exists() or not file_path.is_file():
-            return None
-
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        log.error(f"read_file error: {e}")
-        return None
-
+def save_logbook_entry(*args, **kwargs):
+    return api_logbuch.save_logbook_entry(*args, **kwargs)
 
 @eel.expose
-def list_feature_modal_items():
-    """
-    Returns feature modal items from logbook plus selected markdown files from the project root.
-    """
-    items = [
-        item for item in list_logbook_entries()
-        if item.get("filename") != "31_Project_Documentation.md"
-    ]
-
-    root_dir = Path(__file__).parent
-    root_docs = [
-        ("README.md", "README", "Project overview and quick start."),
-        ("DOCUMENTATION.md", "Documentation", "Detailed technical documentation."),
-        ("INSTALL.md", "Installation", "Installation and setup instructions."),
-        ("DEPENDENCIES.md", "Dependencies", "Dependency list and runtime requirements."),
-        ("LICENSE.md", "License", "License and legal information."),
-    ]
-
-    for filename, title, summary in root_docs:
-        path = root_dir / filename
-        if not path.exists():
-            continue
-        mtime = path.stat().st_mtime
-
-        # Use centralized style sheet (template) from v1.35.96 SSOT
-        entry = GLOBAL_CONFIG["templates"]["logbook_entry"].copy()
-        entry.update({
-            "name": filename,
-            "filename": filename,
-            "title": title,
-            "title_de": title,
-            "title_en": title,
-            "summary": summary,
-            "summary_de": summary,
-            "summary_en": summary,
-            "modified_ts": mtime,
-            "modified_iso": time.strftime('%Y-%m-%d ' + DEFAULT_TIME_FORMAT, time.localtime(mtime)),
-        })
-        items.append(entry)
-
-    return items
-
-
-@eel.expose
-def save_logbook_entry(filename, content):
-    """
-    @brief Saves or updates a logbook entry file.
-    @details Speichert oder aktualisiert einen Logbuch-Eintrag.
-    @param filename Target filename / Ziel-Dateiname.
-    @param content Markdown content / Markdown-Inhalt.
-    @return Status or error dictionary / Status- oder Fehler-Dictionary.
-    """
-    log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    # Sichere den Dateinamen
-    if not filename.endswith('.md'):
-        filename = filename + '.md'
-
-    # Verhindere Directory Traversal
-    if '/' in filename or '\\' in filename or filename.startswith('.'):
-        return {"error": "Ungltiger Dateiname"}
-
-    file_path = log_dir / filename
-
-    try:
-        if "Status:" not in content and "<!-- Status:" not in content:
-            content = f"<!-- Status: ACTIVE -->\n{content}"
-        file_path.write_text(content, encoding='utf-8')
-        return {"status": "ok", "filename": filename}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@eel.expose
-def delete_logbook_entry(filename):
-    """
-    @brief Deletes a logbook entry from the disk.
-    @details Lscht einen Logbuch-Eintrag.
-    @param filename Entry filename / Dateiname des Eintrags.
-    @return Status or error dictionary / Status- oder Fehler-Dictionary.
-    """
-    log_dir = GLOBAL_CONFIG["storage_registry"]["log_dir"]
-
-    if not filename.endswith('.md'):
-        filename = filename + '.md'
-
-    # Verhindere Directory Traversal
-    if '/' in filename or '\\' in filename or filename.startswith(
-            '.') or '..' in filename:
-        return {"error": "Ungltiger Dateiname"}
-
-    file_path = log_dir / filename
-
-    if not file_path.exists():
-        return {"error": "Datei nicht gefunden"}
-
-    try:
-        file_path.unlink()
-        return {"status": "ok"}
-    except Exception as e:
-        return {"error": str(e)}
+def delete_logbook_entry(*args, **kwargs):
+    return api_logbuch.delete_logbook_entry(*args, **kwargs)
 
 
 @eel.expose
