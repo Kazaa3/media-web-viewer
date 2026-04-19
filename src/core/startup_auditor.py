@@ -136,14 +136,28 @@ def _restore_packages(packages: List[str], registry: Dict) -> bool:
             try:
                 log.info(f"[Audit-Deps] PHASE-1 [ONLINE]: Installing '{package}'...")
                 # [v1.53.001] Linux Stabilization: Use --break-system-packages to bypass PEP 668 in forensic environments
-                cmd = [sys.executable, "-m", "pip", "install", "--timeout", "10", package]
+                cmd = [sys.executable, "-m", "pip", "install", "--timeout", "10", "--progress-bar", "off", package]
                 if sys.platform == "linux":
                     cmd.append("--break-system-packages")
-                subprocess.check_call(cmd)
-                log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from Repository.")
-                success = True
+                
+                # Capture output for forensic auditing on failure
+                proc = subprocess.run(cmd, capture_output=True, text=True)
+                if proc.returncode == 0:
+                    log.info(f"[Audit-Deps] SUCCESS: '{package}' restored from Repository.")
+                    success = True
+                    
+                    # [v1.54.007] Special Handling for Playwright (Requires Binary Installation)
+                    if package.lower() == "playwright":
+                        log.info("[Audit-Deps] Triggering Playwright Binary Installation...")
+                        try:
+                            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+                            log.info("[Audit-Deps] Playwright Binaries Ready.")
+                        except Exception as e_pw:
+                            log.error(f"[Audit-Deps] Playwright Binary Install Failed: {e_pw}")
+                else:
+                    log.debug(f"[Audit-Deps] Online Install Error for '{package}': {proc.stderr}")
             except Exception as e:
-                log.debug(f"[Audit-Deps] Phase-1 Failed for '{package}': {e}")
+                log.debug(f"[Audit-Deps] Phase-1 Exception for '{package}': {e}")
 
         # Phase 2: Local
         if not success and local_cache and os.path.exists(local_cache):

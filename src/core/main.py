@@ -24,10 +24,18 @@ if sys.platform != "win32":
 
 from src.core import startup_auditor
 try:
-    # [v1.53.003] Absolute Boot Priority: Fix environment BEFORE imports
-    startup_auditor.run_audit()
+    # [v1.54.007] Mandatory Boot Guard: Strictly enforce environment integrity
+    audit_passed = startup_auditor.run_audit()
+    if not audit_passed:
+        print("STDOUT: [Audit-Pulse] FATAL: System integrity could not be verified. Entering Emergency Mode.", flush=True)
+        # In a headless environment, we might want to exit, but here we'll try to limp along
+        # or signal to the UI that it's in a broken state.
+        # For now, we force an exit if it's a critical mismatch.
+        if "--force-boot" not in sys.argv:
+            sys.exit(1)
 except Exception as e:
     print(f"STDOUT: [Audit-Pulse] Critical boot guard failure: {e}", flush=True)
+    sys.exit(1)
 
 # --- 2. Internal Imports ---
 from src.core.config_master import (
