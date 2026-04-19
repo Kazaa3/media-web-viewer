@@ -1602,6 +1602,73 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "vlc_exhaustive_playback_ms": 1000 # Phase 13: Decoupled pulse
     },
 
+    # --- AUDIT MASTER REGISTRY (v1.46.132) ---
+    # Central SSOT for all audit methods and their configuration.
+    # Playwright & Selenium are disabled by default (require separate venv).
+    # DOM inspection and logging-based audits are active by default.
+    "audit_master": {
+        "enabled": True,            # Global master switch
+
+        # --- Method Registry ---
+        "methods": {
+            "dom_audit": {
+                "enabled": True,
+                "description": "Headless DOM structure integrity check via browser logs",
+                "script": str(SCRIPTS_DIR / "headless_dom_audit.sh"),
+                "timeout_sec": 30,
+                "requires": ["chromium"],
+            },
+            "log_audit": {
+                "enabled": True,
+                "description": "Log-file based runtime error & warning detection",
+                "script": None,     # Built-in via api_audit.py
+                "timeout_sec": 10,
+                "requires": [],
+            },
+            "backend_check": {
+                "enabled": True,
+                "description": "Backend API health probe (eel exposed functions)",
+                "script": str(SCRIPTS_DIR / "check_backend_data.py"),
+                "timeout_sec": 15,
+                "requires": [],
+            },
+            "playback_verify": {
+                "enabled": True,
+                "description": "Media stream & ffmpeg pipeline verification",
+                "script": str(SCRIPTS_DIR / "verify_playback.py"),
+                "timeout_sec": 20,
+                "requires": ["ffmpeg"],
+            },
+            "playwright_audit": {
+                "enabled": False,   # Requires .venv_selenium + playwright install
+                "description": "Full UI automation audit with screenshots",
+                "script": str(SCRIPTS_DIR / "app_audit_playwright.py"),
+                "timeout_sec": 60,
+                "requires": ["playwright"],
+            },
+            "selenium_audit": {
+                "enabled": False,   # Requires .venv_selenium + selenium install
+                "description": "Cross-browser UI compliance suite",
+                "script": None,     # Placeholder for future implementation
+                "timeout_sec": 120,
+                "requires": ["selenium", "chromedriver"],
+            },
+        },
+
+        # --- Depth Levels (applied globally unless per-method override) ---
+        "depth": "standard",            # OPTIONS: "quick", "standard", "deep"
+        "depth_config": {
+            "quick":    {"log_lines": 100,  "dom_checks": False, "screenshots": False},
+            "standard": {"log_lines": 500,  "dom_checks": True,  "screenshots": False},
+            "deep":     {"log_lines": 5000, "dom_checks": True,  "screenshots": True},
+        },
+
+        # --- Output ---
+        "report_dir": str(SCRIPTS_DIR / "audit_reports"),
+        "report_format": "markdown",    # OPTIONS: "markdown", "json", "html"
+        "auto_run_on_startup": False,
+    },
+
     # --- SCRIPT & UTILITY REGISTRY (v1.41.00 Centralized) ---
     "script_registry": {
         "control": {
