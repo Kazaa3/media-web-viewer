@@ -51,30 +51,38 @@ LOGGING_REGISTRY = {
 }
 
 # Dependency & Self-Healing Governance (v1.52 Global SSOT)
-DEPENDENCY_REGISTRY = {
-    "auto_install_enabled": True,    # Global Switch: Allow automated pip activity
-    "offline_mode_enforced": False,  # If True, strictly avoid internet and use local cache
-    "local_package_root": PROJECT_ROOT / "packages" / "packages",
-    "linux_cache_path": PROJECT_ROOT / "packages" / "packages" / "linux",
-    
-    # Tiered Package Categorization
+    # Tiered Package Categorization (The Ultimate Forensic Stack)
     "package_groups": {
-        "core":       ["eel", "gevent", "bottle", "psutil", "requests", "python-dotenv", "numpy"],
-        "forensic":   ["pyautogui", "pillow", "playwright", "selenium", "opencv-python", "pywavelets"],
-        "media":      ["vlc", "pyvidplayer2", "m3u8"],
-        "analytics":  ["pytest", "psutil"]
+        "core":       [
+            "eel", "gevent", "bottle", "psutil", "requests", "python-dotenv", "numpy",
+            "mutagen", "pymediainfo", "m3u8", "python-vlc", "pycdlib", "isoparser",
+            "chardet", "future", "setuptools", "six", "markdown", "scapy", "eyed3",
+            "tinytag", "music-tag", "pymkv", "pychromecast", "zeroconf", "pysubs2", "pysrt"
+        ],
+        "forensic":   [
+            "pyautogui", "pillow", "playwright", "selenium", "opencv-python", "pywavelets",
+            "webdriver-manager", "xvfbwrapper", "pytest-playwright"
+        ],
+        "media":      ["vlc", "pyvidplayer2", "m3u8", "python-vlc"],
+        "analytics":  ["pytest", "psutil", "pytest-cov", "flake8", "mypy"]
     },
     
-    # Known Virtual Environments
+    # Known Virtual Environments (v1.45.22 Lifecycle)
     "environments": {
         "core":       ".venv",
         "testbed":    ".venv_testbed",
         "dev":        ".venv_dev"
     },
     
-    # Informational System Requirements (Linux)
+    # --- CROSS-PLATFORM SYSTEM REQUIREMENTS (v1.53.004) ---
     "system_requirements": {
-        "linux": ["python3-tk", "python3-dev"]
+        "linux": [
+            "python3-tk", "python3-dev", "ffmpeg", "libmediainfo0v5", 
+            "doxygen", "shared-mime-info", "libgdk-pixbuf2.0-0"
+        ],
+        "win32": [
+            "ffmpeg.exe", "MediaInfo.dll", "vlc.exe", "google-chrome.exe"
+        ]
     }
 }
 
