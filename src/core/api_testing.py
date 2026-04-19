@@ -105,24 +105,36 @@ def get_benchmark_results():
 def get_environment_inventory():
     """
     Forensic Environment Inventory (v1.46.136).
-    Returns a comprehensive list of all installed Python packages and their versions.
+    Returns a comprehensive list of all installed Python packages and Forensic Binaries.
     """
     try:
         from importlib.metadata import distributions
-        packages = []
+        from src.core.config_master import is_in_container
+        
+        # 1. Python Package Inventory
+        python_packages = []
         for d in distributions():
             try:
-                name = d.metadata["Name"]
-                version = d.version
-                packages.append({"name": name, "version": version})
-            except (KeyError, AttributeError):
-                continue
+                python_packages.append({"name": d.metadata["Name"], "version": d.version})
+            except: continue
+        python_packages.sort(key=lambda x: x["name"].lower())
         
-        # Sort by name for professional readability
-        packages.sort(key=lambda x: x["name"].lower())
-        
-        log.info(f"[Inventory] Aggregated {len(packages)} environment packages for diagnostic audit.")
-        return {"status": "ok", "packages": packages, "count": len(packages)}
+        # 2. Forensic Binary Inventory (v1.46.136 Tiered)
+        forensic_binaries = []
+        for tool in FORENSIC_TOOLS_LIST:
+            forensic_binaries.append(get_tool_metadata(tool))
+            
+        log.info(f"[Inventory] Aggregated {len(python_packages)} packages and {len(forensic_binaries)} binaries.")
+        return {
+            "status": "ok", 
+            "is_container": is_in_container(),
+            "python_packages": python_packages, 
+            "forensic_binaries": forensic_binaries,
+            "counts": {
+                "packages": len(python_packages),
+                "binaries": len(forensic_binaries)
+            }
+        }
     except Exception as e:
         log.error(f"[Inventory] Failed to aggregate environment: {e}")
         return {"error": str(e)}
