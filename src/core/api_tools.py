@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 
 from src.core.config_master import (
     GLOBAL_CONFIG, PROGRAM_REGISTRY, 
+    FORENSIC_TOOLS_LIST, 
     get_binary_version as _get_version_config
 )
 from src.core.logger import get_logger
@@ -40,7 +41,7 @@ def kill_stalled_forensic_processes(targets: Optional[list] = None):
     (Migrated from api_reporting v1.46.132)
     """
     if targets is None:
-        targets = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc', 'ffplay']
+        targets = FORENSIC_TOOLS_LIST
         
     log.info(f"[Cleanup] Targeted forensic audit: killing stalled processes {targets}")
     count = 0
@@ -65,7 +66,7 @@ def kill_stalled_ffmpeg_streams():
 
 def super_kill():
     """Nuclear cleanup: Terminates ALL forensic tools and known browsers."""
-    targets = ['ffmpeg', 'ffprobe', 'mkvmerge', 'vlc', 'cvlc', 'ffplay', 'chrome', 'chromium', 'firefox']
+    targets = FORENSIC_TOOLS_LIST + ['chrome', 'chromium', 'firefox', 'msedge']
     return kill_stalled_forensic_processes(targets)
 
 def check_binary_available(name: str) -> bool:
