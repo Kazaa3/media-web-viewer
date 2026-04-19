@@ -13,7 +13,17 @@ try:
 except ImportError:
     import eel
 
-from src.core.config_master import (
+# High-Fidelity Mocking of tkinter to satisfy PyAutoGUI/pymsgbox dependencies (v1.46.142)
+import sys
+from unittest.mock import MagicMock
+mock_tk = MagicMock()
+mock_tk.TkVersion = 8.6
+if "tkinter" not in sys.modules:
+    sys.modules["tkinter"] = mock_tk
+if "tkinter.messagebox" not in sys.modules:
+    sys.modules["tkinter.messagebox"] = MagicMock()
+
+import pyautogui
     GLOBAL_CONFIG, PROJECT_ROOT, 
     EEL_SETTINGS, FORENSIC_TOOLS_LIST,
     get_tool_metadata
@@ -75,17 +85,28 @@ def capture_workstation_screenshot():
         return {"status": "error", "message": str(e)}
 
 @eel.expose
-def audit_dom_state():
+def trigger_dom_audit():
     """
-    DOM Integrity Audit Bridge.
     Triggers a hydration pulse in the frontend to verify critical UI components.
     """
     if hasattr(eel, "perform_dom_audit"):
-        # This async call expects the frontend to have 'perform_dom_audit' exposed
         eel.perform_dom_audit()()
         return {"status": "ok", "message": "DOM audit pulse sent to UI."}
     else:
         return {"status": "error", "message": "Frontend DOM audit hook not found."}
+
+@eel.expose
+def audit_dom_state(state_summary):
+    """
+    Records the structural integrity and liveness of the UI (v1.46.142 Receiver).
+    """
+    log.warning(f"🛡️ [DOM-AUDIT] Liveness Report Received: {state_summary}")
+    # Cache state in GLOBAL_CONFIG for standardized reporting
+    GLOBAL_CONFIG["last_dom_audit"] = {
+        "timestamp": time.time(),
+        "summary": state_summary
+    }
+    return True
 
 @eel.expose
 def generate_standardized_audit():

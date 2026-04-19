@@ -197,16 +197,7 @@ def log_spawn_event(component_id, status):
     return True
 
 
-@eel.expose
-def audit_dom_state(state_summary):
-    """Records the structural integrity and liveness of the UI (v1.46.03)."""
-    log.warning(f"🛡️ [DOM-AUDIT] Liveness Report Received: {state_summary}")
-    # Optional: Cache state in GLOBAL_CONFIG for diagnostics
-    GLOBAL_CONFIG["last_dom_audit"] = {
-        "timestamp": time.time(),
-        "summary": state_summary
-    }
-    return True
+# (audit_dom_state moved to api_diagnostics)
 
 
 @eel.expose
