@@ -96,16 +96,16 @@ DEPENDENCY_REGISTRY = {
         "skip_updates":            "--no-update" in sys.argv,
         "force_updates":           "--force-update" in sys.argv,
         "update_on_version_change": True,
-        "last_updated_version":    "v1.54.003" 
+        "last_updated_version":    "v1.54.007" 
     }
 }
 
-# --- [v1.54.002] FORENSIC QUALITY SSOT ---
+# --- [v1.54.007] FORENSIC QUALITY SSOT ---
 BITRATE_QUALITY_THRESHOLDS = {
-    "high":     1000, # Lossless/High-Res (v1.53 Standard)
-    "standard": 320,  # High-Quality lossy
-    "low":      192,  # Standard lossy
-    "minimum":  128   # Low-Quality
+    "lossless": 1000, # FLAC/DSD/Alac (v1.53 Standard)
+    "high":     320,  # High-Quality lossy
+    "standard": 192,  # Standard lossy
+    "low":      128   # Low-Quality
 }
 
 # --- FORENSIC AUDIT & AUTOMATION REGISTRY (v1.47.01) ---
@@ -1338,7 +1338,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
 
         "library_category_hierarchy": {
-            "audio": ["album", "single", "hörbuch", "soundtrack", "podcast", "klassik"],
+            "audio": ["album", "single", "maxi", "hörbuch", "sampler", "soundtrack", "podcast", "klassik"],
             "video": ["film", "series", "documentation"]
         },
 
