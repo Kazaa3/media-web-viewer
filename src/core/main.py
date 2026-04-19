@@ -162,17 +162,6 @@ except ImportError as e:
 def shutdown_backend():
     """Nuclear Shutdown Sequence (Delegated to api_core_app)."""
     api_core_app.shutdown_application()
-                    handler.flush()
-                except Exception:
-                    pass
-
-        time.sleep(0.2)  # Increased grace period for disk I/O (v1.41.169)
-
-        # Final Purge
-        os.killpg(os.getpgrp(), signal.SIGKILL)
-    except Exception as e:
-        print(f"STDOUT: [SHUTDOWN] Nuclear failover: {e}")
-        os._exit(0)
 
 
 @eel.expose
