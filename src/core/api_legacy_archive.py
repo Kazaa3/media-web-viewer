@@ -2,6 +2,32 @@
 Forensic Legacy Archive (v1.54.022)
 This module contains functions that were removed from main.py during the Core Slimming phase.
 Functions are preserved here to ensure no logic is lost and for potential legacy support.
+"""
+
+import os
+import sys
+import time
+import json
+import re
+import shutil
+import sqlite3
+import subprocess
+import threading
+import logging
+import platform
+import socket
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Tuple, cast
+from unittest.mock import MagicMock
+
+# Project-level imports
+from src.core.eel_shell import eel
+from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, FRONTEND_SETTINGS, EEL_SETTINGS, LAUNCH_PROFILE
+from src.core.logger import get_logger
+from src.core import db
+from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem
+
+log = get_logger("api_legacy_archive")
 
 UNUSED FUNCTIONS (SUPERSEDED OR REDUNDANT):
 - add_file_to_library
