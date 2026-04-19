@@ -191,17 +191,6 @@ def get_tech_markers():
 @eel.expose
 def get_system_forensics():
     return api_testing.get_system_forensics()
-             
-             # Pick the youngest browser (likely the one just opened by Eel)
-             if potential_browsers and forensics["fe"]["pid"] == "N/A":
-                 potential_browsers.sort(key=lambda x: x["time"], reverse=True)
-                 forensics["fe"]["pid"] = potential_browsers[0]["pid"]
-                 forensics["fe"]["type"] = potential_browsers[0]["type"]
-
-    except Exception as e:
-        log.error(f"[Forensics] Global system scan failed: {e}")
-        
-    return forensics
 
 
 @eel.expose
