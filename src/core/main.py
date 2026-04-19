@@ -28,7 +28,7 @@ from src.core.config_master import (
 from src.core.db import get_active_db_path
 from src.core import (
     api_playlist, api_frontend, api_orchestrator, 
-    api_logbuch, api_testing
+    api_logbuch, api_testing, api_diagnostics
 )
 from typing import Dict, Any, List, Optional, cast, Tuple
 import threading
