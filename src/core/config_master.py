@@ -50,13 +50,32 @@ LOGGING_REGISTRY = {
     "enable_ui_console":    True
 }
 
-# Dependency & Self-Healing Governance (v1.51)
+# Dependency & Self-Healing Governance (v1.52 Global SSOT)
 DEPENDENCY_REGISTRY = {
     "auto_install_enabled": True,    # Global Switch: Allow automated pip activity
     "offline_mode_enforced": False,  # If True, strictly avoid internet and use local cache
     "local_package_root": PROJECT_ROOT / "packages" / "packages",
     "linux_cache_path": PROJECT_ROOT / "packages" / "packages" / "linux",
-    "critical_packages": ["pyautogui", "bottle", "psutil", "pillow"]
+    
+    # Tiered Package Categorization
+    "package_groups": {
+        "core":       ["eel", "gevent", "bottle", "psutil", "requests"],
+        "forensic":   ["pyautogui", "pillow", "playwright", "selenium"],
+        "media":      ["vlc", "pyvidplayer2", "m3u8"],
+        "analytics":  ["pytest", "psutil"]
+    },
+    
+    # Known Virtual Environments
+    "environments": {
+        "core":       ".venv",
+        "testbed":    ".venv_testbed",
+        "dev":        ".venv_dev"
+    },
+    
+    # Informational System Requirements (Linux)
+    "system_requirements": {
+        "linux": ["python3-tk", "python3-dev"]
+    }
 }
 
 # --- FORENSIC AUDIT & AUTOMATION REGISTRY (v1.47.01) ---
