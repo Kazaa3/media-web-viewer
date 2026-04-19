@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 from src.core.objects import (
-    FilmObject, AudioRelease, AudiobookObject, SequenceObject, create_forensic_object
+    FilmObject, AudioObject, AudiobookObject, SequenceObject, ObjectRelease, create_forensic_object
 )
 from src.parsers.format_utils import natural_sort_key
 
@@ -85,6 +85,10 @@ class ObjectDiscoveryEngine:
             if len(videos) == 1:
                 obj = create_forensic_object("film", name=videos[0]['name'], path=folder_path)
                 obj.items = [videos[0]['id']]
+                # Add default release
+                rel = ObjectRelease(name=videos[0]['name'], media_type="Digital", edition="Standard")
+                rel.items = [videos[0]['id']]
+                obj.releases.append(rel)
                 self._enrich_film_sidecars(obj, items)
                 discovered.append(obj)
             else:
@@ -96,6 +100,10 @@ class ObjectDiscoveryEngine:
                         version = self._extract_version_info(item['name'], "film")
                         if version:
                             obj.versions[version] = item['id']
+                            # Add specific release
+                            rel = ObjectRelease(name=version, media_type="Digital", edition=version)
+                            rel.items = [item['id']]
+                            obj.releases.append(rel)
                     self._enrich_film_sidecars(obj, items)
                     discovered.append(obj)
                     
@@ -118,9 +126,18 @@ class ObjectDiscoveryEngine:
 
                 if is_likely_audiobook and not is_likely_album:
                     obj = create_forensic_object("audiobook", name=folder_name, path=folder_path)
+                    # Detect Language/Source from folder
+                    lang = "DE" if "hörbuch" in folder_name.lower() else "EN"
+                    src = "Audible" if "audible" in folder_path.lower() else "Digital"
+                    rel = ObjectRelease(name=folder_name, media_type="Digital", language=lang, source=src)
+                    rel.items = [i['id'] for i in audios]
+                    obj.releases.append(rel)
                 else:
                     album_title = audios[0].get('tags', {}).get('album', folder_name)
                     obj = create_forensic_object("audio", name=album_title, path=folder_path)
+                    rel = ObjectRelease(name="Standard", media_type="Digital")
+                    rel.items = [i['id'] for i in audios]
+                    obj.releases.append(rel)
                 
                 obj.items = [i['id'] for i in audios]
                 self._enrich_audio_sidecars(obj, items)
@@ -166,7 +183,7 @@ class ObjectDiscoveryEngine:
             elif ext in SIDECAR_EXTENSIONS["covers"]:
                 obj.covers.append(item['path'])
 
-    def _enrich_audio_sidecars(self, obj: AudioRelease, all_items: List[Dict[str, Any]]):
+    def _enrich_audio_sidecars(self, obj: AudioObject, all_items: List[Dict[str, Any]]):
         """Identifies CUE, Log, and Playlists for Audio Collections."""
         for item in all_items:
             ext = str(item.get('extension', '')).lower()

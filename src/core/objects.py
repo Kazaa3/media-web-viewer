@@ -28,6 +28,8 @@ class ObjectRelease:
     media_type: str  # DVD, Blu-ray, CD, Digital, Vinyl
     country: str = "US"
     edition: str = "Standard"
+    language: str = "EN"
+    source: str = "" # e.g., Audible, CD-Rip, SACD
     year: str = ""
     items: List[int] = field(default_factory=list) # Member MediaItem IDs
     assets: List[ObjectAsset] = field(default_factory=list)
@@ -108,12 +110,12 @@ class FilmObject(MediaObject):
         self.category = "video"
 
 @dataclass
-class AudioRelease(MediaObject):
+class AudioObject(MediaObject):
     """
     Specialized entity for Music collections (Albums, Singles, OST, etc.).
     Supports multiple releases (CD, Digital, SACD), CUE files, and EAC logs.
     """
-    subtype: str = "AUDIO_RELEASE_OBJECT"
+    subtype: str = "AUDIO_OBJECT"
     is_gapless: bool = False
     has_cue: bool = False
     has_log: bool = False
@@ -153,7 +155,7 @@ def create_forensic_object(obj_type: str, **kwargs) -> MediaObject:
     if obj_type.lower() == "film":
         return FilmObject(**kwargs)
     elif obj_type.lower() == "audio":
-        return AudioRelease(**kwargs)
+        return AudioObject(**kwargs)
     elif obj_type.lower() == "audiobook":
         return AudiobookObject(**kwargs)
     elif obj_type.lower() == "sequence":
