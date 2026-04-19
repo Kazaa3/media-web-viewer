@@ -3,7 +3,10 @@ import re
 from pathlib import Path
 from typing import Any
 from src.core.config_master import GLOBAL_CONFIG
+from src.core.logger import get_logger
 
+# Specialized logger (v1.46.132 Modernized)
+log = get_logger("parser_ffmpeg")
 
 def get_capabilities() -> dict[str, Any]:
     return {
@@ -12,7 +15,6 @@ def get_capabilities() -> dict[str, Any]:
         "supported_tags": ["container", "codec", "samplerate", "bitrate", "bitdepth", "chapters"],
         "supported_codecs": ["*"]
     }
-
 
 def get_settings_schema() -> dict[str, Any]:
     return {
@@ -28,30 +30,20 @@ def get_settings_schema() -> dict[str, Any]:
         }
     }
 
-
 def parse(path, file_type, tags, filename=None, mode='lightweight', settings=None):
     """
     @brief Extracts metadata using FFmpeg CLI (last-resort fallback).
-    @details Extrahiert Metadaten mittels FFmpeg CLI (letzte Instanz Fallback).
-    @param path Absolute path / Absoluter Pfad.
-    @param file_type Extension / Dateiendung.
-    @param tags Existing tags dictionary / Vorhandene Tags.
-    @param filename Current filename / Aktueller Dateiname.
-    @param mode Extraction mode / Extraktionsmodus.
-    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
     if filename is None:
         filename = Path(path).name
-
-    # full_tags is already initialized by media_parser for 'full'/'ultimate' modes
 
     if settings is None:
         settings = {}
 
     try:
-        ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        ffmpeg_bin = GLOBAL_CONFIG.get("program_paths", {}).get("ffmpeg", "ffmpeg")
         cmd = [ffmpeg_bin]
-        # Add custom flags if any
+        
         custom_flags = settings.get('cli_flags', '').split()
         if custom_flags:
             cmd.extend(custom_flags)
@@ -60,7 +52,9 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
             cmd.extend(["-analyzeduration", "100M", "-probesize", "100M"])
         cmd.extend(["-i", str(path)])
         
-        output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True, timeout=settings.get('timeout', 30)).stderr
+        timeout = settings.get('timeout', 30)
+        res = subprocess.run(cmd, stderr=subprocess.PIPE, text=True, timeout=timeout)
+        output = res.stderr
 
         if mode == 'full':
             tags['full_tags']['ffmpeg_raw'] = output
@@ -96,13 +90,11 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                     tags['samplerate'] = format_samplerate(sr_match.group(1))
 
             # Bitdepth
-            # First try to find explicit bit depth in parentheses (e.g., "s32 (24 bit)")
             explicit_bit_match = re.search(r"\((\d+)\s*bit\)", audio_line)
             if explicit_bit_match:
                 bit_depth = explicit_bit_match.group(1)
                 tags['bitdepth'] = f"{bit_depth} Bit"
             else:
-                # Fall back to format string parsing
                 fmt_match = re.search(r"\b(u8|u8p|s16|s16p|s24|s24p|s32|s32p|fltp|flt|dblp|dbl|s64|s64p)\b", audio_line)
                 if fmt_match:
                     fmt = fmt_match.group(1)
@@ -122,8 +114,9 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         if not tags.get('codec'):
             tags['codec'] = file_type[1:].lower()
 
-        # Chapter parsing
-        if not tags.get('chapters'):
+        # Chapter parsing (Phase 9 Feature Flag)
+        flags = GLOBAL_CONFIG.get("parser_registry", {}).get("feature_flags", {})
+        if flags.get("extract_chapters", True) and not tags.get('chapters'):
             ffmpeg_chapters: list[dict[str, Any]] = []
             lines = output.split('\n')
             current_chapter: Any = None
@@ -151,7 +144,8 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                 tags['chapters'] = sorted(ffmpeg_chapters, key=lambda x: (
                     x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
 
-    except Exception:
-        pass
+    except Exception as e:
+        log.error(f"[FFmpeg-Parser] Failed for {filename}: {e}", exc_info=True)
 
     return tags
+
