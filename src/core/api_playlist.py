@@ -140,7 +140,20 @@ def move_item_down(index: int):
         return {"status": "error", "message": str(e)}
 
 @eel.expose
-def remove_playlist_item(index: int):
+def move_current_up():
+    """Move the currently selected playlist item up by one position."""
+    global CURRENT_INDEX
+    if CURRENT_INDEX < 0:
+        return {"status": "error", "message": "no current item"}
+    return move_item_up(CURRENT_INDEX)
+
+@eel.expose
+def move_current_down():
+    """Move the currently selected playlist item down by one position."""
+    global CURRENT_INDEX
+    if CURRENT_INDEX < 0:
+        return {"status": "error", "message": "no current item"}
+    return move_item_down(CURRENT_INDEX)
     global CURRENT_PLAYLIST, CURRENT_INDEX
     try:
         idx = int(index)
