@@ -1798,7 +1798,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "db_path":                  str(DB_FILENAME),
         "db_dir":                   str(DB_DIR),
         "cache_dir":                str(CACHE_DIR),
-        "cache_media_dir":          str(CACHE_MEDIA_DIR),
+        "media_cache_dir":          str(CACHE_MEDIA_DIR),
         "mkv_cache_dir":            str(CACHE_MKV_DIR),
         "media_dir":                str(MEDIA_DIR),
         "benchmarks_dir":           str(DATA_DIR / "benchmarks"),
