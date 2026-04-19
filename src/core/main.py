@@ -5096,8 +5096,8 @@ def log_process_stderr(process, name):
 
 
 def is_mkvtoolnix_available():
-    """Checks if mkvmerge is available in PATH."""
-    return shutil.which("mkvmerge") is not None
+    """Checks if mkvmerge is available via the registry (v1.46.132)."""
+    return api_transcoding.is_mkvtoolnix_available()
 
 
 @eel.btl.route('/video-remux-stream/<item_id:path>')
@@ -6299,10 +6299,7 @@ def stop_vlc():
     return {"status": "ok"}
 
 
-@eel.expose
-def is_mkvtoolnix_available():
-    """Checks if mkvmerge is available in PATH."""
-    return shutil.which("mkvmerge") is not None
+# Remote MKVToolNix check (Handled by api_transcoding)
 
 
 @eel.expose
