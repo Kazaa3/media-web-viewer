@@ -4978,123 +4978,13 @@ def stream_video_fragmented(file_path):
         elif ".wma" in low_path:
             p_key = "transcode_audio_wma"
 
-    def ffmpeg_stream():
-        # Auto-detect best encoder for performance
-        encoder = get_best_hw_encoder()
-        log.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
-
-        # Register active stream for stats (SSOT v1.35.94)
-        if "GLOBAL_ACTIVE_STREAMS" in globals():
-            GLOBAL_ACTIVE_STREAMS["mse_transcode"] = {
-                "ts": time.time(),
-                "codec": "H.264 (AVC) / AAC",
-                "bitrate": "Target: 4-8 Mbps",
-                "engine": f"FFmpeg ({encoder})",
-                "rtt": 5,  # Low latency for MSE
-                "atmos": False,
-                "bitstream": False
-            }
-
-        # Base command for H.264 FragMP4
-        ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
-        is_iso = str(resolved_path).lower().endswith('.iso')
-
-        # ISO / DVD optimization
-        if is_iso:
-            main_track = find_main_track_iso(resolved_path)
-            # FFmpeg DVD syntax: -playlist X (if supported) or just -i
-            input_args = ["-i", str(resolved_path)]
-        else:
-            input_args = ["-i", str(resolved_path)]
-
-        # FFmpeg command for FragMP4 remuxing/transcoding (profiles pre-calculated)
-        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
-        cmd.extend(ss_args)
-        cmd.extend(input_args)
-
-        if is_audio:
-            # Audio Transcoding Profile Selection (v1.35.98 Unified)
-            profile = profiles.get(p_key, {})
-            codec = profile.get("codec", "aac")
-            bitrate = profile.get("bitrate", "192k")
-            fmt = profile.get("format", "mp4")
-            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
-
-            cmd.extend([
-                "-vn",
-                "-c:a", codec, "-b:a", bitrate,
-                "-f", fmt
-            ])
-            if movflags:
-                cmd.extend(["-movflags", movflags])
-        else:
-            # Video/ISO Transcoding Profile (SSOT)
-            profile = profiles.get("video_transcode", {})
-            preset = profile.get("preset", "veryfast")
-            crf = profile.get("crf", "23")
-            a_codec = profile.get("a_codec", "aac")
-            a_bitrate = profile.get("a_bitrate", "128k")
-            fmt = profile.get("format", "mp4")
-            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
-
-            if subs_idx is not None and str(subs_idx).lower() != 'none':
-                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}", "-map", f"0:s:{subs_idx}"])
-            else:
-                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
-
-            cmd.extend([
-                "-c:v", encoder, "-preset", preset, "-crf", crf,
-                "-c:a", a_codec, "-b:a", a_bitrate,
-                "-f", fmt,
-                "-movflags", movflags
-            ])
-
-        cmd.append("pipe:1")
-
-        # Apply Large File Protection (v1.35.98 Hook)
-        cmd, is_large_file = apply_large_file_protection(cmd, resolved_path)
-
-        perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
-        stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
-
-        process = None
-        try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf)
-            # Log stderr in background
-
-            def log_stderr(p):
-                for line in p.stderr:
-                    log.error(f"[FFmpeg-Stream] {line.decode().strip()}")
-            import threading
-            threading.Thread(target=log_stderr, args=(process,), daemon=True).start()
-
-            while True:
-                chunk = process.stdout.read(512 * 1024)
-                if not chunk:
-                    break
-                yield chunk
-        except Exception as e:
-            log.error(f"[stream] Generator error: {e}")
-        finally:
-            if process:
-                process.terminate()
-                try:
-                    process.wait(timeout=1)
-                except BaseException:
-                    process.kill()
-
-    # Determine Correct Content-Type (v1.35.98 Dynamic)
-    if is_audio:
-        low_path = str(resolved_path).lower()
-        if ".wma" in low_path or ".opus" in low_path:
-            bottle.response.content_type = 'audio/webm'
-        elif ".alac" in low_path or "flac" in str(profiles.get(p_key, {}).get("codec")):
-            bottle.response.content_type = 'audio/flac'
-        else:
-            bottle.response.content_type = 'audio/mp4'
-    else:
-        bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
-    return ffmpeg_stream()
+    # FFmpeg Streaming Flow (Delegated to api_transcoding v1.46.132)
+    return api_transcoding.get_transcode_stream(
+        resolved_path=resolved_path,
+        start_time=float(start_time),
+        audio_idx=int(audio_idx),
+        subs_idx=subs_idx if subs_idx and str(subs_idx).lower() != 'none' else None
+    )
 
 
 @eel.expose
@@ -5257,99 +5147,14 @@ def video_remux_stream(item_id):
         mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
         ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
 
-        def generate():
-            # PIPE-KIT: mkvmerge (MKV) -> ffmpeg (FragMP4)
-            # This provides the best of both worlds: lossless remux and browser-friendly streaming.
-            mkv_proc = None
-            ffmpeg_proc = None
-
-            try:
-                # Seeking support
-                ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
-                is_iso = str(file_path).lower().endswith('.iso')
-
-                # FOR DVDs: Force transcoding because fMP4 in Chrome doesn't support MPEG-2 (VOB/ISO)
-                if is_iso:
-                    log.info(f" [Remux] ISO detected, redirecting to transcode flow for compatibility.")
-                    return stream_video_fragmented(item_id)
-
-                # Mapping support for track switching
-                map_args = ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
-                if subs_idx is not None and str(subs_idx).lower() != 'none':
-                    map_args += ["-map", f"0:s:{subs_idx}"]
-
-                perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
-                stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
-                mkv_buf = perf_cfg.get("mkvmerge_bufsize", 1024 * 1024)
-
-                if is_mkvtoolnix_available() and float(start_time) == 0 and audio_idx == '0' and not subs_idx:
-                    # Lossless remux via mkvmerge for start (best compatibility)
-                    mkv_proc = subprocess.Popen(
-                        [mkvmerge_path, "-o", "-", str(file_path)],
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=mkv_buf
-                    )
-                    log_process_stderr(mkv_proc, "MKVMerge-Pipe")
-
-                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
-                    lossless_flags = lossless_cfg.get(
-                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
-
-                    ffmpeg_cmd = [
-                        ffmpeg_path, "-loglevel", "error", "-i", "pipe:0"
-                    ] + lossless_flags + ["-"]
-
-                    ffmpeg_proc = subprocess.Popen(
-                        ffmpeg_cmd,
-                        stdin=mkv_proc.stdout,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        bufsize=stream_buf)
-                    log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
-                else:
-                    # Use FFmpeg for seeking/mapping remux (more reliable for mid-stream offsets/tracks)
-                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
-                    lossless_flags = lossless_cfg.get(
-                        "flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
-
-                    ffmpeg_cmd = [
-                        ffmpeg_path, "-loglevel", "error"
-                    ] + ss_args + [
-                        "-i", str(file_path)
-                    ] + map_args + lossless_flags + ["-"]
-
-                    ffmpeg_proc = subprocess.Popen(
-                        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf
-                    )
-                    log_process_stderr(ffmpeg_proc, "FFmpeg-Remux-SS")
-
-                # Stream chunks to browser
-                stream_cfg = GLOBAL_CONFIG.get("streaming_settings", {})
-                chunk_sz = stream_cfg.get("chunk_size_kb", 256) * 1024
-                
-                while True:
-                    if ffmpeg_proc.stdout is None:
-                        break
-                    chunk = ffmpeg_proc.stdout.read(chunk_sz)
-                    if not chunk:
-                        break
-                    yield chunk
-            except Exception as e:
-                log.error(f" [Remux] Generator error: {e}")
-            finally:
-                # Cleanup processes
-                for p in [ffmpeg_proc, mkv_proc]:
-                    if p:
-                        try:
-                            p.terminate()
-                            p.wait(timeout=1)
-                        except BaseException:
-                            try:
-                                p.kill()
-                            except BaseException:
-                                pass
-                log.info(f" [Remux] Finalized Pipe-Kit stream for: {file_path}")
-
-        return bottle.HTTPResponse(generate(), content_type="video/mp4")
+        # Pipe-Kit Streaming Flow (Delegated to api_transcoding v1.46.132)
+        stream_gen = api_transcoding.get_remux_stream(
+            file_path=file_path,
+            start_time=float(start_time),
+            audio_idx=int(audio_idx),
+            subs_idx=subs_idx if subs_idx and str(subs_idx).lower() != 'none' else None
+        )
+        return bottle.HTTPResponse(stream_gen, content_type="video/mp4")
     except Exception as e:
         import traceback
         log.error(f" [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
@@ -5389,10 +5194,10 @@ def get_video_metadata(file_path: str) -> dict:
 
 @eel.expose
 def open_with_ffplay(file_path: str):
-    """Explicitly open a file with ffplay."""
+    """Explicitly open a file with ffplay using the registry."""
     file_path = resolve_media_path(file_path)
     try:
-        ffplay_path = shutil.which("ffplay") or "ffplay"
+        ffplay_path = GLOBAL_CONFIG["program_paths"].get("ffplay", "ffplay")
         proc = subprocess.Popen([str(ffplay_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
         log.info(f" [FFplay] Started for: {file_path}")
@@ -5403,52 +5208,26 @@ def open_with_ffplay(file_path: str):
 
 @eel.expose
 def run_raw_media_probe(item_id):
-    """
-    Forensic Item Probe: Extracts complete ffprobe JSON metadata for a specific item (v1.37.20).
-    Supports IDs and literal paths.
-    """
-    import os
-    import json
-    import subprocess
-    from src.core import db
-    from src.core.config_master import GLOBAL_CONFIG
-
+    """Forensic Item Probe: Delegated to api_parsing (v1.46.132)."""
     path = resolve_media_path(item_id)
     if not os.path.exists(path):
-        # Try database resolve if path not immediately found (numerical IDs)
+        from src.core import db
         item = db.get_media_by_id(item_id)
-        if item:
-            path = item['path']
+        if item: path = item['path']
 
     if not os.path.exists(path):
         return {"status": "error", "message": "Media path not found."}
 
-    log.info(f"[Forensic-Probe] Executing Deep Header Probe: {path}")
-
-    try:
-        ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
-        cmd = [
-            ffprobe_path, "-v", "quiet", "-print_format", "json",
-            "-show_format", "-show_streams", str(path)
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-
-        if result.returncode != 0:
-            return {"status": "error", "message": f"ffprobe failed: {result.stderr}"}
-
-        data = json.loads(result.stdout)
-        return {"status": "success", "data": data}
-    except Exception as e:
-        log.error(f"[Forensic-Probe] Bridge Fault: {e}")
-        return {"status": "error", "message": str(e)}
+    tags = api_parsing.get_media_metadata(path, mode="ultimate")
+    return {"status": "success", "data": tags}
 
 
 @eel.expose
 def open_with_vlc(file_path: str):
-    """Explicitly open a file with VLC (GUI)."""
+    """Explicitly open a file with VLC (GUI) using the registry."""
     file_path = resolve_media_path(file_path)
     try:
-        vlc_path = shutil.which("vlc") or "vlc"
+        vlc_path = GLOBAL_CONFIG["program_paths"].get("vlc", "vlc")
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
         log.info(f" [VLC] Started for: {file_path}")
@@ -5459,10 +5238,11 @@ def open_with_vlc(file_path: str):
 
 @eel.expose
 def open_with_cvlc(file_path: str):
-    """Explicitly open a file with CVLC (command-line VLC)."""
+    """Explicitly open a file with CVLC (command-line VLC) using the registry."""
     file_path = resolve_media_path(file_path)
     try:
-        vlc_path = GLOBAL_CONFIG["program_paths"]["cvlc"]
+        vlc_path = GLOBAL_CONFIG["program_paths"].get("cvlc", "cvlc")
+        if not vlc_path: vlc_path = "cvlc"
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
         log.info(f" [CVLC] Started for: {file_path}")
