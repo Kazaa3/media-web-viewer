@@ -6648,34 +6648,25 @@ def delete_test(filename):
         return {"status": "error", "message": str(e)}
 
 
-@eel.expose
 def get_logbook_entry(*args, **kwargs):
     return api_logbuch.get_logbook_entry(*args, **kwargs)
 
-@eel.expose
 def list_logbook_entries():
     return api_logbuch.list_logbook_entries()
 
-@eel.expose
 def save_logbook_entry(*args, **kwargs):
     return api_logbuch.save_logbook_entry(*args, **kwargs)
 
-@eel.expose
 def delete_logbook_entry(*args, **kwargs):
     return api_logbuch.delete_logbook_entry(*args, **kwargs)
 
 
-@eel.expose
 def run_tests(*args, **kwargs):
     return api_testing.run_tests(*args, **kwargs)
 
-
-@eel.expose
 def get_test_results():
     return api_testing.get_test_results()
 
-
-@eel.expose
 def get_benchmark_results():
     return api_testing.get_benchmark_results()
 
