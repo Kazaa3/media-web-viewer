@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 # Fix paths for imports
-project_root = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 sys.path.insert(0, str(project_root))
 
 from src.core.main import get_library

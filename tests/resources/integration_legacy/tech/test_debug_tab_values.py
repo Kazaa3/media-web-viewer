@@ -4,9 +4,8 @@ import sys
 from pathlib import Path
 
 # Add project root to sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 def test_debug_db_stats_label():
     """Checks if the debug tab labels match the user requirement 'database item'."""

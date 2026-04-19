@@ -31,7 +31,7 @@ from src.parsers import media_parser
 from src.parsers.format_utils import PARSER_CONFIG
 
 # Setup paths and centralized reporting
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 # Allow override from environment (BuildSystem)
 REPORT_DIR = Path(os.getenv("PERF_REPORT_DIR", str(PROJECT_ROOT / "tests" / "artifacts" / "reports")))
 

@@ -5,9 +5,8 @@ import time
 from pathlib import Path
 
 # Setup path to include src/
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 # Mock Eel to avoid starting a real server during unit tests
 class MockEel:

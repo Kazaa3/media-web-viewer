@@ -26,7 +26,7 @@ import re
 from pathlib import Path
 
 # Project Roots
-ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 VERSION_FILE = ROOT / "VERSION"
 
 def test_version_consistency():

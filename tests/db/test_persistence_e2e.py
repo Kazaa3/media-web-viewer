@@ -3,8 +3,7 @@ import os
 from pathlib import Path
 
 # Dynamic Path Discovery (v1.46.132)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 
 from core import db
 

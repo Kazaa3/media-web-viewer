@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from src.parsers import media_parser
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 ARTIFACTS_DIR = PROJECT_ROOT / "tests" / "artifacts" / "real_media"
 
 # Define formats to test (if files exist)

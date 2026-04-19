@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Setup paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 

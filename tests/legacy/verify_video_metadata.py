@@ -8,9 +8,8 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 
 # Fix sys.path for absolute imports
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 # Dynamic Path Discovery (v1.46.132)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 DB_FILENAME = PROJECT_ROOT / "data" / "database.db"
 
 def verify_persistence():

@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 # Fix paths for imports
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 
 class TestEnvironmentDeploy(unittest.TestCase):
     """

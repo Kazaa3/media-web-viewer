@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 # Fix imports
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 sys.path.append(str(PROJECT_ROOT))
 
 from src.core import db

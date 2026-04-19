@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+from src.core.config_master import PROJECT_ROOT, DB_FILENAME, TEST_DIR, DATA_DIR
 PORT = 8345
 
 def verify_navigation():
