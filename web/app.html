@@ -157,6 +157,7 @@
             }
 
             console.info("[DOM-RENDER] Starting Header Orchestration Pulse...");
+            if (typeof config !== 'undefined') console.dir(config);
 
             // [v1.54.029] Centralized Logo Orchestration
             const logoConfig = config.logo || {};
@@ -277,10 +278,11 @@
                     clusterFragment.appendChild(navButtonsNode);
                 }
 
-                // Final Atomic Swap
+                // Final Atomic Swap (LEFT CLUSTER)
+                console.info(`[DOM-RENDER] Primary Cluster Fragment Built. Items: ${clusterFragment.children.length}`);
                 primaryCluster.innerHTML = '';
                 primaryCluster.appendChild(clusterFragment);
-                console.info(`[DOM-RENDER] Primary Cluster Swap Complete. Elements Appended: ${clusterFragment.children.length}`);
+                console.info("[DOM-RENDER] Primary Cluster Atomic Swap Complete.");
             }
 
             // 3. Middle Tabs Orchestration (Ordering & Visibility)
@@ -414,10 +416,13 @@
                         eel.log_spawn_event(`header-btn-r-${btn.id}`, 'SPAWNED');
                     }
                 });
-                console.info("[DOM-RENDER] Secondary Cluster Hydration Complete.");
+                console.info(`[DOM-RENDER] Secondary Cluster Hydration Complete. Total: ${secondaryCluster.children.length}`);
             }
         } catch (err) {
             console.error("[HEADER-FAULT] Orchestration crashed. Shielding boot sequence.", err);
+            if (typeof eel !== 'undefined' && typeof eel.log_gui_event === 'function') {
+                eel.log_gui_event('HEADER-FAULT', 'CRASH', err.message);
+            }
         }
         
         // [v1.54.048] Final Backend Handshake

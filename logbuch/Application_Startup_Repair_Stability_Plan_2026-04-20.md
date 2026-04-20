@@ -1,3 +1,47 @@
+# [Nuclear restoration] Header & Interaction Pulse v16
+
+The workstation header and boot sequence are experiencing a "Sync-Lock" where action buttons are vanishing and library hydration is stalled. This plan implements Atomic Reconstruction of the top row to ensure 100% visibility and interaction stability.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+**Atomic Swap:** I am moving the `innerHTML = ''` operations to the very end of the orchestration pulse and adding absolute verification logs.
+
+**Backend Confirmation:** I'm adding `eel.log_spawn_event` calls to every single UI object created in the header so you can see exactly which elements reached the DOM in your terminal.
+
+**Geometry Lock:** Enforcing `min-width` on the left and right clusters to prevent buttons from being hidden by the logo or tabs.
+
+---
+
+## Proposed Changes
+
+### [Frontend Reconstruction]
+- **[MODIFY] `app.html`**
+	- Advanced Orchestrator Instrumentation:
+		- Add `console.dir(config)` to verify the SSOT data at runtime.
+		- Explicitly log `[DOM-RENDER] Appending Logo...` and `[DOM-RENDER] Appending Tab Cluster....`
+		- Ensure the `left_cluster` buttons are given a high z-index and `z-index: 10010` for the system cluster to stay above all HUD elements.
+	- Safety Fallback:
+		- If the orchestrator fails, it will now explicitly print the line number of the failure in the catch block.
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Global Bootstrap Restoration:
+		- Trigger `updateGlobalSubNav` with a small delay after header orchestration to ensure the container is ready.
+
+---
+
+## Verification Plan
+
+### Manual Verification
+- Hard Reload (Ctrl + F5).
+- Verify the Backend Terminal for:
+	- 🚀 [SPAWN-LOG] HEADER-BTN-L-POWER -> SPAWNED
+	- 🚀 [SPAWN-LOG] HEADER-BTN-L-RESTART -> SPAWNED
+	- 🚀 [SPAWN-LOG] HEADER-LOGO -> SPAWNED
+- Verify that the Power icon is visible on the far left.
+- Verify that Player/Bibliothek navigation brings up the sub-nav pills instantly.
 # [Finalized] Emergency Recovery & Boot Restoration
 
 The workstation has been successfully recovered from a "Sync-Lock" failure. All systems (Header, Player, and Sub-nav) have been restored to a stable, configuration-driven state.

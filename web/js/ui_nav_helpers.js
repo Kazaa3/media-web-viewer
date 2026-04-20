@@ -984,13 +984,15 @@ function updateGlobalSubNav(category) {
         container.innerHTML = newContent;
     }
 
-    if (container.innerHTML !== prevContent) {
-        console.log(`[DOM-RENDER] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
-        console.log(`[DOM-RENDER] SPAWN_SUCCESS: Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
-    } else {
-        // Log even if content is identical during refresh pass
-        console.log(`[DOM-RENDER] REFRESH_SUCCESS: Sub-Nav state verified for ${normalizedCategory}.`);
-    }
+    // [DOM-RENDER] Final Audit pass to ensure correct display
+    setTimeout(() => {
+        if (container.innerHTML !== prevContent) {
+            console.log(`[DOM-RENDER] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
+            console.log(`[DOM-RENDER] SPAWN_SUCCESS: Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
+        } else {
+            console.log(`[DOM-RENDER] REFRESH_SUCCESS: Sub-Nav state verified for ${normalizedCategory}.`);
+        }
+    }, 150);
 
     // Recalibrate layout after content changes might have triggered visibility shifts
     refreshViewportLayout();
