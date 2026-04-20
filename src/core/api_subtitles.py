@@ -9,12 +9,14 @@ from src.core.subtitle_processor import SubtitleProcessor
 log = get_logger("api_subtitles")
 
 @eel.expose
-def extract_subtitle(filepath: str, track_index: int):
+def extract_subtitle(filepath: str, track_index: int, output_path: Optional[str] = None):
     """ Extracts a specific subtitle track to a temp file for forensic analysis. """
     try:
-        from src.core import mkv_tool_wrapper as mkv_tool
-        result = mkv_tool.mkv_extract_track(filepath, track_index, "subtitles")
-        return {"status": "ok", "path": result}
+        if not output_path:
+            output_path = str(Path(filepath).with_suffix(f".track_{track_index}.srt"))
+            
+        success = SubtitleProcessor.extract_track(filepath, track_index, output_path)
+        return {"status": "ok" if success else "error", "path": output_path if success else None}
     except Exception as e:
         log.error(f"[Subtitles] Extraction failed: {e}")
         return {"status": "error", "message": str(e)}
@@ -27,6 +29,16 @@ def adjust_subtitle_timing(subtitle_path: str, offset_ms: int):
         return {"status": "ok" if success else "error"}
     except Exception as e:
         log.error(f"[Subtitles] Timing adjustment failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def convert_subtitle_format(input_path: str, output_path: str):
+    """ Converts a subtitle file to a different format (e.g., ASS to SRT). """
+    try:
+        success = SubtitleProcessor.convert_format(input_path, output_path)
+        return {"status": "ok" if success else "error"}
+    except Exception as e:
+        log.error(f"[Subtitles] Conversion failed: {e}")
         return {"status": "error", "message": str(e)}
 
 @eel.expose
