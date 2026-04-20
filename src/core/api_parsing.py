@@ -8,6 +8,7 @@ from src.core.logger import get_logger
 
 log = get_logger("api_parsing")
 
+@eel.expose
 def get_media_metadata(file_path: str, mode: str = "lightweight", **kwargs) -> Dict[str, Any]:
     """
     High-level API to extract metadata from a media file.
@@ -25,6 +26,7 @@ def get_media_metadata(file_path: str, mode: str = "lightweight", **kwargs) -> D
         log.error(f"[API-Parsing] Failed to parse '{filename}': {e}")
         return {"error": str(e), "name": filename, "path": abs_path}
 
+@eel.expose
 def probe_forensic_depth(file_path: str, depth: str = "standard") -> Dict[str, Any]:
     """
     Performs a deep forensic audit with varying scan depths.
@@ -38,6 +40,7 @@ def probe_forensic_depth(file_path: str, depth: str = "standard") -> Dict[str, A
     mode = depth_map.get(depth, "lightweight")
     return get_media_metadata(file_path, mode=mode)
 
+@eel.expose
 def get_parser_chain_info() -> Dict[str, Any]:
     """Returns the currently active parser chain configuration."""
     registry = GLOBAL_CONFIG.get("parser_registry", {})

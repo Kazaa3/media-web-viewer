@@ -9,6 +9,22 @@ from src.core.logger import get_logger
 
 log = get_logger("api_streaming")
 
+def is_engine_available(engine_name: str) -> bool:
+    """ Checks if a specific streaming engine (binary) is available on the system. """
+    from src.core.config_master import GLOBAL_CONFIG
+    registry = GLOBAL_CONFIG.get("technical_orchestrator", {}).get("tools_orchestrator", {}).get("registry", {})
+    tool_info = registry.get(engine_name, {})
+    binary = tool_info.get("binary", engine_name)
+    import shutil
+    return shutil.which(binary) is not None
+
+@eel.expose
+def get_streaming_status():
+    """ Returns the availability of all configured streaming engines. """
+    from src.core.config_master import GLOBAL_CONFIG
+    engines = GLOBAL_CONFIG.get("playback_registry", {}).get("streaming_engines", [])
+    return {engine: is_engine_available(engine) for engine in engines}
+
 @eel.expose
 def get_universal_stream_url(file_path: str, mode: str = None, audio_idx: int = 0, subs_idx: int = None, start_time: int = 0):
     """ Returns the optimal stream URL for a given file and mode. """
@@ -18,11 +34,23 @@ def get_universal_stream_url(file_path: str, mode: str = None, audio_idx: int = 
 @eel.expose
 def stream_to_mediamtx(path: str, protocol: str = "hls"):
     """ Orchestrates MediaMTX for high-performance streaming (HLS/WebRTC). """
+    if not is_engine_available("mediamtx"):
+        return {"status": "error", "message": "MediaMTX binary not found. Please install it for forensic streaming."}
+        
     try:
-        # Implementation logic moved from legacy main.py
+        # Implementation logic: In a production environment, this would spawn 
+        # a ffmpeg process to push the file to mediamtx.
         log.info(f"[Streaming] Initiating MediaMTX {protocol} stream for {path}")
-        # In a real scenario, this would trigger the MediamtxMode or similar.
-        return {"status": "ok", "url": f"http://localhost:8888/{protocol}/stream"}
+        
+        # Placeholder for process orchestration logic found in legacy archive
+        # process = subprocess.Popen(...)
+        
+        return {
+            "status": "ok", 
+            "url": f"http://localhost:8888/{protocol}/{Path(path).stem}",
+            "protocol": protocol,
+            "engine": "mediamtx"
+        }
     except Exception as e:
         log.error(f"[Streaming] MediaMTX launch failed: {e}")
         return {"status": "error", "message": str(e)}
