@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from pathlib import Path
 
 # --- BOOTSTRAP: PATH & VERSION SSOT (v1.41.00) ---
@@ -689,6 +690,27 @@ APP_HOST = os.environ.get("MWV_HOST", "localhost")
 BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
+CONFIG_FILE = PROJECT_ROOT / "config_master.json"
+
+def save_config():
+    """Persists the GLOBAL_CONFIG to disk."""
+    try:
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(GLOBAL_CONFIG, f, indent=4, default=str)
+    except Exception as e:
+        print(f"STDOUT: [Config-Error] Failed to save config: {e}")
+
+def load_config_from_file():
+    """Loads configuration overrides from disk and merges them into GLOBAL_CONFIG."""
+    if CONFIG_FILE.exists():
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+                GLOBAL_CONFIG.update(data)
+                print(f"STDOUT: [Config] Loaded overrides from {CONFIG_FILE}")
+        except Exception as e:
+            print(f"STDOUT: [Config-Error] Failed to load config: {e}")
+
 from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
     "version": APP_VERSION_FULL,
@@ -793,7 +815,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "special_format_steering": {
                     "3d": "auto"          # Special Case (v1.46.052 Sonderfall)
                 },
-                "frequency_steering": {
                     "pal_50hz": "auto",    # Master Profile for PAL/50Hz content
                     "ntsc_60hz": "auto"     # Master Profile for NTSC/60Hz content
                 },
@@ -2619,6 +2640,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
     # End of Registry
 }
+
+# --- LOAD CONFIGURATION OVERRIDES ---
+load_config_from_file()
 
 
 # SLOW_PARSERS and registries moved to src/core/models.py for Ultimate SSOT (v1.35.76)
