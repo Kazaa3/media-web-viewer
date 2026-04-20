@@ -8705,6 +8705,7 @@ def list_feature_modal_items():
             f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable.")
 '''
 
+'''
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
     import threading
@@ -9004,6 +9005,7 @@ def list_feature_modal_items():
         import traceback
         traceback.print_exc()
         sys.exit(1)
+'''
 
 
 
