@@ -7789,7 +7789,7 @@ def get_forensic_thresholds():
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
 
     def test_remux_mkv_mp4(self):
-        """MKV -> MP4 Lossless Check"""
+        'MKV -> MP4 Lossless Check'
         from src.parsers.format_utils import ffprobe_suite
         out = PROJECT_ROOT / "cache" / f"test_remux_{Path(self.input).stem}.mp4"
         cmd = ['ffmpeg', '-y', '-i', self.input, '-c', 'copy', '-movflags', '+faststart', str(out)]
@@ -7810,7 +7810,7 @@ def get_forensic_thresholds():
             return {'name': 'MKV->MP4 Remux', 'status': 'fail', 'details': str(e)}
 
     def test_hls_generation(self):
-        """HLS Streaming Segment Test"""
+        'HLS Streaming Segment Test'
         out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
         out_dir.mkdir(parents=True, exist_ok=True)
         playlist = out_dir / "playlist.m3u8"
@@ -7842,7 +7842,7 @@ def get_forensic_thresholds():
             return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
 
     def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
+        'Runs all enabled pipeline tests.'
         results = [
             self.test_remux_mkv_mp4(),
             self.test_hls_generation()
