@@ -8599,19 +8599,19 @@ def list_feature_modal_items():
 
 @eel.expose
 
-    def _session_project_root(session: dict) -> Path | None:
-        cmdline = str(session.get('cmdline', '') or '')
-        if not cmdline:
-            return None
-
-        for token in cmdline.split():
-            token_clean = token.strip("'\"")
-            if token_clean.endswith('main.py'):
-                try:
-                    return Path(token_clean).resolve().parent
-                except Exception:
-                    return None
+def _session_project_root(session: dict) -> Path | None:
+    cmdline = str(session.get('cmdline', '') or '')
+    if not cmdline:
         return None
+
+    for token in cmdline.split():
+        token_clean = token.strip("'\"")
+        if token_clean.endswith('main.py'):
+            try:
+                return Path(token_clean).resolve().parent
+            except Exception:
+                return None
+    return None
 
     same_project_sessions = [
         s for s in existing_sessions
