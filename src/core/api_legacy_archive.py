@@ -7784,10 +7784,6 @@ def get_forensic_thresholds():
     from src.core.config_master import BITRATE_QUALITY_THRESHOLDS
     return BITRATE_QUALITY_THRESHOLDS
 
-
-
-
-
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
 
@@ -7851,57 +7847,6 @@ def get_forensic_thresholds():
             self.test_hls_generation()
         ]
         return results
-
-
-@eel.expose
-
-    def test_hls_generation(self):
-        """HLS Streaming Segment Test"""
-        out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        playlist = out_dir / "playlist.m3u8"
-
-        cmd = [
-            'ffmpeg', '-y', '-i', self.input,
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
-            str(playlist)
-        ]
-        try:
-            # We only run for a short time to verify segments
-            subprocess.run(cmd, check=True, capture_output=True, timeout=15)
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Generated {len(segments)} HLS segments"
-            }
-        except subprocess.TimeoutExpired:
-            # Timeout is actually okay if segments were created
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Verified {len(segments)} segments before timeout"
-            }
-        except Exception as e:
-            return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
-
-    def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
-        results = [
-            self.test_remux_mkv_mp4(),
-            self.test_hls_generation()
-        ]
-        return results
-
-
-@eel.expose
-
-    def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
-        results = [
-            self.test_remux_mkv_mp4(),
             self.test_hls_generation()
         ]
         return results
@@ -8152,8 +8097,7 @@ def get_environment_info(force_refresh=False):
                     source = "importlib_or_pkg_resources"
         except (subprocess.TimeoutExpired, Exception) as e:
             logging.warning(
-                f"pip list failed ({
-                    type(e).__name__}) - using importlib fallback")
+                f"pip list failed ({type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
             source = "importlib_or_pkg_resources"
 
@@ -8541,21 +8485,17 @@ def get_environment_info(force_refresh=False):
         trace_log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(trace_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 80}\n")
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')
-                        }] get_environment_info() called\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] get_environment_info() called\n")
             f.write(f"force_refresh: {force_refresh}\n")
             f.write(f"package_count: {len(installed_packages)}\n")
-            f.write(f"installed_packages_source: {
-                    installed_packages_source}\n")
+            f.write(f"installed_packages_source: {installed_packages_source}\n")
             f.write(f"requirements_status: {requirements_status}\n")
-            f.write(f"first_3_packages: {
-                    installed_packages[:3] if installed_packages else 'EMPTY'}\n")
+            f.write(f"first_3_packages: {installed_packages[:3] if installed_packages else 'EMPTY'}\n")
             f.write(f"env_type: {result.get('env_type')}\n")
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
         # Also print to console for immediate visibility
-        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
-            installed_packages)}, source={installed_packages_source}, req={requirements_status}")
+        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(installed_packages)}, source={installed_packages_source}, req={requirements_status}")
     except Exception as e:
         print(f"⚠️  UI-TRACE logging failed: {e}")
 
@@ -8689,10 +8629,7 @@ def list_feature_modal_items():
         existing_url = f"http://localhost:{existing['port']}/app.html"
 
         if is_session_url_reachable(existing_url, timeout=0.8):
-            logging.warning(
-                f"[Session] Existing session detected (PID {
-                    existing['pid']}, port {
-                    existing['port']}). " "Skipping new window launch.")
+            logging.warning(f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). Skipping new window launch.")
             logging.info(f"[Session] Existing session URL: {existing_url}")
 
             if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
@@ -8708,10 +8645,7 @@ def list_feature_modal_items():
 
             raise SystemExit(0)
 
-        logging.warning(
-            f"[Session] Ignoring stale session candidate (PID {
-                existing['pid']}, port {
-                existing['port']}) - URL unreachable.")
+        logging.warning(f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable.")
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
@@ -8788,9 +8722,7 @@ def list_feature_modal_items():
             logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             raise
         except BaseException as e:
-            logging.warning(
-                f"[WebSocket] keepalive recovered from base error: {
-                    type(e).__name__}: {e}")
+            logging.warning(f"[WebSocket] keepalive recovered from base error: {type(e).__name__}: {e}")
             time.sleep(1.0)
 
     @eel.expose
