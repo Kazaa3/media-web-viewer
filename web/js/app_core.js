@@ -769,7 +769,11 @@ window.addEventListener('DOMContentLoaded', async () => {
             console.log("Data: Triggering library sync...");
             (async () => {
                  try {
-                     if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
+                     // Independent UI Orchestration (Non-blocking)
+                     setTimeout(() => {
+                         if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
+                     }, 0);
+                     
                      if (typeof loadLibrary === 'function') await loadLibrary();
                      if (typeof loadEditItems === 'function') await loadEditItems();
                  } catch (e) { console.warn("Background Sync Warning:", e); }
