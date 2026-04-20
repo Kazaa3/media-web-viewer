@@ -156,7 +156,7 @@
                  return;
             }
 
-            console.info("[HEADER] Starting Orchestration Pulse...");
+            console.info("[DOM-RENDER] Starting Header Orchestration Pulse...");
 
             // [v1.54.029] Centralized Logo Orchestration
             const logoConfig = config.logo || {};
@@ -189,6 +189,7 @@
                 const layout = window.CONFIG?.header_layout || {};
                 const navButtonsNode = document.getElementById('header-nav-buttons');
                 const clusterFragment = document.createDocumentFragment();
+                console.info("[DOM-RENDER] Initializing Primary Cluster Fragment...");
                 
                 // [v1.54.032] Master Toggle Implementation
                 const showLeft = config.show_left_cluster !== false;
@@ -249,6 +250,7 @@
                             console.info(`[Header-Action-Left] ${btn.id} triggered: ${btn.action}`);
                             eval(btn.action);
                         };
+                        console.debug(`[DOM-RENDER] Spawning Primary Button: ${btn.id}`);
                         clusterFragment.appendChild(el);
                     });
                 }
@@ -269,6 +271,7 @@
                 // Final Atomic Swap
                 primaryCluster.innerHTML = '';
                 primaryCluster.appendChild(clusterFragment);
+                console.info(`[DOM-RENDER] Primary Cluster Swap Complete. Elements Appended: ${clusterFragment.children.length}`);
             }
 
             // 3. Middle Tabs Orchestration (Ordering & Visibility)
@@ -321,6 +324,7 @@
             // 4. Right Cluster Orchestration (Secondary Cluster)
             const secondaryCluster = document.querySelector('.nav-cluster.secondary-cluster');
             if (secondaryCluster && config.right_cluster) {
+                console.info(`[DOM-RENDER] Hydrating Secondary Cluster | Requested: ${config.right_cluster.length}`);
                 const layout = window.CONFIG?.header_layout || {};
                 secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
                 secondaryCluster.style.display = (config.show_right_cluster !== false) ? 'flex' : 'none';
@@ -394,8 +398,10 @@
                         el.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     };
 
+                    console.debug(`[DOM-RENDER] Spawning Secondary Button: ${btn.id}`);
                     secondaryCluster.appendChild(el);
                 });
+                console.info("[DOM-RENDER] Secondary Cluster Hydration Complete.");
             }
         } catch (err) {
             console.error("[HEADER-FAULT] Orchestration crashed. Shielding boot sequence.", err);

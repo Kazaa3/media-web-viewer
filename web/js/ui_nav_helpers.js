@@ -965,7 +965,7 @@ function updateGlobalSubNav(category) {
         'warteschlange';
 
     // Render logic with explicit lifecycle markers
-    console.info(`[MWV-UI] Populating Sub-Nav for: ${normalizedCategory} | Pills: ${entries.length}`);
+    console.info(`[DOM-RENDER] Sub-Nav Hydration Pulse | Category: ${normalizedCategory} | Pills Requested: ${entries.length}`);
     const isRebuild = container.id === 'rebuild-pill-container';
     const pillClass = isRebuild ? 'rebuild-pill' : 'sub-pill-btn';
 
@@ -980,15 +980,16 @@ function updateGlobalSubNav(category) {
     `).join('');
 
     if (newContent) {
+        console.debug(`[DOM-RENDER] Injecting ${entries.length} items into #${container.id}`);
         container.innerHTML = newContent;
     }
 
     if (container.innerHTML !== prevContent) {
-        console.log(`[UI-NAV] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
-        console.log(`[UI-NAV] SPAWN_SUCCESS: Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
+        console.log(`[DOM-RENDER] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
+        console.log(`[DOM-RENDER] SPAWN_SUCCESS: Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
     } else {
         // Log even if content is identical during refresh pass
-        console.log(`[UI-NAV] REFRESH_SUCCESS: Sub-Nav state verified for ${normalizedCategory}.`);
+        console.log(`[DOM-RENDER] REFRESH_SUCCESS: Sub-Nav state verified for ${normalizedCategory}.`);
     }
 
     // Recalibrate layout after content changes might have triggered visibility shifts

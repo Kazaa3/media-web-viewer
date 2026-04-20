@@ -1,3 +1,84 @@
+# [Forensic Trace] DOM Rendering Observability v1.54.045
+
+The workstation is undergoing a high-fidelity diagnostic upgrade. We are implementing Forensic DOM Trace across all UI orchestration layers to provide immediate visibility into every element "spawn" event. This will reveal exactly where objects are failing to render.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+**Verbosity Increase:** I am enabling `console.info` level tracing for all DOM operations. You will see detailed "[DOM-RENDER]" messages in your browser inspector.
+
+**SSOT Verification:** These logs will verify that the configurations from `config_master.py` are being correctly translated into HTML elements.
+
+---
+
+## Proposed Changes
+
+### [Diagnostic Instrumentation]
+- **[MODIFY] `app.html`**
+	- Inject `console.info("[DOM-RENDER] Header Left Cluster Spawning...")` and detailed item-level success logs for Power/Restart.
+	- Log the atomic swap of the primary-cluster.
+	- Log the creation/removal of secondary-cluster action buttons.
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Inject `console.info("[DOM-RENDER] Sub-Nav Hydration Pulse...")` into `updateGlobalSubNav`.
+	- Log the target container ID being hydrated and the count of resulting pills.
+- **[MODIFY] `bibliothek.js`**
+	- Inject `console.info("[DOM-RENDER] Library Grid Spawning...")` into `renderLibrary`.
+	- Log performance metrics for the DOM injection process.
+
+---
+
+## Verification Plan
+
+### Automated Verification
+- Verify that `console.info` messages appear in the browser log for:
+	- Header Orchestration.
+	- Sub-Nav Hydration.
+	- Library Rendering.
+
+### Manual Verification
+- Hard Reload (Ctrl + F5).
+- Check the console for `[DOM-RENDER]` markers and confirm they show the correct item counts as defined in `config_master.py`.
+# [Emergency Recovery] Workstation Boot Restoration & Exception Shielding
+
+The forensic workstation is currently experiencing a "Sync-Lock" where a rendering error in the header is blocking the entire system bootstrap (Player, Metadata, and Sub-nav). This plan implements Exception Shielding and Safe Hydration to restore full functionality.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+**Fault Tolerance:** I am wrapping the header orchestrator in a try/catch block. If the header fails to render perfectly, it will no longer "kill" the Player or the sub-menus.
+
+**Logging:** 100% of action button clicks will now be explicitly logged to the console for forensic verification.
+
+---
+
+## Proposed Changes
+
+### [Frontend Hardening]
+- **[MODIFY] `app.html`**
+	- Exception Shielding: Wrap `orchestrateHeaderUI` logic in a try/catch block.
+	- Robust Icon Mapping: Harden the lookup for `icon_mapping` to prevent undefined property access.
+	- High-Fidelity Logging: Add `console.info` to every orchestrated button click.
+	- Geometry Restoration: Ensure the `secondary-cluster` (right side) correctly appends its children and handles layout properties.
+	- Sub-Nav Recovery: Validate that `updateGlobalSubNav` is not being blocked.
+- **[MODIFY] `app_core.js`**
+	- Non-Blocking Boot: Ensure that `orchestrateHeaderUI` is called within its own micro-task or safely inside the boot sequence without blocking downstream await calls.
+
+---
+
+## Verification Plan
+
+### Manual Verification
+- Hard Reload (Ctrl + F5).
+- Verify that "LADE PLAYER..." disappears and the library is populated.
+- Verify that the Power and Restart icons are visible on the left.
+- Open the Browser Inspector (Ctrl + Shift + I) and verify that clicking an icon prints `[Header-Action]` in the console.
+- Confirm that the Level 2 sub-navigation bar (Queue/Playlist) correctly hydrates.
 # [Final Hardening] Interaction Shielding & Geometry Lock
 
 The workstation header has been upgraded with Interaction Shielding and a Geometry Lock to ensure 100% click reliability and visual stability.

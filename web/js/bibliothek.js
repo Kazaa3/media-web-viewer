@@ -240,7 +240,8 @@ async function renderLibrary() {
     }
 
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });
-    
+    console.info(`[DOM-RENDER] Library Grid Spawning | Items indexed: ${allLibraryItems.length}`);
+
     // [v1.46.085] Global Render Spawn Trace
     if (typeof eel.log_spawn_event === 'function') {
         eel.log_spawn_event('Library View', `GLOBAL_RENDER_PULSE_${allLibraryItems.length}`);
@@ -248,6 +249,9 @@ async function renderLibrary() {
     
     const track = document.getElementById('coverflow-track');
     if (!track) {
+        console.error("[DOM-RENDER] FAILED: #coverflow-track container not found in DOM.");
+        return;
+    }
         // [v1.54.025] Forensic Hydration Guard: If we are on the library tab but the fragment isn't ready
         const libPane = document.getElementById('library-panel-container');
         if (libPane && libPane.classList.contains('active')) {
