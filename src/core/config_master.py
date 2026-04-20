@@ -815,6 +815,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "special_format_steering": {
                     "3d": "auto"          # Special Case (v1.46.052 Sonderfall)
                 },
+                "frequency_steering": {
                     "pal_50hz": "auto",    # Master Profile for PAL/50Hz content
                     "ntsc_60hz": "auto"     # Master Profile for NTSC/60Hz content
                 },

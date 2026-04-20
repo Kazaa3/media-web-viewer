@@ -29,6 +29,7 @@ from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem
 
 log = get_logger("api_legacy_archive")
 
+"""
 UNUSED FUNCTIONS (SUPERSEDED OR REDUNDANT):
 - add_file_to_library
 - add_scan_dir
@@ -111,8 +112,7 @@ RESTORED FUNCTIONS (LEGACY ARCHIVE):
 - update_library_dir
 """
 
-import os, sys, json, time, sqlite3, subprocess, platform
-from pathlib import Path
+# Rest of imports already covered at top of file.
 try:
     from src.core.eel_shell import eel
 except ImportError:
@@ -6668,6 +6668,12 @@ def create_new_test(name):
 def {safe_name}():
     # Hier Test-Code schreiben
     assert True
+"""
+
+    file_path.write_text(template, encoding='utf-8')
+    return {"status": "ok", "filename": filename}
+
+
 
 @eel.expose
 

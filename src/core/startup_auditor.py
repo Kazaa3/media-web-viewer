@@ -32,5 +32,10 @@ def run_audit():
             
     return True
 
+def run_preflight_audit():
+    """Standardized entry point for the pre-flight integrity check."""
+    print("STDOUT: [Bootstrap-Audit] Running Pre-Flight Integrity Check...")
+    return run_audit()
+
 if __name__ == "__main__":
-    run_audit()
+    run_preflight_audit()

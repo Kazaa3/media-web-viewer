@@ -1,5 +1,6 @@
 import eel
 import logging
+from typing import Any
 from .config_master import GLOBAL_CONFIG, save_config
 
 log = logging.getLogger("mwv.api.config")

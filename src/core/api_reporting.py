@@ -158,9 +158,6 @@ def get_process_forensics():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 @eel.expose
 def get_api_forensics(exposed_registry: List[Dict]):
     """Forensic Internal API Registry & Documentation (v1.37.39)."""
@@ -216,9 +213,6 @@ def get_routing_suite_report():
         "total": len(items)
     }
 
-        "total": len(items)
-    }
-
 @eel.expose
 def get_security_forensics():
     """Forensic Security & Authority Audit (v1.37.38)."""
@@ -246,9 +240,6 @@ def prune_ghost_items(item_ids: List[str]) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 @eel.expose
 def kill_stalled_ffmpeg_streams() -> Dict[str, Any]:
     """Purges all FFmpeg/mkvmerge processes associated with the project."""
@@ -269,9 +260,6 @@ def kill_stalled_ffmpeg_streams() -> Dict[str, Any]:
                     killed_count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied): continue
         return {"status": "success", "count": killed_count}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -331,9 +319,6 @@ def terminate_worker_process(pid):
             proc.terminate()
             return {"status": "success"}
         return {"status": "error", "message": "Access Denied"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

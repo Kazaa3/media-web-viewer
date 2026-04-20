@@ -1,4 +1,5 @@
 import os
+from src.core.eel_shell import eel
 import time
 import sqlite3
 import re
@@ -28,6 +29,7 @@ log = get_logger("api_library")
 
 from src.core.object_discovery import ObjectDiscoveryEngine
 from src.core.models import MediaItem
+def apply_library_filters(all_media: List[Dict],
                           force_raw: bool = False,
                           search: str = "",
                           genre: str = "all",

@@ -171,21 +171,8 @@ def play_stream_url(url: str, engine: str = "hls"):
     # Delegate to frontend for HLS/DASH
     return {"status": "stream", "url": url, "engine": engine}
 
-# --- Cast & Remote Features (Migrated from api_tools) ---
+# --- Cast & Remote Features (Exposed via api_tools.py) ---
 
-@eel.expose
 def launch_ffplay_tool(file_path: str):
     """ Tool-specific FFplay launch with forensic stats. """
     return open_with_ffplay(file_path)
-
-@eel.expose
-def discover_chromecast():
-    """ Network scan for Cast devices. """
-    from src.core.api_tools import discover_chromecast as _disco
-    return _disco()
-
-@eel.expose
-def cast_to_device(device_uuid: str, file_path: str):
-    """ Cast media to target device. """
-    from src.core.api_tools import cast_to_device as _cast
-    return _cast(device_uuid, file_path)
