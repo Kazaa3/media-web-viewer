@@ -61,11 +61,23 @@ def stream_to_vlc(path: str):
     return {"status": "ok", "url": f"http://localhost:8345/streams/vlc/vlc.m3u8"}
 
 @eel.expose
-def start_webm_conversion(path: str):
-    """ Initiates a real-time WebM conversion stream for browser compatibility. """
-    return {"status": "started", "stream_url": f"/stream/via/transcode/{path}?mode=webm"}
+def start_ffmpeg_pipe_stream(file_path: str, mode: str = "fragmented", audio_idx: int = 0, subs_idx: Optional[int] = None, start_time: float = 0.0):
+    """ Initiates a real-time FFmpeg pipe stream for browser compatibility. """
+    try:
+        from src.core.streaming_processor import StreamingProcessor
+        # Note: Frontend will consume this via a separate HTTP route (e.g., Bottle) that calls the generator.
+        log.info(f"[Streaming] Pipe stream requested for {file_path} (Start: {start_time}s)")
+        return {"status": "ok", "message": "Stream pipeline ready for consumption."}
+    except Exception as e:
+        log.error(f"[Streaming] Pipe launch failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def mediamtx_mode(path: str, action: str = "start"):
     """ Direct control for MediaMTX forensic mode. """
-    return {"status": "success", "action": action}
+    try:
+        from src.core.streaming_processor import StreamingProcessor
+        return StreamingProcessor.orchestrate_mediamtx(path)
+    except Exception as e:
+        log.error(f"[Streaming] MediaMTX orchestration failed: {e}")
+        return {"status": "error", "message": str(e)}
