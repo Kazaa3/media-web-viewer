@@ -7790,7 +7790,7 @@ def get_forensic_thresholds():
 
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
-
+"""
     def test_remux_mkv_mp4(self):
         """MKV -> MP4 Lossless Check"""
         from src.parsers.format_utils import ffprobe_suite
@@ -7908,6 +7908,7 @@ def get_forensic_thresholds():
 
 
 @eel.expose
+"""
 
 
 
