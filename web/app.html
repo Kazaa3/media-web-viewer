@@ -177,6 +177,10 @@
                 logoNode.style.letterSpacing = logoConfig.letter_spacing || 'normal';
                 logoNode.style.marginRight = '20px';
                 logoNode.style.cursor = 'default';
+                
+                if (typeof eel !== 'undefined' && typeof eel.log_spawn_event === 'function') {
+                    eel.log_spawn_event('header-logo', logoConfig.visible ? 'SPAWNED' : 'HIDDEN');
+                }
             }
 
             // 2. Left Cluster Orchestration (Buttons LEFT OF Logo Order)
@@ -251,6 +255,11 @@
                             eval(btn.action);
                         };
                         console.debug(`[DOM-RENDER] Spawning Primary Button: ${btn.id}`);
+                        
+                        if (typeof eel !== 'undefined' && typeof eel.log_spawn_event === 'function') {
+                            eel.log_spawn_event(`header-btn-l-${btn.id}`, 'SPAWNED');
+                        }
+                        
                         clusterFragment.appendChild(el);
                     });
                 }
@@ -400,11 +409,21 @@
 
                     console.debug(`[DOM-RENDER] Spawning Secondary Button: ${btn.id}`);
                     secondaryCluster.appendChild(el);
+
+                    if (typeof eel !== 'undefined' && typeof eel.log_spawn_event === 'function') {
+                        eel.log_spawn_event(`header-btn-r-${btn.id}`, 'SPAWNED');
+                    }
                 });
                 console.info("[DOM-RENDER] Secondary Cluster Hydration Complete.");
             }
         } catch (err) {
             console.error("[HEADER-FAULT] Orchestration crashed. Shielding boot sequence.", err);
+        }
+        
+        // [v1.54.048] Final Backend Handshake
+        if (typeof eel !== 'undefined' && typeof eel.report_items_spawned === 'function') {
+            const totalInHeader = document.querySelectorAll('.header-orchestrated-btn').length;
+            eel.report_items_spawned(totalInHeader, 'header');
         }
     }
         window.orchestrateHeaderUI = orchestrateHeaderUI;
