@@ -18,7 +18,7 @@ FRONTEND_SETTINGS    = {
     "port": 8345,
     "mode": "chrome",
     "host": "localhost",
-    "size": (1280, 800),
+    "size": (1600, 900),
     "cmdline_args": ["--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required"]
 }
 

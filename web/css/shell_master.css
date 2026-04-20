@@ -259,6 +259,7 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
 .master-header.elite-inversion .logo-text {
     color: #000 !important;
     font-weight: 900 !important;
+    font-size: 18px; /* Restored from config */
 }
 
 .master-header.elite-inversion .tool-icon-btn {
@@ -272,24 +273,28 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
 
 /* [v1.41.121] Header Slot Configuration */
 .master-header > .nav-cluster.primary-cluster {
-    flex: 0 0 var(--header-left-width, auto);
+    flex: 1 1 auto; /* Allow tabs to take required space */
+    display: flex;
+    align-items: center;
     min-width: 0;
+    gap: 12px;
 }
 
 .master-header > .header-center-title {
-    flex: 1;
+    flex: 0 0 auto;
     text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 0 20px;
+    font-weight: 800;
+    font-size: 14px;
 }
 
 .master-header > .nav-cluster.secondary-cluster {
-    flex: 0 0 var(--header-right-width, auto);
+    flex: 0 0 auto; /* Keep right cluster stable */
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 12px;
+    gap: 8px; /* Slightly tighter gap to fit all workstation icons */
+    margin-left: auto; /* Force to the rightmost edge */
     transition: width var(--transition-fluid), opacity var(--transition-snappy), transform var(--transition-fluid);
 }
 

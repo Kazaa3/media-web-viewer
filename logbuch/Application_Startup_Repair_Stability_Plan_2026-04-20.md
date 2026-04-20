@@ -1,3 +1,60 @@
+# Implementation Plan: Forensic UI Layout Hardening & Logo Restoration
+
+The goal is to restore the "dict" logo, fix header layout overlaps in the Elite Inversion theme, increase the workstation window width, and resolve the issue of missing real media items.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+**Window Size:** I am proposing to increase the window size to 1600x900 to accommodate the high-density forensic HUD and prevent tab overlap. Please confirm if this fits your display.
+
+**NOTE**
+
+**Real Items Missing:** This might be due to the "Forensic Hydration" mode being set to mock only. I will ensure the system defaults to both or correctly reflects the scanned library.
+
+---
+
+## Proposed Changes
+
+### 1. Backend: Window Geometry & Config
+- **[MODIFY] `config_master.py`**
+	- Increase `FRONTEND_SETTINGS["size"]` to `(1600, 900)`.
+	- Verify `header_orchestrator` settings for the logo.
+
+### 2. Header: Logo Restoration & Logging
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Update `orchestrateHeaderUI` to apply `font_size`, `font_weight`, and `font_family` from `logoConfig` to the `#header-logo-text` element.
+	- Ensure `logSpawn('dict-icon-text')` is called upon rendering for backend handshake verification.
+
+### 3. Layout: Cluster Alignment & Overlap Fix
+- **[MODIFY] `shell_master.css`**
+	- Harden `.master-header` to prevent horizontal overlap.
+	- Adjust `.nav-cluster.secondary-cluster` to ensure it doesn't float over the primary tabs.
+	- Ensure `.header-logo-pulsar` has explicit visibility and alignment rules for the elite-inversion theme.
+
+### 4. Library: Real Item Hydration
+- Audit `get_library` calls and `hydration_mode` to ensure real items are not being filtered out accidentally.
+
+---
+
+## Open Questions
+- Do you have a specific preferred window width? I've chosen 1600px as a workstation standard.
+- Do "real items" refer to items on your disk or items previously in the database?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `python3 src/core/main.py` and verify window dimensions.
+- Check backend logs for `[Header-Spawn] dict-icon-text: SPAWNED`.
+
+### Manual Verification
+- Visual check of the header: Logo should be visible and pulsating.
+- Verify that tabs (Player, Bibliothek, etc.) do not overlap with the right-side icons.
+- Check "Mediengalerie" to see if real items (if any exist in the scan dir) are listed.
 # Forensic HUD: "Grade" Restoration & Logging Walkthrough
 
 We have elevated the technical monitoring layer and the system logo by implementing professional "Grades" (frames) and a mandatory backend logging handshake.

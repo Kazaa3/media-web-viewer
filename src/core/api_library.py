@@ -246,6 +246,10 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     log.info(f"🚀 [SPAWN-LOG] PAYLOAD-READY -> {len(final_media)} items (Source: {'MOCKS' if all(it.get('is_mock') for it in final_media) else 'REAL_DB'})")
 
     triggered_auto_scan = (count_total == 0)
+    if triggered_auto_scan:
+        log.warning("[BD-AUDIT] Database empty. Triggering background auto-scan...")
+        import threading
+        threading.Thread(target=_scan_media_execution, kwargs={'clear_db': False}, daemon=True).start()
 
     return {
         "media": final_media,

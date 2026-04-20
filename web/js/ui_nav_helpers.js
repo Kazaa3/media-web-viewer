@@ -899,13 +899,13 @@ function switchMainCategory(category, btn) {
     // [v1.54.012] Force Hydration Pulse for Rebuild Mode
     if (activeTab === 'player' && evolutionMode === 'rebuild') {
         if (!window.__PLAYER_INITIALIZED__) {
-             console.info("[UI-NAV] Player NOT initialized. Forcing Fragment Load...");
-             if (typeof FragmentLoader !== 'undefined') {
-                 FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
-                     window.__PLAYER_INITIALIZED__ = true;
-                     if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
-                 });
-             }
+            console.info("[UI-NAV] Player NOT initialized. Forcing Fragment Load...");
+            if (typeof FragmentLoader !== 'undefined') {
+                FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
+                    window.__PLAYER_INITIALIZED__ = true;
+                    if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+                });
+            }
         }
     }
 
@@ -974,9 +974,9 @@ function updateGlobalSubNav(category) {
         } else if (item.id.includes('recovery')) {
             iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-shield"></use></svg>';
         } else if (item.id.includes('lib') || item.id.includes('visual')) {
-             iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-library"></use></svg>';
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-library"></use></svg>';
         } else if (item.id.includes('vid') || item.id.includes('cinema')) {
-             iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-video"></use></svg>';
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-video"></use></svg>';
         }
 
         return `
@@ -2106,11 +2106,11 @@ async function orchestrateHeaderUI(retryCount = 0) {
         // [v1.55.002] Robust Icon Registry Sentinel
         const registry = document.getElementById('svg-icons-placeholder');
         const hasIcons = registry && registry.querySelector('symbol, svg');
-        
+
         if (!hasIcons && retryCount < 25) {
-             console.warn(`[HEADER] Icon Registry not yet hydrated. Awaiting symbols (${retryCount}/25)...`);
-             setTimeout(() => orchestrateHeaderUI(retryCount + 1), 150);
-             return;
+            console.warn(`[HEADER] Icon Registry not yet hydrated. Awaiting symbols (${retryCount}/25)...`);
+            setTimeout(() => orchestrateHeaderUI(retryCount + 1), 150);
+            return;
         }
 
         console.info("[DOM-RENDER] Starting Header Orchestration Pulse...");
@@ -2131,32 +2131,32 @@ async function orchestrateHeaderUI(retryCount = 0) {
         };
 
         const logAction = (id, action) => {
-             console.info(`[Header-Action] ${id} triggered: ${action}`);
-             if (typeof eel !== 'undefined' && typeof eel.log_gui_event === 'function') {
-                 eel.log_gui_event(id, 'CLICK', action);
-             }
+            console.info(`[Header-Action] ${id} triggered: ${action}`);
+            if (typeof eel !== 'undefined' && typeof eel.log_gui_event === 'function') {
+                eel.log_gui_event(id, 'CLICK', action);
+            }
         };
 
         // 1. Primary Cluster Orchestration (Left)
         const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
         if (primaryCluster) {
-             const clusterFragment = document.createDocumentFragment();
-             
-             // [v1.55.007] Left System Buttons (Power, Restart)
-             if (config.left_cluster) {
-                 config.left_cluster.forEach(btn => {
-                     if (btn.visible === false) return;
-                     const el = document.createElement('button');
-                     el.id = `header-btn-l-${btn.id}`;
-                     el.title = btn.title;
-                     el.className = 'tool-icon-btn header-orchestrated-btn';
-                     
-                     const size = (btn.size || layout.btn_size || 24) + 'px';
-                     const color = btn.color || 'var(--text-primary)';
-                     const borderColor = btn.border_color || 'rgba(255, 255, 255, 0.1)';
-                     const bgAlpha = btn.bg_alpha || '12';
+            const clusterFragment = document.createDocumentFragment();
 
-                     el.style.cssText = `
+            // [v1.55.007] Left System Buttons (Power, Restart)
+            if (config.left_cluster) {
+                config.left_cluster.forEach(btn => {
+                    if (btn.visible === false) return;
+                    const el = document.createElement('button');
+                    el.id = `header-btn-l-${btn.id}`;
+                    el.title = btn.title;
+                    el.className = 'tool-icon-btn header-orchestrated-btn';
+
+                    const size = (btn.size || layout.btn_size || 24) + 'px';
+                    const color = btn.color || 'var(--text-primary)';
+                    const borderColor = btn.border_color || 'rgba(255, 255, 255, 0.1)';
+                    const bgAlpha = btn.bg_alpha || '12';
+
+                    el.style.cssText = `
                         width: ${size} !important; height: ${size} !important;
                         min-width: ${size} !important; min-height: ${size} !important;
                         margin-right: ${layout.btn_gap || 8}px;
@@ -2166,75 +2166,75 @@ async function orchestrateHeaderUI(retryCount = 0) {
                         cursor: pointer; pointer-events: auto; transition: all 0.2s ease;
                      `;
 
-                     const iconSize = Math.floor(parseInt(size) * 0.6);
-                     el.innerHTML = renderIcon(btn.icon, iconSize, btn.stroke_width || 2.5);
-                     
-                     el.onclick = (e) => {
-                         e.preventDefault();
-                         logAction(btn.id, btn.action);
-                         eval(btn.action);
-                     };
+                    const iconSize = Math.floor(parseInt(size) * 0.6);
+                    el.innerHTML = renderIcon(btn.icon, iconSize, btn.stroke_width || 2.5);
 
-                     clusterFragment.appendChild(el);
-                     logSpawn(el.id);
-                 });
-             }
+                    el.onclick = (e) => {
+                        e.preventDefault();
+                        logAction(btn.id, btn.action);
+                        eval(btn.action);
+                    };
 
-             // [v1.55.003] Logo Handling
-             const logoConfig = config.logo || {};
-             if (logoConfig.visible) {
-                 const logoDiv = document.createElement('div');
-                 logoDiv.className = 'header-logo-pulsar';
-                 logoDiv.innerHTML = `<span id="header-logo-text" class="logo-text">${logoConfig.text || "dict"}</span>`;
-                 clusterFragment.appendChild(logoDiv);
-                 logSpawn('header-logo-container');
-             }
+                    clusterFragment.appendChild(el);
+                    logSpawn(el.id);
+                });
+            }
 
-             // [v1.55.010] Technical HUD Orchestration & Logging
-             const hud = document.getElementById('header-technical-hud');
-             if (hud) {
-                 const pills = hud.querySelectorAll('.hud-pill');
-                 pills.forEach(pill => {
-                     const valNode = pill.querySelector('.hud-val');
-                     if (valNode && valNode.id) logSpawn(valNode.id);
-                     else logSpawn('hud-pill-generic');
-                 });
-             }
+            // [v1.55.003] Logo Handling
+            const logoConfig = config.logo || {};
+            if (logoConfig.visible) {
+                const logoDiv = document.createElement('div');
+                logoDiv.className = 'header-logo-pulsar';
+                logoDiv.innerHTML = `<span id="header-logo-text" class="logo-text">${logoConfig.text || "dict"}</span>`;
+                clusterFragment.appendChild(logoDiv);
+                logSpawn('header-logo-container');
+            }
 
-             // Navigation Tabs Container (Level 1)
-             const tabContainer = document.createElement('div');
-             tabContainer.id = 'header-nav-buttons';
-             tabContainer.style.cssText = `display: flex; gap: 4px; align-items: center;`;
+            // [v1.55.010] Technical HUD Orchestration & Logging
+            const hud = document.getElementById('header-technical-hud');
+            if (hud) {
+                const pills = hud.querySelectorAll('.hud-pill');
+                pills.forEach(pill => {
+                    const valNode = pill.querySelector('.hud-val');
+                    if (valNode && valNode.id) logSpawn(valNode.id);
+                    else logSpawn('hud-pill-generic');
+                });
+            }
 
-             const midTabs = config.mid_tabs || [];
-             midTabs.forEach(tab => {
-                 if (tab.visible === false) return;
-                 const btn = document.createElement('button');
-                 btn.id = `nav-btn-${tab.id}`;
-                 btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
-                 btn.innerText = tab.label;
-                 btn.onclick = (e) => {
-                     logAction(tab.id, tab.action);
-                     if (tab.action.includes('switchMainCategory')) {
-                         switchMainCategory(tab.id, btn);
-                     } else {
-                         eval(tab.action);
-                     }
-                 };
-                 tabContainer.appendChild(btn);
-                 logSpawn(btn.id);
-             });
-             clusterFragment.appendChild(tabContainer);
+            // Navigation Tabs Container (Level 1)
+            const tabContainer = document.createElement('div');
+            tabContainer.id = 'header-nav-buttons';
+            tabContainer.style.cssText = `display: flex; gap: 4px; align-items: center;`;
 
-             primaryCluster.innerHTML = '';
-             primaryCluster.appendChild(clusterFragment);
+            const midTabs = config.mid_tabs || [];
+            midTabs.forEach(tab => {
+                if (tab.visible === false) return;
+                const btn = document.createElement('button');
+                btn.id = `nav-btn-${tab.id}`;
+                btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
+                btn.innerText = tab.label;
+                btn.onclick = (e) => {
+                    logAction(tab.id, tab.action);
+                    if (tab.action.includes('switchMainCategory')) {
+                        switchMainCategory(tab.id, btn);
+                    } else {
+                        eval(tab.action);
+                    }
+                };
+                tabContainer.appendChild(btn);
+                logSpawn(btn.id);
+            });
+            clusterFragment.appendChild(tabContainer);
+
+            primaryCluster.innerHTML = '';
+            primaryCluster.appendChild(clusterFragment);
         }
 
         // 2. Secondary Cluster Orchestration (Right)
         const secondaryCluster = document.querySelector('.nav-cluster.secondary-cluster');
         if (secondaryCluster && config.right_cluster) {
             secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
-            
+
             const orchestratedButtons = document.createElement('div');
             orchestratedButtons.className = 'header-sys-cluster';
             orchestratedButtons.style.cssText = `display: flex; gap: ${layout.btn_gap || 8}px; align-items: center;`;
@@ -2250,7 +2250,7 @@ async function orchestrateHeaderUI(retryCount = 0) {
                 const size = (btn.size || layout.btn_size || 28) + 'px';
                 const color = btn.color || 'var(--text-secondary)';
                 const borderColor = btn.border_color || 'rgba(255, 255, 255, 0.1)';
-                
+
                 el.style.cssText = `
                     width: ${size} !important; height: ${size} !important;
                     min-width: ${size} !important; min-height: ${size} !important;
@@ -2346,11 +2346,11 @@ document.addEventListener('keydown', (e) => {
  * [v1.54.018] updateWorkstationIdentity (SSOT Persistence)
  * Synchronizes the browser document title with the backend configuration.
  */
-window.updateWorkstationIdentity = function() {
+window.updateWorkstationIdentity = function () {
     const config = window.CONFIG || {};
     const version = config.version || 'v1.54.018';
     const release = config.ui_evolution_mode === 'rebuild' ? 'MASTER' : 'STABLE';
-    
+
     console.info(`[UI-NAV] Synchronizing Identity: ${version} (${release})`);
     document.title = `Media Viewer ${version} - ${release}`;
 };
