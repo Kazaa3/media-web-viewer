@@ -542,7 +542,7 @@ if __name__ == "__main__":
         sys.exit(1)
         
     # 5. Log Session Details
-    log_session_diagnostics()
+    log_self_diagnostics()
     
     # 6. Start Eel Application
     start_app()
