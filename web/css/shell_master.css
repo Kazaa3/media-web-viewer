@@ -595,3 +595,10 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
 .quality-high { color: var(--accent-success) !important; text-shadow: 0 0 8px rgba(0, 255, 204, 0.3); }
 .quality-std  { color: var(--accent-primary) !important; }
 .quality-low  { color: #ff3b30 !important; font-weight: 800; }
+
+/* [v1.35.65] DOM AUDITOR OVERLAY HOOK */
+#dom-auditor-hud {
+    z-index: 100010 !important;
+    font-family: var(--font-family);
+    transition: all var(--transition-fluid);
+}
