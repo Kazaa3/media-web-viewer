@@ -1,3 +1,61 @@
+# Forensic Workstation Navigation & DOM Restoration Plan
+
+The goal is to resolve the broken Level 2 sub-navigation and the missing right-side SVG icons in the Forensic Media Workstation. The core issue is that the `orchestrateHeaderUI` function, which builds the header DOM dynamically, is either missing or trapped in a legacy file (`app.html`), while the system is booting from `shell_master.html`.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+The `orchestrateHeaderUI` function will be migrated from an inline script in `app.html` to `ui_nav_helpers.js`. This will make it the single source of truth for header construction across all views.
+
+**WARNING**
+
+We will update the Level 2 menu rendering to include labels AND icons. This changes the visual layout of the sub-nav pills to match the premium forensic aesthetic.
+
+---
+
+## Proposed Changes
+
+### 1. Centralize Header Orchestration
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Implement `orchestrateHeaderUI` (v1.54.023+) logic here.
+	- Add support for building the primary-cluster, secondary-cluster, and logo area dynamically from `GLOBAL_CONFIG`.
+	- Update `updateGlobalSubNav` to include SVG icons for Level 2 pills.
+	- Add a safety check to ensure icons are loaded in the DOM before rendering.
+- **[MODIFY] `app_core.js`**
+	- Ensure `orchestrateHeaderUI` is called during the boot sequence after `FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html')`.
+	- Remove redundant or conflicting manual DOM manipulation for the header logo.
+
+### 2. UI Structure Hardening
+- **[MODIFY] `shell_master.html`**
+	- Ensure `#header-nav-buttons`, `#header-right-system-cluster`, and `.header-logo-pulsar` exist with the correct IDs expected by the orchestrator.
+	- Standardize the CSS class usage for orchestrated buttons (`header-orchestrated-btn`).
+
+### 3. SVG Icon Support
+- **[MODIFY] `fragments/icons.html`**
+	- Ensure all required icons (e.g., `icon-power`, `icon-refresh`, `icon-pulse`, `icon-shield`) are present and correctly matched to the IDs in `config_master.py`.
+
+---
+
+## Open Questions
+- Should we keep the existing static buttons in `shell_master.html` as fallbacks, or should the orchestrator clear them entirely during boot?
+- Do you want a specific color theme for the Level 2 icons, or should they follow the main category color?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Refresh the browser and verify the "PID / BOOT / UP" technical HUD appears.
+- Navigate between "Audio", "Multimedia", and "Extended" to ensure Level 2 sub-menus hydrate with icons.
+- Check the console for `[DOM-RENDER]` and `[HYD-AUDIT]` success logs.
+
+### Manual Verification
+- Clicking the right-side icons (Diagnostics, Sync, Theme) should trigger their respective JS functions.
+- The "Power" button should show its red hover effect.
+- Level 2 pills should remain populated even after clicking.
 # [Nuclear restoration] Header & Interaction Pulse v16
 
 The workstation header and boot sequence are experiencing a "Sync-Lock" where action buttons are vanishing and library hydration is stalled. This plan implements Atomic Reconstruction of the top row to ensure 100% visibility and interaction stability.

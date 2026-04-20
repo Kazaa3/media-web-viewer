@@ -912,17 +912,7 @@ function switchMainCategory(category, btn) {
     if (window.WindowManager && typeof window.WindowManager.activate === 'function') {
         window.WindowManager.activate(activeTab);
     } else if (typeof switchTab === 'function') {
-        switchTab(activeTab);
-    }
-        'debug': 'debug',
-        'tests': 'tests',
-        'file': 'file',
-        'parser': 'parser'
-    };
-
-    if (categoryDefaults[category]) {
-        console.log(`[UI-NAV] Mapping Category [${category}] to Tab [${categoryDefaults[category]}]`);
-        switchTab(categoryDefaults[category], btn);
+        switchTab(activeTab, btn);
     }
 
     // Dynamically populate sub-navigation header pills (Atomic Engine v1.41.112 Hard-Trigger)
@@ -970,14 +960,36 @@ function updateGlobalSubNav(category) {
     const pillClass = isRebuild ? 'rebuild-pill' : 'sub-pill-btn';
 
     const prevContent = container.innerHTML;
-    const newContent = entries.map(item => `
-        <button id="sub-nav-pill-${item.id}" 
-                class="${pillClass} ${activeSubTab === item.id ? 'active' : ''}" 
-                onclick="${item.action}"
-                title="${item.label}">
-            ${item.label}
-        </button>
-    `).join('');
+    const newContent = entries.map(item => {
+        // [v1.54.050] Dynamic Icon Support for Level 2 Pills
+        let iconHtml = '';
+        if (item.id === 'lyrics') {
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-music"></use></svg>';
+        } else if (item.id === 'playlist') {
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-playlist"></use></svg>';
+        } else if (item.id === 'warteschlange' || item.id === 'queue') {
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-menu"></use></svg>';
+        } else if (item.id.includes('health') || item.id.includes('status')) {
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-pulse"></use></svg>';
+        } else if (item.id.includes('recovery')) {
+            iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-shield"></use></svg>';
+        } else if (item.id.includes('lib') || item.id.includes('visual')) {
+             iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-library"></use></svg>';
+        } else if (item.id.includes('vid') || item.id.includes('cinema')) {
+             iconHtml = '<svg width="10" height="10" style="margin-right: 6px;"><use href="#icon-video"></use></svg>';
+        }
+
+        return `
+            <button id="sub-nav-pill-${item.id}" 
+                    class="${pillClass} ${activeSubTab === item.id ? 'active' : ''}" 
+                    onclick="${item.action}"
+                    title="${item.label}"
+                    style="display: flex; align-items: center;">
+                ${iconHtml}
+                <span>${item.label}</span>
+            </button>
+        `;
+    }).join('');
 
     if (newContent) {
         console.debug(`[DOM-RENDER] Injecting ${entries.length} items into #${container.id}`);
@@ -2075,7 +2087,134 @@ window.dumpNavDom = function () {
 };
 
 
-// Created with MWV v1.46.00-MASTER
+/**
+ * orchestrateHeaderUI (v1.55.001 Hardened)
+ * Dynamically rebuilds the header clusters based on GLOBAL_CONFIG.
+ * Includes a recursive wait-for-icons pulse to prevent empty render circles.
+ */
+async function orchestrateHeaderUI(retryCount = 0) {
+    try {
+        const config = window.CONFIG?.ui_settings?.header_orchestrator;
+        if (!config) {
+            if (retryCount < 10) {
+                console.warn(`[HEADER] Config missing. Retrying (${retryCount}/10)...`);
+                setTimeout(() => orchestrateHeaderUI(retryCount + 1), 200);
+            }
+            return;
+        }
+
+        // [v1.55.002] Robust Icon Registry Sentinel
+        const registry = document.getElementById('svg-icons-placeholder');
+        const hasIcons = registry && registry.querySelector('symbol, svg');
+        
+        if (!hasIcons && retryCount < 25) {
+             console.warn(`[HEADER] Icon Registry not yet hydrated. Awaiting symbols (${retryCount}/25)...`);
+             setTimeout(() => orchestrateHeaderUI(retryCount + 1), 150);
+             return;
+        }
+
+        console.info("[DOM-RENDER] Starting Header Orchestration Pulse...");
+
+        // 1. Primary Cluster Orchestration (Left)
+        const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
+        if (primaryCluster && config.left_cluster) {
+             const clusterFragment = document.createDocumentFragment();
+             
+             // [v1.55.003] Logo Handling
+             const logoConfig = config.logo || {};
+             if (logoConfig.visible) {
+                 const logoDiv = document.createElement('div');
+                 logoDiv.className = 'header-logo-pulsar';
+                 logoDiv.innerHTML = `<span id="header-logo-text">${logoConfig.text || "dict"}</span>`;
+                 logoDiv.style.cssText = `
+                    font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -1px; margin-right: 20px;
+                 `;
+                 clusterFragment.appendChild(logoDiv);
+             }
+
+             // Navigation Tabs Container (Level 1)
+             const tabContainer = document.createElement('div');
+             tabContainer.id = 'header-nav-buttons';
+             tabContainer.style.display = 'flex';
+             tabContainer.style.gap = '4px';
+
+             const midTabs = config.mid_tabs || [];
+             midTabs.forEach(tab => {
+                 if (tab.visible === false) return;
+                 const btn = document.createElement('button');
+                 btn.id = `nav-btn-${tab.id}`;
+                 btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
+                 btn.innerText = tab.label;
+                 btn.onclick = (e) => {
+                     if (tab.action.includes('switchMainCategory')) {
+                         switchMainCategory(tab.id, btn);
+                     } else {
+                         eval(tab.action);
+                     }
+                 };
+                 tabContainer.appendChild(btn);
+             });
+             clusterFragment.appendChild(tabContainer);
+
+             primaryCluster.innerHTML = '';
+             primaryCluster.appendChild(clusterFragment);
+        }
+
+        // 2. Secondary Cluster Orchestration (Right)
+        const secondaryCluster = document.querySelector('.nav-cluster.secondary-cluster');
+        if (secondaryCluster && config.right_cluster) {
+            const layout = window.CONFIG?.header_layout || { btn_size: 28, btn_gap: 8 };
+            secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
+            
+            // Clear existing but keep HUD if present (or build HUD dynamically)
+            const orchestratedButtons = document.createElement('div');
+            orchestratedButtons.className = 'header-sys-cluster';
+            orchestratedButtons.style.display = 'flex';
+            orchestratedButtons.style.gap = (layout.btn_gap || 8) + 'px';
+
+            config.right_cluster.forEach(btn => {
+                if (btn.visible === false) return;
+
+                const el = document.createElement('button');
+                el.id = `header-btn-r-${btn.id}`;
+                el.title = btn.title;
+                el.className = 'tool-icon-btn';
+
+                const size = (btn.size || layout.btn_size || 28) + 'px';
+                const color = btn.color || 'var(--text-secondary)';
+                
+                el.style.cssText = `
+                    width: ${size}; height: ${size}; color: ${size};
+                    display: flex; align-items: center; justify-content: center;
+                `;
+
+                const mapping = config.icon_mapping || {};
+                const iconId = mapping[btn.icon] || `icon-${btn.icon}`;
+                const iconSize = Math.floor(parseInt(size) * 0.6);
+
+                el.innerHTML = `<svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#${iconId}"></use></svg>`;
+                el.onclick = (e) => {
+                    e.preventDefault();
+                    eval(btn.action);
+                };
+                orchestratedButtons.appendChild(el);
+            });
+
+            // Standard approach: Replace old sys cluster
+            const oldCluster = secondaryCluster.querySelector('.header-sys-cluster');
+            if (oldCluster) {
+                secondaryCluster.replaceChild(orchestratedButtons, oldCluster);
+            } else {
+                secondaryCluster.appendChild(orchestratedButtons);
+            }
+        }
+    } catch (err) {
+        console.error("[HEADER-FAULT] Orchestration crashed.", err);
+    }
+}
+window.orchestrateHeaderUI = orchestrateHeaderUI;
+
+// Created with MWV v1.55.001-MASTER
 /**
  * [v1.46.017] Centralized Level 4 Fragment Orchestrator
  */

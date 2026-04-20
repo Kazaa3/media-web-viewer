@@ -347,6 +347,7 @@ window.hydrateCategoryDropdown = function (branchId) {
 
              console.info(`[UI-NAV] Filter Change: ${newFilter}. Triggering Pulse...`);
              if (typeof setLibraryFilter === 'function') setLibraryFilter(newFilter);
+         };
     });
 };
 
@@ -647,23 +648,18 @@ window.addEventListener('DOMContentLoaded', async () => {
             syncUiGeometry(config);
 
             // [v1.43] MASTER NAVIGATION RENDER
-            renderMasterNav(config);
-
             if (config.ui_evolution_mode === 'rebuild') {
                 console.warn(">>> [ORCHESTRATOR] EVOLUTION MODE: REBUILD ACTIVE <<<");
-                if (typeof FragmentLoader !== 'undefined') {
-                    // Level 1: Master Header Rebuild
-                    FragmentLoader.load('master-header-container', 'fragments/rebuild/menu_l1.html', () => {
-                        console.log("[NAV] Level 1 Stage Ready.");
-                    });
-
-                    // Level 2: Sub-Nav Neck Rebuild
-                    FragmentLoader.load('sub-nav-container', 'fragments/rebuild/menu_l2.html', () => {
-                        console.log("[NAV] Level 2 Stage Ready. Syncing default category...");
-                        const activeCat = localStorage.getItem('mwv_active_category') || 'media';
-                        if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav(activeCat);
-                    });
+                // [v1.55] Decoupled: Using orchestrateHeaderUI instead of static fragments
+                if (typeof orchestrateHeaderUI === 'function') {
+                    orchestrateHeaderUI();
                 }
+
+                // Initial L2 Sync
+                const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+                if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav(activeCat);
+            } else {
+                renderMasterNav(config);
             }
         }
     } catch (e) {
