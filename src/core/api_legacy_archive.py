@@ -7785,127 +7785,14 @@ def get_forensic_thresholds():
     return BITRATE_QUALITY_THRESHOLDS
 
 
-
-
-
+"""
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
 
     def test_remux_mkv_mp4(self):
         """MKV -> MP4 Lossless Check"""
-        from src.parsers.format_utils import ffprobe_suite
-        out = PROJECT_ROOT / "cache" / f"test_remux_{Path(self.input).stem}.mp4"
-        cmd = ['ffmpeg', '-y', '-i', self.input, '-c', 'copy', '-movflags', '+faststart', str(out)]
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=60)
-            output_analysis = ffprobe_suite(out)
-
-            # Simple validation
-            v_match = self.input_analysis.get('video_codec') == output_analysis.get('video_codec')
-            d_match = abs(self.input_analysis.get('duration_min', 0) - output_analysis.get('duration_min', 0)) < 0.2
-
-            return {
-                'name': 'MKV->MP4 Remux',
-                'status': 'pass' if (v_match and d_match) else 'fail',
-                'details': f"In: {self.input_analysis.get('video_codec')} | Out: {output_analysis.get('video_codec')}"
-            }
-        except Exception as e:
-            return {'name': 'MKV->MP4 Remux', 'status': 'fail', 'details': str(e)}
-
-    def test_hls_generation(self):
-        """HLS Streaming Segment Test"""
-        out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        playlist = out_dir / "playlist.m3u8"
-
-        cmd = [
-            'ffmpeg', '-y', '-i', self.input,
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
-            str(playlist)
-        ]
-        try:
-            # We only run for a short time to verify segments
-            subprocess.run(cmd, check=True, capture_output=True, timeout=15)
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Generated {len(segments)} HLS segments"
-            }
-        except subprocess.TimeoutExpired:
-            # Timeout is actually okay if segments were created
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Verified {len(segments)} segments before timeout"
-            }
-        except Exception as e:
-            return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
-
-    def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
-        results = [
-            self.test_remux_mkv_mp4(),
-            self.test_hls_generation()
-        ]
-        return results
-
-
-@eel.expose
-
-    def test_hls_generation(self):
-        """HLS Streaming Segment Test"""
-        out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        playlist = out_dir / "playlist.m3u8"
-
-        cmd = [
-            'ffmpeg', '-y', '-i', self.input,
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
-            str(playlist)
-        ]
-        try:
-            # We only run for a short time to verify segments
-            subprocess.run(cmd, check=True, capture_output=True, timeout=15)
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Generated {len(segments)} HLS segments"
-            }
-        except subprocess.TimeoutExpired:
-            # Timeout is actually okay if segments were created
-            segments = list(out_dir.glob("*.ts"))
-            return {
-                'name': 'HLS Generation',
-                'status': 'pass' if len(segments) > 0 else 'fail',
-                'details': f"Verified {len(segments)} segments before timeout"
-            }
-        except Exception as e:
-            return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
-
-    def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
-        results = [
-            self.test_remux_mkv_mp4(),
-            self.test_hls_generation()
-        ]
-        return results
-
-
-@eel.expose
-
-    def run_full_suite(self):
-        """Runs all enabled pipeline tests."""
-        results = [
-            self.test_remux_mkv_mp4(),
-            self.test_hls_generation()
-        ]
-        return results
-
+        ...
+"""
 
 @eel.expose
 
@@ -8152,8 +8039,7 @@ def get_environment_info(force_refresh=False):
                     source = "importlib_or_pkg_resources"
         except (subprocess.TimeoutExpired, Exception) as e:
             logging.warning(
-                f"pip list failed ({
-                    type(e).__name__}) - using importlib fallback")
+                f"pip list failed ({type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
             source = "importlib_or_pkg_resources"
 
@@ -8541,15 +8427,12 @@ def get_environment_info(force_refresh=False):
         trace_log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(trace_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 80}\n")
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')
-                        }] get_environment_info() called\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] get_environment_info() called\n")
             f.write(f"force_refresh: {force_refresh}\n")
             f.write(f"package_count: {len(installed_packages)}\n")
-            f.write(f"installed_packages_source: {
-                    installed_packages_source}\n")
+            f.write(f"installed_packages_source: {installed_packages_source}\n")
             f.write(f"requirements_status: {requirements_status}\n")
-            f.write(f"first_3_packages: {
-                    installed_packages[:3] if installed_packages else 'EMPTY'}\n")
+            f.write(f"first_3_packages: {installed_packages[:3] if installed_packages else 'EMPTY'}\n")
             f.write(f"env_type: {result.get('env_type')}\n")
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
