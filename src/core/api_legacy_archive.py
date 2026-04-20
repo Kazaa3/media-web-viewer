@@ -127,9 +127,7 @@ def set_hydration_mode(mode: str) -> bool:
 def set_mock_data_enabled(enabled):
     pass
 
-@eel.expose
-def set_ui_config_value(key: str, value: Any):
-    pass
+
 
 @eel.expose
 def test_pyautogui():
