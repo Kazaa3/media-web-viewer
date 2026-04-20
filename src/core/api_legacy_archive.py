@@ -8151,9 +8151,7 @@ def get_environment_info(force_refresh=False):
                     packages = _get_packages_fallback()
                     source = "importlib_or_pkg_resources"
         except (subprocess.TimeoutExpired, Exception) as e:
-            logging.warning(
-                f"pip list failed ({
-                    type(e).__name__}) - using importlib fallback")
+            logging.warning(f"pip list failed ({type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
             source = "importlib_or_pkg_resources"
 
