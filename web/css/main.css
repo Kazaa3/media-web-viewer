@@ -2199,6 +2199,20 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
 }
 
+.mock-stage-badge {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--accent-color);
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    margin: 0 4px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
 .provenance-badge.real {
     background: rgba(46, 204, 113, 0.1);
     color: #2ecc71;
