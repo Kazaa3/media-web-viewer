@@ -1,4 +1,4 @@
-import eel
+from src.core.eel_shell import eel
 import sys
 import os
 import subprocess

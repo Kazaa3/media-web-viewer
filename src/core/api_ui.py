@@ -1,4 +1,4 @@
-import eel
+from src.core.eel_shell import eel
 import logging
 import os
 import re

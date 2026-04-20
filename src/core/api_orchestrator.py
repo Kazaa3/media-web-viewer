@@ -158,7 +158,7 @@ def vlc_hls_live_proxy(filename):
 
 # --- Media Orchestration API (Migrated from main.py v1.54.018) ---
 
-@eel.expose
+# @eel.expose # REDUNDANT: Handled by api_streaming or api_legacy_archive recovery
 def get_universal_stream_url(file_path, mode=None, audio_idx=0, subs_idx=None, start_time=0):
     """ Returns the optimal stream URL for a given file and mode. """
     from src.core.mode_router import smart_route

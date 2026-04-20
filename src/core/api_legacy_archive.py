@@ -2302,7 +2302,7 @@ def set_start_page(page):
 
 
 # --- [set_ui_config_value] ---
-# @eel.expose
+# @eel.expose # NEUTRALIZED CONFLICT
 def set_ui_config_value(key: str, value: Any):
     """
     Sets a configuration value in GLOBAL_CONFIG (v1.38.05).
@@ -2694,8 +2694,7 @@ def log_session_diagnostics():
     log.info(f"[System] Active Database: {get_active_db_path()}")
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_session_id():
     """Returns the current backend session ID."""
     return SESSION_ID
@@ -2720,8 +2719,7 @@ def get_best_ffmpeg_encoder():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_universal_stream_url(file_path, mode=None, audio_idx=0, subs_idx=None, start_time=0):
     """
     @brief Returns the optimal stream URL for a given file and mode.
@@ -2752,8 +2750,7 @@ def get_universal_stream_url(file_path, mode=None, audio_idx=0, subs_idx=None, s
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_playback_stats():
     """Returns real-time performance metrics for the Stats Overlay."""
     try:
@@ -2788,27 +2785,23 @@ def get_playback_stats():
         }
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_storage_forensics():
     return api_reporting.get_storage_forensics()
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def check_database_resilience():
     return api_reporting.check_database_resilience()
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def prune_ghost_items(item_ids):
     return api_reporting.prune_ghost_items(item_ids)
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_startup_info():
     """Returns dual-PID forensic info, startup metrics, and background process registry (v1.46.090)."""
     global FRONTEND_PROCESS_ID
@@ -3052,8 +3045,7 @@ def handle_click_batch(events):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def api_extract_metadata(path, name=None, mode='lightweight'):
     """Expose metadata extraction in a consistent dict form for tests/frontend."""
     try:
@@ -4048,8 +4040,6 @@ def set_all_debug_flags(value):
 
 @eel.expose
 
-@eel.expose
-
 def get_db_info():
     """
     @brief Returns summary statistics about the database and logs.
@@ -4082,8 +4072,7 @@ def get_db_info():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_library_forensics():
     return api_reporting.get_library_forensics()
 
@@ -4114,8 +4103,7 @@ def init_db():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_library(force_raw=False, audit_stage=False, active_branch=None):
     return api_library.get_library(force_raw, audit_stage, active_branch)
 
@@ -4242,8 +4230,7 @@ def log_ui_event(event_type: str, name: str, details: str = ""):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_db_stats():
     return api_reporting.get_db_stats()
 
@@ -4330,8 +4317,7 @@ def normalize_isbn(isbn: str) -> str:
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def api_scan_isbn(isbn: str):
     """
     @brief Scans an ISBN and returns metadata (v2.5).
@@ -4480,8 +4466,7 @@ def set_bandwidth_limit(limit_mbps):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def play_media(path):
     """
     @brief Triggers media playback based on the current playback mode.
@@ -4686,8 +4671,7 @@ def apply_large_file_protection(cmd, file_path):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def delete_file(file_path):
     """Deletes high-performance JSON/text files from data/ cache."""
     try:
@@ -4700,8 +4684,7 @@ def delete_file(file_path):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def write_file(file_path, content):
     """Writes high-performance JSON/text files to data/ cache."""
     try:
@@ -4902,8 +4885,7 @@ def get_video_metadata(file_path: str) -> dict:
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_with_ffplay(file_path: str):
     """Explicitly open a file with ffplay using the registry."""
     file_path = resolve_media_path(file_path)
@@ -4936,8 +4918,7 @@ def run_raw_media_probe(item_id):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_with_vlc(file_path: str):
     """Explicitly open a file with VLC (GUI) using the registry."""
     file_path = resolve_media_path(file_path)
@@ -4952,8 +4933,7 @@ def open_with_vlc(file_path: str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_with_cvlc(file_path: str):
     """Explicitly open a file with CVLC (command-line VLC) using the registry."""
     file_path = resolve_media_path(file_path)
@@ -4969,8 +4949,7 @@ def open_with_cvlc(file_path: str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_with_pyvlc(file_path: str):
     """Explicitly open a file with python-vlc (libvlc bindings)."""
     file_path = resolve_media_path(file_path)
@@ -5083,8 +5062,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def send_vlc_command(port, command, val=None):
     """
     @brief Proxies control commands to the local VLC instance's HTTP interface.
@@ -5108,8 +5086,7 @@ def send_vlc_command(port, command, val=None):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_video(file_path: str, player_type: str = "auto", mode: str = "auto",
                source: str = "direct", start_time: float = 0):
     """
@@ -5274,8 +5251,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto",
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def vlc_seek(instance_id, time_seconds):
     """
     @brief Seeks within an active VLC HLS stream by restarting the process with an offset.
@@ -5299,8 +5275,7 @@ def vlc_seek(instance_id, time_seconds):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def play_external_file(path: str):
     """
     @brief Plays a local file that was dropped onto the UI or selected via picker.
@@ -5324,8 +5299,7 @@ def play_external_file(path: str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def play_stream_url(url: str, engine: str = "hls"):
     """
     @brief Returns playback parameters for a specific network stream URL.
@@ -5344,8 +5318,7 @@ def play_stream_url(url: str, engine: str = "hls"):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     """
     @brief Smart routing for video playback as described in videoplayer logbuch.
@@ -5397,8 +5370,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def analyse_media(path):
     """
     @brief Performs deep analysis of a media file.
@@ -5444,8 +5416,7 @@ def write_media_tags(path, tags):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
@@ -5478,8 +5449,7 @@ def open_in_explorer(path_str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def browse_dir(dir_path=None):
     """
     @brief Lists folders and audio files for the in-app file browser.
@@ -5519,8 +5489,7 @@ def browse_dir(dir_path=None):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def pick_folder():
     """
     @brief Opens a native OS folder selection dialog using Tkinter.
@@ -5542,10 +5511,9 @@ def pick_folder():
 
 
 
-@eel.expose
+# @eel.expose # NEUTRALIZED CONFLICT
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def play_vlc(file_path: str):
     """
     @brief Plays a media file in an external VLC window.
@@ -5575,8 +5543,7 @@ def play_vlc(file_path: str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def stop_vlc():
     """
     @brief Stops the VLC player and any external active subprocess players.
@@ -5602,8 +5569,7 @@ def stop_vlc():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def stream_to_vlc(file_path, engine="ffmpeg"):
     """
     @brief Real-time streaming via mkvmerge pipe to VLC.
@@ -5851,16 +5817,14 @@ def mkvmerge_standalone_mode(file_path):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def mediamtx_mode(file_path, variant="hls"):
     """Enhanced handler for MediaMTX GUI integration."""
     return stream_to_mediamtx(file_path, protocol=variant)
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def stream_to_mediamtx(file_path, protocol="hls"):
     """
     @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server) using FFmpeg push.
@@ -6188,8 +6152,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def pick_file(title="Datei auswhlen", filetypes=None):
     """
     @brief Opens a native file picker dialog.
@@ -6631,8 +6594,7 @@ def update_test_metadata(filename, metadata):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def clear_logs():
     """Clear the UI log buffer."""
     log.info("Logs cleared.")
@@ -6757,8 +6719,7 @@ def run_gui_tests():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def ui_trace(message):
     """
     Receives trace messages from the UI and logs them to a centralized file.
@@ -6800,8 +6761,7 @@ def get_media_tracks(filepath):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def extract_subtitle(filepath, track_index):
     """Extracts a specific subtitle track to a temp file."""
     try:
@@ -6819,8 +6779,7 @@ def extract_subtitle(filepath, track_index):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def adjust_subtitle_timing(subtitle_path, offset_ms):
     """Adjusts the timing of a subtitle file."""
     try:
@@ -6834,8 +6793,7 @@ def adjust_subtitle_timing(subtitle_path, offset_ms):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_subtitle_info(subtitle_path):
     """Returns metadata about a subtitle file."""
     try:
@@ -6845,8 +6803,7 @@ def get_subtitle_info(subtitle_path):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def mkv_batch_extract(files, track_type="subtitles"):
     """
     @brief Batch extraction of MKV tracks (Cleaver-style).
@@ -6915,8 +6872,7 @@ def mkv_mux_simple(output_path, input_files):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def hb_encode(input_path, output_path, preset="Very Fast 1080p30"):
     """Encodes a file using HandBrakeCLI."""
     return handbrake.encode(input_path, output_path, preset)
@@ -7084,8 +7040,7 @@ def open_vlc(filepath):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_ffplay(filepath):
     """Opens a file in FFplay."""
     log.info(f"[Video] Opening in FFplay: {filepath}")
@@ -7176,8 +7131,7 @@ def toggle_swyh_rs(enabled: bool):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def open_mpv(filepath):
     """Opens a file in MPV player."""
     log.info(f"[Video] Opening in MPV: {filepath}")
@@ -7254,8 +7208,7 @@ def start_spotify_bridge():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def batch_remux_to_mkv(folder_path):
     """Remuxes all videos in a folder to MKV using mkvmerge."""
     path = Path(folder_path)
@@ -7447,8 +7400,7 @@ def get_media_compatibility_report():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def analyze_media(relpath: str, client: str = 'browser'):
     """
     Deep analysis for routing decisions.
@@ -7514,8 +7466,7 @@ def get_play_source(item_path: str, client: str = 'browser'):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def scan_js_errors():
     """
     @brief Scans app.html for potential JS errors like unguarded .style accesses.
@@ -7555,8 +7506,7 @@ def scan_js_errors():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def check_ui_integrity():
     """
     @brief Checks app.html for structural integrity (div balance, duplicate functions, orphaned catches).
@@ -7697,8 +7647,7 @@ def trigger_ffmpeg_stream(*args, **kwargs):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def analyze_media_item(*args, **kwargs):
     return {"status": "ok"}
 
@@ -7706,8 +7655,7 @@ def analyze_media_item(*args, **kwargs):
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_parser_registry():
     """Returns all available parsers, their capabilities and settings schemas."""
     from src.parsers import media_parser
@@ -7715,8 +7663,7 @@ def get_parser_registry():
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def update_parser_setting(parser_id, key, value):
     """Updates a specific setting for a parser in GLOBAL_CONFIG and persists it."""
     from src.core.config_master import GLOBAL_CONFIG
@@ -7749,8 +7696,7 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
 
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def trigger_workstation_update(force: bool = False):
     """
     Manually triggers the forensic self-healing update cycle during runtime.
@@ -7775,8 +7721,7 @@ def trigger_workstation_update(force: bool = False):
         DEPENDENCY_REGISTRY["bootstrap_governance"]["force_updates"] = orig_force
 
 
-@eel.expose
-
+# @eel.expose # NEUTRALIZED CONFLICT
 def get_forensic_thresholds():
     """
     Returns centralized bitrate quality thresholds for UI parity.

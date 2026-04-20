@@ -1,4 +1,5 @@
 import os
+from src.core.eel_shell import eel
 from pathlib import Path
 from typing import Dict, Any, Optional
 
