@@ -219,7 +219,7 @@ def _get_requirements_status():
 
     requirement_names = set()
 
-    def parse_requirements(file_path, seen=None):
+def parse_requirements(file_path, seen=None):
         if seen is None:
             seen = set()
         # Normalize path for seen set
@@ -1034,7 +1034,7 @@ def get_sys_overview(force_refresh=False):
 
     # ===== Alternative Environments Discovery =====
 
-    def _get_conda_environments():
+def _get_conda_environments():
         """Get list of available Conda environments."""
         environments = []
         try:
@@ -1078,7 +1078,7 @@ def get_sys_overview(force_refresh=False):
             pass
         return sorted(environments, key=lambda x: x["name"])
 
-    def _get_system_pythons():
+def _get_system_pythons():
         """Get list of system Python installations."""
         pythons = []
         search_paths = ["/usr/bin", "/usr/local/bin", "/opt/python"]
@@ -1117,7 +1117,7 @@ def get_sys_overview(force_refresh=False):
 
         return sorted(pythons, key=lambda x: x["version"])
 
-    def _get_packages_fallback():
+def _get_packages_fallback():
         """Fallback method to get packages if pip list fails."""
         packages = []
         try:
@@ -1145,7 +1145,7 @@ def get_sys_overview(force_refresh=False):
                 pass
         return packages
 
-    def _get_installed_packages():
+def _get_installed_packages():
         """Get list of installed packages in current environment."""
         packages = []
         source = "none"
@@ -1220,7 +1220,7 @@ def get_sys_overview(force_refresh=False):
 
         return packages, source
 
-    def _find_local_venvs():
+def _find_local_venvs():
         """Find local venv directories in common locations using Multi-Venv Strategy."""
         venvs = []
 
@@ -1312,7 +1312,7 @@ def get_sys_overview(force_refresh=False):
 
         return venvs
 
-    def _get_mediainfo_status():
+def _get_mediainfo_status():
         """Get runtime status for pymediainfo (python) and mediainfo (system)."""
         cli_path = shutil.which("mediainfo")
         pymediainfo_available = False
@@ -1349,7 +1349,7 @@ def get_sys_overview(force_refresh=False):
             "mediainfo_cli_version": mediainfo_cli_version,
         }
 
-    def _get_runtime_tools_status():
+def _get_runtime_tools_status():
         from src.core.config_master import GLOBAL_CONFIG
         ffmpeg_path = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
@@ -2534,7 +2534,7 @@ def run_app_audit_detached(session_port):
     Background thread that waits for the Eel UI to be ready and then launches
     the Playwright audit script in debug mode.
     """
-    def audit_trigger():
+def audit_trigger():
         log.info(f"[System-Audit] Waiting for UI synchronization on port {session_port}...")
         spawn_event.wait()
         log.info(f"[Guard] Boot Sequence Initiated. Waiting for UI hydration...")
@@ -3397,7 +3397,7 @@ def get_environment_info_dict():
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
     import psutil
 
-    def find_venv_pid(venv_name):
+def find_venv_pid(venv_name):
         """Find PID of a running python process in the given venv (by path match)."""
         venv_path = str((PROJECT_ROOT / venv_name).resolve())
         for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
@@ -3412,7 +3412,7 @@ def get_environment_info_dict():
                 continue
         return None
 
-    def find_browser_pid():
+def find_browser_pid():
         """Try to find the browser PID by looking for chrome/chromium with our port."""
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
@@ -4045,8 +4045,6 @@ def set_all_debug_flags(value):
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
 
-
-@eel.expose
 
 @eel.expose
 
@@ -4777,7 +4775,7 @@ def log_process_stderr(process, name):
         except Exception as e:
             log.debug(f"[Log-Process-Internal] Failed to setup specialized log for {name}: {e}")
 
-    def log_thread():
+def log_thread():
         try:
             for line in process.stderr:
                 try:
@@ -5541,8 +5539,6 @@ def pick_folder():
         return None
 
 
-
-@eel.expose
 
 @eel.expose
 
@@ -7788,7 +7784,7 @@ def get_forensic_thresholds():
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
 
-    def test_remux_mkv_mp4(self):
+def test_remux_mkv_mp4(self):
         'MKV -> MP4 Lossless Check'
         from src.parsers.format_utils import ffprobe_suite
         out = PROJECT_ROOT / "cache" / f"test_remux_{Path(self.input).stem}.mp4"
@@ -7809,7 +7805,7 @@ def get_forensic_thresholds():
         except Exception as e:
             return {'name': 'MKV->MP4 Remux', 'status': 'fail', 'details': str(e)}
 
-    def test_hls_generation(self):
+def test_hls_generation(self):
         'HLS Streaming Segment Test'
         out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -7841,7 +7837,7 @@ def get_forensic_thresholds():
         except Exception as e:
             return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
 
-    def run_full_suite(self):
+def run_full_suite(self):
         'Runs all enabled pipeline tests.'
         results = [
             self.test_remux_mkv_mp4(),
@@ -7852,10 +7848,6 @@ def get_forensic_thresholds():
         ]
         return results
 """
-
-
-@eel.expose
-
 
 
 # === [MULTI-BASELINE DEEP SWEEP ARCHIVE] ===
@@ -7919,7 +7911,7 @@ def get_environment_info(force_refresh=False):
 
     # ===== Alternative Environments Discovery =====
 
-    def _get_conda_environments():
+def _get_conda_environments():
         """Get list of available Conda environments."""
         environments = []
         try:
@@ -7963,7 +7955,7 @@ def get_environment_info(force_refresh=False):
             pass
         return sorted(environments, key=lambda x: x["name"])
 
-    def _get_system_pythons():
+def _get_system_pythons():
         """Get list of system Python installations."""
         pythons = []
         search_paths = ["/usr/bin", "/usr/local/bin", "/opt/python"]
@@ -8002,7 +7994,7 @@ def get_environment_info(force_refresh=False):
 
         return sorted(pythons, key=lambda x: x["version"])
 
-    def _get_packages_fallback():
+def _get_packages_fallback():
         """Fallback method to get packages if pip list fails."""
         packages = []
         try:
@@ -8030,7 +8022,7 @@ def get_environment_info(force_refresh=False):
                 pass
         return packages
 
-    def _get_installed_packages():
+def _get_installed_packages():
         """Get list of installed packages in current environment."""
         packages = []
         source = "none"
@@ -8105,7 +8097,7 @@ def get_environment_info(force_refresh=False):
 
         return packages, source
 
-    def _find_local_venvs():
+def _find_local_venvs():
         """Find local venv directories in common locations using Multi-Venv Strategy."""
         venvs = []
         
@@ -8197,7 +8189,7 @@ def get_environment_info(force_refresh=False):
 
         return venvs
 
-    def _get_mediainfo_status():
+def _get_mediainfo_status():
         """Get runtime status for pymediainfo (python) and mediainfo (system)."""
         cli_path = shutil.which("mediainfo")
         pymediainfo_available = False
@@ -8234,7 +8226,7 @@ def get_environment_info(force_refresh=False):
             "mediainfo_cli_version": mediainfo_cli_version,
         }
 
-    def _get_runtime_tools_status():
+def _get_runtime_tools_status():
         ffmpeg_path = shutil.which("ffmpeg")
         ffprobe_path = shutil.which("ffprobe")
         vlc_cli_path = shutil.which("vlc")
@@ -8507,7 +8499,7 @@ def get_environment_info(force_refresh=False):
 
 
 
-    def matches(it, key):
+def matches(it, key):
         if not isinstance(it, dict):
             return False
         for f in ('name', 'filename', 'path', 'id'):
@@ -8551,8 +8543,6 @@ def _extract_key_from_obj(item_obj: dict) -> str:
             return str(item_obj[k])
     return ""
 
-
-@eel.expose
 
 @eel.expose
 def list_feature_modal_items():
@@ -8675,7 +8665,7 @@ def _session_project_root(session: dict) -> Path | None:
     # Find a free port dynamically to allow multiple sessions
     import socket
 
-    def find_free_port():
+def find_free_port():
         """Find and return a free port for this session."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(('', 0))
@@ -8728,7 +8718,7 @@ def _session_project_root(session: dict) -> Path | None:
             time.sleep(1.0)
 
     @eel.expose
-    def test_pyautogui():
+def test_pyautogui():
         """
         Simple test for pyautogui integration.
         Returns screen size and current mouse position.
@@ -8947,7 +8937,7 @@ def _session_project_root(session: dict) -> Path | None:
 
 
 
-    def ffmpeg_stream():
+def ffmpeg_stream():
         # Auto-detect best encoder for performance
         encoder = get_best_hw_encoder()
         log.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
@@ -9229,8 +9219,6 @@ def read_file(filename, context='logbuch'):
 
 
 @eel.expose
-
-@eel.expose
 def run_selenium_session_tests(options=None):
     """
     Runs Selenium tests by attaching to the running Chrome instance.
@@ -9266,6 +9254,4 @@ def run_selenium_session_tests(options=None):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-
-@eel.expose
 
