@@ -219,7 +219,7 @@ def _get_requirements_status():
 
     requirement_names = set()
 
-def parse_requirements(file_path, seen=None):
+    def parse_requirements(file_path, seen=None):
         if seen is None:
             seen = set()
         # Normalize path for seen set
