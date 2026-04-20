@@ -8695,7 +8695,6 @@ def list_feature_modal_items():
                 try:
                     if open_session_url(existing_url):
                         logging.info("[Session] Opened existing session URL.")
-'''
                 except Exception as e:
                     logging.warning(
                         f"[Session] Failed to open existing session URL: {e}")
@@ -8703,9 +8702,8 @@ def list_feature_modal_items():
             raise SystemExit(0)
 
         logging.warning(
-            f"[Session] Ignoring stale session candidate (PID {
-                existing['pid']}, port {
-                existing['port']}) - URL unreachable.")
+            f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable.")
+'''
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint

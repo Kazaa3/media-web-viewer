@@ -2112,6 +2112,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "vlc_exhaustive_playback_ms": 1000 # Phase 13: Decoupled pulse
     },
 
+    # --- VIDEO FRAMERATE REGISTRY (v1.54.025) ---
+    "video_framerates": {
+        "23.976": {"label": "23.976 fps", "desc": "Kino-Look (NTSC)", "type": "cinematic"},
+        "24":     {"label": "24 fps",     "desc": "Kino-Look (Native)", "type": "cinematic"},
+        "25":     {"label": "25 fps",     "desc": "PAL Standard (Europe)", "type": "broadcast"},
+        "29.97":  {"label": "29.97 fps",  "desc": "NTSC Standard (Web/US)", "type": "broadcast"},
+        "30":     {"label": "30 fps",     "desc": "Standard Online", "type": "broadcast"},
+        "50":     {"label": "50 fps",     "desc": "PAL High-Motion / Slow-Mo", "type": "action"},
+        "59.94":  {"label": "59.94 fps",  "desc": "NTSC High-Motion", "type": "action"},
+        "60":     {"label": "60 fps",     "desc": "Gaming / Action", "type": "action"},
+        "custom": {"label": "Custom",     "desc": "User defined framerate", "type": "manual"}
+    },
+
     # --- AUDIT MASTER REGISTRY (v1.46.132) ---
     # Central SSOT for all audit methods and their configuration.
     # Playwright & Selenium are disabled by default (require separate venv).
