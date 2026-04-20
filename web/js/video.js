@@ -351,6 +351,7 @@ function renderVideoQueue() {
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span class="provenance-badge ${prov}">${provLabel}</span>
+                        ${item.mock_stage ? `<span class="mock-stage-badge" style="font-size: 10px; font-weight: 800; color: var(--accent-color); opacity: 0.8; background: rgba(0, 122, 255, 0.1); padding: 1px 4px; border-radius: 3px;">S${item.mock_stage}</span>` : ''}
                         <strong style="display:block; font-size: 0.9em; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${titleDisplay}</strong>
                     </div>
                     <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6; display: flex; gap: 8px; margin-top: 2px;">

@@ -712,8 +712,31 @@ def load_config_from_file():
             print(f"STDOUT: [Config-Error] Failed to load config: {e}")
 
 from datetime import datetime
+# --- [v1.55.020] FORENSIC MOCK COLLECTION (Centralized Orchestration) ---
+# Multi-Stage Mock Assets for technical hydration and UI stress testing.
+FORENSIC_MOCK_COLLECTION = [
+    # --- STAGE 1: CORE STANDARD (S1) ---
+    { "id": "mock_a3", "name": "Ambient_Rain_3D.mp3",          "path": "mock/a3.mp3", "category": "Audio",   "codec": "MP3",   "bitrate": "320kbps",  "mock_stage": 1, "is_mock": True, "tags": { "title": "City Rain (Binaural)", "artist": "Atmos-X", "album": "Soundscapes", "duration": 600 } },
+    { "id": "mock_a6", "name": "Jazz_Midnight_Session.mp3",   "path": "mock/a6.mp3", "category": "Audio",   "codec": "MP3",   "bitrate": "256kbps",  "mock_stage": 1, "is_mock": True, "tags": { "title": "After Hours", "artist": "The Blue Notes", "album": "Jazz Room", "duration": 520 } },
+    { "id": "mock_a7", "name": "Classical_Requiem.opus",      "path": "mock/a7.opus", "category": "Audio",   "codec": "Opus",  "bitrate": "96kbps",   "mock_stage": 1, "is_mock": True, "tags": { "title": "Requiem in D Minor", "artist": "Symphony Orchestra", "album": "Masterpieces", "duration": 900 } },
+    { "id": "mock_a1", "name": "Cyberpunk_Nocturne.flac",     "path": "mock/a1.flac", "category": "Audio",   "codec": "FLAC",  "bitrate": "1411kbps", "mock_stage": 1, "is_mock": True, "tags": { "title": "Nocturne in Neon", "artist": "Ghost City", "album": "Electric Dreams", "duration": 324 } },
+    
+    # --- STAGE 2: MULTIMEDIA & PODCAST (S2) ---
+    { "id": "mock_p1", "name": "Tech_Weekly_Ep99.m4a",        "path": "mock/p1.m4a", "category": "Podcast", "codec": "AAC",   "bitrate": "128kbps",  "mock_stage": 2, "is_mock": True, "tags": { "title": "AI Agency & The Future", "artist": "Tech Weekly", "album": "Podcast Archive", "duration": 3600 } },
+    { "id": "mock_v1", "name": "Security_Cam_A4.mp4",         "path": "mock/v1.mp4", "category": "Video",   "codec": "H.264", "bitrate": "8Mbps",    "mock_stage": 2, "is_mock": True, "tags": { "title": "Security Footage A4", "artist": "CCTV-Node-09", "duration": 1200 } },
+    { "id": "mock_v2", "name": "Drone_Flyover_HD.mkv",        "path": "mock/v2.mkv", "category": "Video",   "codec": "H.265", "bitrate": "12Mbps",   "mock_stage": 2, "is_mock": True, "tags": { "title": "City Flyover 4K", "artist": "Drone-Unit-7", "duration": 450 } },
+    { "id": "mock_a4", "name": "Deep_Blue_Sub_Bass.ogg",      "path": "mock/a4.ogg", "category": "Audio",   "codec": "Vorbis", "bitrate": "192kbps",  "mock_stage": 2, "is_mock": True, "tags": { "title": "Deep Sea Frequency", "artist": "Sub-Sonic", "album": "Abyss", "duration": 240 } },
+    
+    # --- STAGE 3: TECHNICAL & FORENSIC (S3) ---
+    { "id": "mock_a2", "name": "Forensic_Vocal_Capture_04.wav", "path": "mock/a2.wav", "category": "Audio",   "codec": "PCM",   "bitrate": "2304kbps", "mock_stage": 3, "is_mock": True, "tags": { "title": "Vocal Evidence #04", "artist": "Field Recorder", "album": "Forensic Samples", "duration": 185 } },
+    { "id": "mock_a5", "name": "Lost_Transmission.wav",       "path": "mock/a5.wav", "category": "Audio",   "codec": "PCM",   "bitrate": "1536kbps", "mock_stage": 3, "is_mock": True, "tags": { "title": "Static Signal #01", "artist": "EVP-Hunter", "album": "Classified", "duration": 45 } },
+    { "id": "mock_m1", "name": "Metadata_Test_Extreme.flac",  "path": "mock/m1.flac", "category": "Audio",   "codec": "FLAC",                         "mock_stage": 3, "is_mock": True, "tags": { "title": "Title with Special Char !@#$%", "artist": "Extremely Long Artist Name That Should Be Truncated By The CSS System", "album": "Standard Album", "duration": 10 } },
+    { "id": "mock_v3", "name": "Thermal_Scan_A.mp4",          "path": "mock/v3.mp4", "category": "Video",   "codec": "H.264",                        "mock_stage": 3, "is_mock": True, "tags": { "title": "Thermal Analysis A", "artist": "Scan-Tech", "duration": 300 } }
+]
+
 GLOBAL_CONFIG: Dict[str, Any] = {
     "version": APP_VERSION_FULL,
+    "mock_collection": FORENSIC_MOCK_COLLECTION,  # Centralized Mock Registry
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "branch_id": os.environ.get("MWV_BRANCH", "extended"),
     "orchestrator_version": "v1.53.001-MASTER",
