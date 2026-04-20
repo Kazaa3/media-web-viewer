@@ -700,7 +700,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
 
-        let fragmentsNeeded = 4;
+        let fragmentsNeeded = 5;
         let fragmentsLoaded = 0;
 
         const onFragmentDone = (name) => {
@@ -724,6 +724,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             FragmentLoader.load('modals-placeholder', `fragments/modals_container.html?cb=${cb}`, () => onFragmentDone('modals-res'));
             FragmentLoader.load('svg-icons-placeholder', `fragments/icons.html?cb=${cb}`, () => onFragmentDone('icons'));
             FragmentLoader.load('context-menu-placeholder', `fragments/context_menu.html?cb=${cb}`, () => onFragmentDone('menus'));
+            FragmentLoader.load('dom-auditor-container', `fragments/dom_auditor.html?cb=${cb}`, () => onFragmentDone('auditor-res'));
             FragmentLoader.load('diagnostics-overlay-container', `fragments/diagnostics_sidebar.html?cb=${cb}`, () => onFragmentDone('diags'));
         } else {
             mwv_finalize_boot();

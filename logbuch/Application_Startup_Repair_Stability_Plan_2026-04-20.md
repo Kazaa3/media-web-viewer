@@ -1,3 +1,56 @@
+# Forensic UI: Header Restoration & Layout Hardening
+
+The Forensic Media Workstation UI has been hardened to support higher data density and consistent branding across all diagnostic modes.
+
+---
+
+## Key Accomplishments
+
+### 1. Logo Restoration & Handshake
+- **Dict Logo:** Restored the missing "dict" logo at the top left.
+- **Config-Driven Styling:** The logo now respects `font_size`, `font_weight`, and `color` settings from `config_master.py` directly in the JS injection layer.
+- **Backend Handshake:** Implemented `logSpawn('dict-icon-text')` to provide backend confirmation of logo hydration.
+
+### 2. Header Layout Alignment
+- **Overlap Fix:** Redesigned the flex distribution for the `.master-header` to prevent the right-side system icons from overlapping navigation tabs (e.g., Logbuch, Video).
+- **Cluster Stabilization:**
+	- The Secondary Cluster (Right) is now anchored to the edge with `margin-left: auto` and a stable `flex: 0 0 auto`.
+	- The Primary Cluster (Left/Tabs) now occupies the available space with `flex: 1 1 auto` and proper gap management.
+- **Elite Inversion Fix:** Ensured logo and icon visibility on the white header background.
+
+### 3. Workstation Density (Window Size)
+- **Increased Resolution:** The default window size is now `1600x900` (up from `1280x800`). This provides the necessary horizontal space for the full forensic HUD without tab-shifting or overlapping.
+
+### 4. Library Hydration (Real Items)
+- **Problem:** The database was empty (`ITEMS: 0`), causing real files to be missing from the player view.
+- **Solution:** Implemented a Background Auto-Scan in `api_library.py`. If the system detects 0 items upon hydration, it now automatically triggers a non-blocking scan of the `/media` directory to populate the library.
+
+---
+
+## Visual Changes
+
+**TIP**
+
+The "dict" logo now pulsates and acts as a forensic heartbeat. You should see it between the System Restart button and the Player tab.
+
+---
+
+## CSS Stabilization
+```css
+.master-header > .nav-cluster.secondary-cluster {
+		flex: 0 0 auto;
+		margin-left: auto; /* Force to the rightmost edge */
+		gap: 8px;
+}
+```
+
+---
+
+## Verification Results
+
+- **Window Geometry:** Confirmed (`1600x900`) in `FRONTEND_SETTINGS`.
+- **Logo Hydration:** Logged successfully as 🚀 `[SPAWN-LOG] DICT-ICON-TEXT -> SPAWNED`.
+- **Media Scan:** Background thread initialized; real items in `/media` will now appear after the initial library pulse.
 # Implementation Plan: Forensic UI Layout Hardening & Logo Restoration
 
 The goal is to restore the "dict" logo, fix header layout overlaps in the Elite Inversion theme, increase the workstation window width, and resolve the issue of missing real media items.
