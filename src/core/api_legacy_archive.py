@@ -7784,6 +7784,7 @@ def get_forensic_thresholds():
     from src.core.config_master import BITRATE_QUALITY_THRESHOLDS
     return BITRATE_QUALITY_THRESHOLDS
 
+"""
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
 
@@ -7850,6 +7851,7 @@ def get_forensic_thresholds():
             self.test_hls_generation()
         ]
         return results
+"""
 
 
 @eel.expose
