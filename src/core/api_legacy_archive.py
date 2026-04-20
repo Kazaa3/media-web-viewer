@@ -8750,6 +8750,7 @@ def _session_project_root(session: dict) -> Path | None:
 
 
 
+"""
 # === [V3 DEEP SWEEP ARCHIVE - RECENT PULSES] ===
 # These functions were recovered from recent baselines (Yesterday and Today 07:00).
 
@@ -8821,11 +8822,8 @@ def _session_project_root(session: dict) -> Path | None:
             if profiler:
                 profiler.log_checkpoint("Application Ready", tag="success")
 
-    except Exception as e:
-        print(f"CRITICAL: Eel launch failure: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
+"""
 
 
 
