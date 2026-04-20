@@ -8578,8 +8578,7 @@ def get_environment_info(force_refresh=False):
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
         if matches(it, key):
-            print(f"[DEBUG] move_item_down_by_key: matched idx={
-                  idx} key={key} item={it}")
+            print(f"[DEBUG] move_item_down_by_key: matched idx={idx} key={key} item={it}")
             return move_item_down(idx)
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
@@ -8606,7 +8605,8 @@ def _extract_key_from_obj(item_obj: dict) -> str:
     return ""
 
 
-@eel.expose
+# @eel.expose
+# (Orphaned exposure)
 
 @eel.expose
 def list_feature_modal_items():
@@ -8651,8 +8651,7 @@ def list_feature_modal_items():
     return items
 
 
-@eel.expose
-
+"""
     def _session_project_root(session: dict) -> Path | None:
         cmdline = str(session.get('cmdline', '') or '')
         if not cmdline:
@@ -8686,9 +8685,7 @@ def list_feature_modal_items():
 
         if is_session_url_reachable(existing_url, timeout=0.8):
             logging.warning(
-                f"[Session] Existing session detected (PID {
-                    existing['pid']}, port {
-                    existing['port']}). " "Skipping new window launch.")
+                f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). Skipping new window launch.")
             logging.info(f"[Session] Existing session URL: {existing_url}")
 
             if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
@@ -8698,6 +8695,7 @@ def list_feature_modal_items():
                 try:
                     if open_session_url(existing_url):
                         logging.info("[Session] Opened existing session URL.")
+"""
                 except Exception as e:
                     logging.warning(
                         f"[Session] Failed to open existing session URL: {e}")
