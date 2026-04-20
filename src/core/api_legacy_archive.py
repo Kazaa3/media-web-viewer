@@ -7790,7 +7790,7 @@ def get_forensic_thresholds():
 
 # === [DEEP SWEEP ARCHIVE] ===
 # These functions were found in commit db1d29f7 but were missing from the current architecture.
-"""
+'''
     def test_remux_mkv_mp4(self):
         """MKV -> MP4 Lossless Check"""
         from src.parsers.format_utils import ffprobe_suite
@@ -7908,7 +7908,7 @@ def get_forensic_thresholds():
 
 
 @eel.expose
-"""
+'''
 
 
 
@@ -8651,7 +8651,7 @@ def list_feature_modal_items():
     return items
 
 
-"""
+'''
     def _session_project_root(session: dict) -> Path | None:
         cmdline = str(session.get('cmdline', '') or '')
         if not cmdline:
@@ -8695,7 +8695,7 @@ def list_feature_modal_items():
                 try:
                     if open_session_url(existing_url):
                         logging.info("[Session] Opened existing session URL.")
-"""
+'''
                 except Exception as e:
                     logging.warning(
                         f"[Session] Failed to open existing session URL: {e}")
