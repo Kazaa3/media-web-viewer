@@ -33,7 +33,7 @@ const ForensicHydrationBridge = {
                 this.forceEmergencyHydration();
             } else if (this.stage === 1 && !this.isLocked) {
                 const firstItem = (window.allLibraryItems && window.allLibraryItems.length > 0) ? window.allLibraryItems[0] : null;
-                const isReal = firstItem && !firstItem.id?.toString().startsWith('emergency-');
+                const isReal = firstItem && firstItem.is_mock !== true;
                 
                 // [v1.46.079] Auto-Promotion: If real items detected OR if we've been in mock-state for 5+ seconds
                 if (isReal || auditTicks > 3) {
@@ -50,7 +50,7 @@ const ForensicHydrationBridge = {
     forceEmergencyHydration() {
         // [v1.46.056] Hardened Forensic Skip Logic
         const realDbCount = window.__mwv_last_db_count || 0;
-        const hasRealItems = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0 && !window.__mwv_all_library_items[0].id?.toString().startsWith('emergency-'));
+        const hasRealItems = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0 && window.__mwv_all_library_items[0].is_mock !== true);
 
         if (realDbCount > 0 || hasRealItems) {
             console.log(`[HYDRATION-BRIDGE] Skip Stage 1: Real Items verified. DB: ${realDbCount} | FE-Cache: ${hasRealItems}`);
@@ -107,8 +107,8 @@ const ForensicHydrationBridge = {
 
         // Split current registry
         const allItems = window.allLibraryItems || [];
-        let realItems = allItems.filter(it => it.id && !it.id.toString().startsWith('emergency-'));
-        const mockItems = allItems.filter(it => it.id && it.id.toString().startsWith('emergency-'));
+        let realItems = allItems.filter(it => it.is_mock !== true);
+        const mockItems = allItems.filter(it => it.is_mock === true);
 
         // [v1.46.075] Synthetic Diagnostic Integration
         // If realItems is empty, try to pull from RecoveryManager stages (user-requested repair)

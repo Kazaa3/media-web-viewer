@@ -487,7 +487,11 @@ function renderGridView() {
                 </div>
                 <div class="grid-info">
                     <div class="grid-title" title="${item.name}">${displayTitle}${seriesInfo}</div>
-                    <div class="grid-meta">${item.category || ''} | ${item.type || ''}</div>
+                    <div class="grid-meta" style="display: flex; align-items: center; gap: 6px;">
+                        <span class="provenance-badge ${item.is_diag ? 'diag' : (item.is_mock ? 'mock' : 'real')}">${item.is_diag ? '[D]' : (item.is_mock ? '[M]' : '[R]')}</span>
+                        ${item.mock_stage ? `<span class="mock-stage-badge" style="font-size: 9px; font-weight: 800; color: var(--accent-color); opacity: 0.8; background: rgba(0, 122, 255, 0.1); padding: 1px 4px; border-radius: 3px;">S${item.mock_stage}</span>` : ''}
+                        <span>${item.category || ''} | ${item.type || ''}</span>
+                    </div>
                 </div>
             </div>
         `;
