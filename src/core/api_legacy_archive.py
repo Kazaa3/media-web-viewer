@@ -2302,7 +2302,7 @@ def set_start_page(page):
 
 
 # --- [set_ui_config_value] ---
-@eel.expose
+# @eel.expose
 def set_ui_config_value(key: str, value: Any):
     """
     Sets a configuration value in GLOBAL_CONFIG (v1.38.05).
@@ -9005,9 +9005,6 @@ def list_feature_modal_items():
         import traceback
         traceback.print_exc()
         sys.exit(1)
-'''
-
-
 
     def ffmpeg_stream():
         # Auto-detect best encoder for performance
@@ -9291,8 +9288,6 @@ def read_file(filename, context='logbuch'):
 
 
 @eel.expose
-
-@eel.expose
 def run_selenium_session_tests(options=None):
     """
     Runs Selenium tests by attaching to the running Chrome instance.
@@ -9326,8 +9321,5 @@ def run_selenium_session_tests(options=None):
     except subprocess.TimeoutExpired:
         return {"status": "error", "message": "Selenium Test Zeitberschreitung (30s)"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-
-@eel.expose
+        return {"status": "error", "message": str(e)}'''
 
