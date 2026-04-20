@@ -2114,12 +2114,72 @@ async function orchestrateHeaderUI(retryCount = 0) {
         }
 
         console.info("[DOM-RENDER] Starting Header Orchestration Pulse...");
+        const layout = window.CONFIG?.header_layout || { btn_size: 28, btn_gap: 8 };
+
+        // Helper for SVG rendering (v1.55.005)
+        const renderIcon = (iconKey, size, strokeWidth = 2.5) => {
+            const mapping = config.icon_mapping || {};
+            const iconId = mapping[iconKey] || `icon-${iconKey}`;
+            return `<svg class="icon" style="width: ${size}px; height: ${size}px; pointer-events: none; stroke: currentColor; fill: none; stroke-width: ${strokeWidth};"><use href="#${iconId}" xlink:href="#${iconId}"></use></svg>`;
+        };
+
+        // Helper for Backend Logging (v1.55.006)
+        const logSpawn = (id) => {
+            if (typeof eel !== 'undefined' && typeof eel.log_spawn_event === 'function') {
+                eel.log_spawn_event(id, 'SPAWNED');
+            }
+        };
+
+        const logAction = (id, action) => {
+             console.info(`[Header-Action] ${id} triggered: ${action}`);
+             if (typeof eel !== 'undefined' && typeof eel.log_gui_event === 'function') {
+                 eel.log_gui_event(id, 'CLICK', action);
+             }
+        };
 
         // 1. Primary Cluster Orchestration (Left)
         const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
-        if (primaryCluster && config.left_cluster) {
+        if (primaryCluster) {
              const clusterFragment = document.createDocumentFragment();
              
+             // [v1.55.007] Left System Buttons (Power, Restart)
+             if (config.left_cluster) {
+                 config.left_cluster.forEach(btn => {
+                     if (btn.visible === false) return;
+                     const el = document.createElement('button');
+                     el.id = `header-btn-l-${btn.id}`;
+                     el.title = btn.title;
+                     el.className = 'tool-icon-btn header-orchestrated-btn';
+                     
+                     const size = (btn.size || layout.btn_size || 24) + 'px';
+                     const color = btn.color || 'var(--text-primary)';
+                     const borderColor = btn.border_color || 'rgba(255, 255, 255, 0.1)';
+                     const bgAlpha = btn.bg_alpha || '12';
+
+                     el.style.cssText = `
+                        width: ${size} !important; height: ${size} !important;
+                        min-width: ${size} !important; min-height: ${size} !important;
+                        margin-right: ${layout.btn_gap || 8}px;
+                        border-radius: 50%; border: 1px solid ${borderColor};
+                        background: ${color}${bgAlpha}; color: ${color};
+                        display: flex; align-items: center; justify-content: center;
+                        cursor: pointer; pointer-events: auto; transition: all 0.2s ease;
+                     `;
+
+                     const iconSize = Math.floor(parseInt(size) * 0.6);
+                     el.innerHTML = renderIcon(btn.icon, iconSize, btn.stroke_width || 2.5);
+                     
+                     el.onclick = (e) => {
+                         e.preventDefault();
+                         logAction(btn.id, btn.action);
+                         eval(btn.action);
+                     };
+
+                     clusterFragment.appendChild(el);
+                     logSpawn(el.id);
+                 });
+             }
+
              // [v1.55.003] Logo Handling
              const logoConfig = config.logo || {};
              if (logoConfig.visible) {
@@ -2135,8 +2195,7 @@ async function orchestrateHeaderUI(retryCount = 0) {
              // Navigation Tabs Container (Level 1)
              const tabContainer = document.createElement('div');
              tabContainer.id = 'header-nav-buttons';
-             tabContainer.style.display = 'flex';
-             tabContainer.style.gap = '4px';
+             tabContainer.style.cssText = `display: flex; gap: 4px; align-items: center;`;
 
              const midTabs = config.mid_tabs || [];
              midTabs.forEach(tab => {
@@ -2146,6 +2205,7 @@ async function orchestrateHeaderUI(retryCount = 0) {
                  btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
                  btn.innerText = tab.label;
                  btn.onclick = (e) => {
+                     logAction(tab.id, tab.action);
                      if (tab.action.includes('switchMainCategory')) {
                          switchMainCategory(tab.id, btn);
                      } else {
@@ -2153,6 +2213,7 @@ async function orchestrateHeaderUI(retryCount = 0) {
                      }
                  };
                  tabContainer.appendChild(btn);
+                 logSpawn(btn.id);
              });
              clusterFragment.appendChild(tabContainer);
 
@@ -2163,14 +2224,11 @@ async function orchestrateHeaderUI(retryCount = 0) {
         // 2. Secondary Cluster Orchestration (Right)
         const secondaryCluster = document.querySelector('.nav-cluster.secondary-cluster');
         if (secondaryCluster && config.right_cluster) {
-            const layout = window.CONFIG?.header_layout || { btn_size: 28, btn_gap: 8 };
             secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
             
-            // Clear existing but keep HUD if present (or build HUD dynamically)
             const orchestratedButtons = document.createElement('div');
             orchestratedButtons.className = 'header-sys-cluster';
-            orchestratedButtons.style.display = 'flex';
-            orchestratedButtons.style.gap = (layout.btn_gap || 8) + 'px';
+            orchestratedButtons.style.cssText = `display: flex; gap: ${layout.btn_gap || 8}px; align-items: center;`;
 
             config.right_cluster.forEach(btn => {
                 if (btn.visible === false) return;
@@ -2178,26 +2236,44 @@ async function orchestrateHeaderUI(retryCount = 0) {
                 const el = document.createElement('button');
                 el.id = `header-btn-r-${btn.id}`;
                 el.title = btn.title;
-                el.className = 'tool-icon-btn';
+                el.className = 'tool-icon-btn header-orchestrated-btn';
 
                 const size = (btn.size || layout.btn_size || 28) + 'px';
                 const color = btn.color || 'var(--text-secondary)';
+                const borderColor = btn.border_color || 'rgba(255, 255, 255, 0.1)';
                 
                 el.style.cssText = `
-                    width: ${size}; height: ${size}; color: ${size};
+                    width: ${size} !important; height: ${size} !important;
+                    min-width: ${size} !important; min-height: ${size} !important;
+                    border-radius: 50%; border: 1px solid ${borderColor};
+                    background: transparent; color: ${color};
                     display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; pointer-events: auto; transition: all 0.2s ease;
                 `;
 
-                const mapping = config.icon_mapping || {};
-                const iconId = mapping[btn.icon] || `icon-${btn.icon}`;
                 const iconSize = Math.floor(parseInt(size) * 0.6);
+                el.innerHTML = renderIcon(btn.icon, iconSize, btn.stroke_width || 2.5);
 
-                el.innerHTML = `<svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#${iconId}"></use></svg>`;
                 el.onclick = (e) => {
                     e.preventDefault();
+                    logAction(btn.id, btn.action);
                     eval(btn.action);
                 };
+
+                // Hover Effects
+                el.onmouseenter = () => {
+                    el.style.background = 'rgba(255, 255, 255, 0.05)';
+                    el.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    el.style.transform = 'scale(1.1)';
+                };
+                el.onmouseleave = () => {
+                    el.style.background = 'transparent';
+                    el.style.borderColor = borderColor;
+                    el.style.transform = 'scale(1)';
+                };
+
                 orchestratedButtons.appendChild(el);
+                logSpawn(el.id);
             });
 
             // Standard approach: Replace old sys cluster

@@ -1,3 +1,58 @@
+# Forensic Header UI Repair & Logging Plan
+
+The goal is to fix the missing SVG icons in the header (both left and right clusters), restore the missing left-side system buttons (Power, Restart), and implement mandatory backend logging for all spawned UI elements.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+All header buttons will now trigger a backend handshake (`eel.log_spawn_event`) upon creation. This is critical for forensic traceability but adds a small network overhead during boot.
+
+**WARNING**
+
+I will enforce a standardized SVG rendering pattern using both `href` and `xlink:href` to ensure cross-browser compatibility for the icon symbols.
+
+---
+
+## Proposed Changes
+
+### 1. Header Orchestrator Refinement
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Fix Left Cluster: Loop through `config.left_cluster` to spawn the Power and Restart buttons before the logo.
+	- Fix SVG Rendering:
+		- Use the high-fidelity SVG pattern: `<svg class="icon" ...><use href="#id" xlink:href="#id"></use></svg>`.
+		- Correct the CSS color bug (was using size instead of color).
+		- Apply `stroke-width` from config if available.
+	- Implement Backend Logging:
+		- Call `eel.log_spawn_event(btn.id, 'SPAWNED')` for every button created.
+		- Call `eel.log_gui_event(btn.id, 'CLICK')` in the `onclick` handler.
+	- Pointer Events: Ensure buttons have `pointer-events: auto` and icons have `pointer-events: none` to guarantee click reliability.
+
+### 2. UI Structure Audit
+- **[MODIFY] `shell_master.html`**
+	- Ensure the `.nav-cluster.primary-cluster` container is properly cleared before orchestration to avoid duplicate logos.
+	- Verify `#svg-icons-placeholder` is present and accessible.
+
+---
+
+## Open Questions
+- Should the "Power" button have a specific red theme, as seen in the legacy `app.html` code, or should it follow the general button styling?
+- Do you want the "Restart" button to have a confirmation dialog before triggering the backend restart?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Refresh workstation and check console for `[DOM-RENDER] Spawning ...` logs.
+- Verify browser network tab for `eel.log_spawn_event` calls.
+
+### Manual Verification
+- Verify that the Power (Red) and Restart icons appear to the left of the Logo.
+- Verify that right-side icons (Diagnostics, Sync, etc.) have visible frames/borders on hover.
+- Click each icon and verify that the backend logs the interaction.
 # Forensic Workstation Navigation & DOM Restoration Plan
 
 The goal is to resolve the broken Level 2 sub-navigation and the missing right-side SVG icons in the Forensic Media Workstation. The core issue is that the `orchestrateHeaderUI` function, which builds the header DOM dynamically, is either missing or trapped in a legacy file (`app.html`), while the system is booting from `shell_master.html`.
