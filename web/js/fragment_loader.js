@@ -138,6 +138,19 @@ const FragmentLoader = {
         // Ensure fragment paths are correctly relative to the web root.
         if (fragmentPath.startsWith('/')) fragmentPath = fragmentPath.substring(1);
 
+        // [v1.54.025] Legacy Path Sanitization: Redirect svg_icons.html to icons.html
+        if (fragmentPath.includes('svg_icons.html')) {
+            console.warn(`[FL] LEGACY PATH DETECTED: Redirecting ${fragmentPath} -> fragments/icons.html`);
+            const version = fragmentPath.includes('?') ? fragmentPath.split('?')[1] : `cb=${Date.now()}`;
+            fragmentPath = `fragments/icons.html?${version}`;
+        }
+
+        // [v1.54.026] Global Cache-Busting: Ensure every fragment has a fresh ?cb= or ?v=
+        if (!fragmentPath.includes('cb=') && !fragmentPath.includes('v=')) {
+            const separator = fragmentPath.includes('?') ? '&' : '?';
+            fragmentPath += `${separator}cb=${Date.now()}`;
+        }
+
         // Return if already loaded (unless we want to force reload)
         if (container.dataset.loaded === 'true') {
             if (callback) callback();

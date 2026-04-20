@@ -774,12 +774,12 @@ document.addEventListener('DOMContentLoaded', () => {
     applyDiagnosticsSidebarState(diagnosticsSidebarVisible);
     syncGlobalDiagnosticsNav(localStorage.getItem(DIAGNOSTICS_VIEW_STORAGE_KEY) || 'debug-db');
 
-    // Load static UI fragments (v1.35.65)
-    if (typeof FragmentLoader !== 'undefined') {
-        FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
-        FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
-        FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
-    }
+    // Load static UI fragments (v1.35.65) - [v1.54.024] MOVED TO app_core.js for Atomic Boot
+    // if (typeof FragmentLoader !== 'undefined') {
+    //     FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
+    //     FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
+    //     FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
+    // }
 
     // [v1.41.145] Sub-Nav and UI Visibility Watchdog
     // Ensures that Level 2 menu entries hydrate even if fragment loading is slow.

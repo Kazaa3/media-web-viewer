@@ -1415,10 +1415,27 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
         # --- [v1.46.01] SYSTEM HEADER ORCHESTRATOR ---
         "header_orchestrator": {
+            "show_left_cluster": True,
+            "show_right_cluster": True,
             "show_logo": True,
             "logo_text": "dict",
+            "icon_mapping": {
+                "power": "icon-power",
+                "refresh": "icon-refresh",
+                "pulse": "icon-pulse",
+                "shield": "icon-shield",
+                "grid": "icon-grid",
+                "db": "icon-db",
+                "diag": "icon-diag",
+                "check": "icon-check",
+                "layout": "icon-layout",
+                "menu": "icon-menu",
+                "sun": "icon-sun",
+                "zen": "icon-zen",
+                "trash": "icon-trash"
+            },
             "left_cluster": [
-                {"id": "power",   "visible": True, "title": "Exit Application", "icon": "power",   "action": "exitApplication()"},
+                {"id": "power",   "visible": True, "title": "Exit Application", "icon": "power",   "action": "exitApplication()", "size": 32, "stroke_width": 2.5},
                 {"id": "restart", "visible": True, "title": "Restart System",   "icon": "refresh", "action": "location.reload()"}
             ],
             "mid_tabs": [
@@ -1437,7 +1454,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 {"id": "video",      "label": "Video",        "visible": True, "action": "switchMainCategory('video', this)"}
             ],
             "right_cluster": [
-                {"id": "status",       "visible": True,  "title": "Toggle Technical HUD",     "icon": "pulse",   "action": "toggleTechnicalHUD()",        "color": "#007aff"},
+                {"id": "status",       "visible": True,  "title": "Toggle Technical HUD",     "icon": "pulse",   "action": "toggleTechnicalHUD()",        "color": "#007aff", "stroke_width": 2.5},
                 {"id": "sync",         "visible": True,  "title": "Toggle Sync Anchor",      "icon": "shield",  "action": "toggleSyncAnchor()",         "color": "#2ecc71"},
                 {"id": "theme",        "visible": True,  "title": "Switch System Theme",     "icon": "sun",     "action": "toggleTheme()",              "color": "#ff9500"},
                 {"id": "footer_hud",   "visible": True,  "title": "Toggle Swiss HUD LED",    "icon": "grid",    "action": "toggleFooterHUD()",          "color": "#9b59b6"},
@@ -1448,16 +1465,36 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 {"id": "sidebar",      "visible": True,  "title": "Toggle Main Sidebar",     "icon": "menu",    "action": "toggleSidebar()",            "color": "#e5e5e7"},
                 {"id": "zen",          "visible": True,  "title": "Toggle Zen Mode",         "icon": "zen",     "action": "toggleZenMode()",            "color": "#2ecc71"},
                 {"id": "reset_db",     "visible": True,  "title": "Reset System Database",   "icon": "trash",   "action": "resetDatabase()",            "color": "#ff3300"}
-            ]
+            ],
+            "logo": {
+                "visible": True,
+                "text": "dict",
+                "font_family": "Inter, sans-serif",
+                "font_size": "18px",
+                "font_weight": "900",
+                "color": "var(--text-primary)",
+                "letter_spacing": "-1px"
+            },
+            "tab_layout": {
+                "font_size": "11px",
+                "font_weight": "600",
+                "padding": "4px 12px",
+                "border_radius": "6px",
+                "height": "26px",
+                "gap": "6px"
+            }
         },
 
         # --- [v1.46.03] SYSTEM STEERING: HEADER & THEME (NEW) ---
         "header_layout": {
-            "btn_size": 26,              # Pixel size (Default: 26)
-            "btn_gap": 6,               # Spacing between buttons (Default: 6)
-            "btn_border_radius": "50%", # Shape (50% = Circle, 6px = Rounded Square)
+            "btn_size": 28,              # Pixel size for ALL header buttons
+            "btn_gap": 8,               # Spacing between buttons
+            "btn_border_radius": "50%", # Shape (50% = Circle)
+            "btn_border_color": "rgba(255, 255, 255, 0.1)",
+            "btn_bg_alpha": "12",       # Hex alpha (12 = ~7%)
             "hover_scale": "1.1",       # Animation scale factor
-            "show_tooltips": True       # Enable hover comments
+            "show_tooltips": True,      # Enable hover comments
+            "force_circular": True      # Force strict aspect-ratio 1:1
         },
         "themes": {
             "active": "forensic_dark",   # Default theme ID

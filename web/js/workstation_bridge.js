@@ -20,7 +20,7 @@ window.MWV_Workstation = {
         
         // 2. Load Workstation Layout Fragment (if not already loaded)
         if (!document.getElementById('forensic-workstation-root')) {
-            await window.loadFragment('/fragments/rebuild/forensic_workstation.html', 'rebuild-stage');
+            await window.FragmentLoader.load('rebuild-stage', 'fragments/rebuild/forensic_workstation.html');
         }
 
         this.active = true;
@@ -42,7 +42,7 @@ window.MWV_Workstation = {
 
         // Clear anchor and load new atomic player
         anchor.innerHTML = '<div class="loading-fragment">Swapping Engines...</div>';
-        await window.loadFragment(fragmentPath, 'workstation-player-anchor');
+        await window.FragmentLoader.load('workstation-player-anchor', fragmentPath.replace(/^\//, ''));
 
         console.log(`[WORKSTATION] ${type.toUpperCase()} Engine Active.`);
         

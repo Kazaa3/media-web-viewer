@@ -130,12 +130,25 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
 
         document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
 
+        if (library.status === 'db_busy') {
+            console.warn(`[DATA-LIB] Backend reported DB_BUSY (Attempt ${retryCount + 1}). Retrying in 3s...`);
+            if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] DB Busy (Attempt ${retryCount + 1})...`, "WARN");
+            if (retryCount < 4) {
+                setTimeout(() => loadLibrary(retryCount + 1), 3000);
+            }
+            return;
+        }
+
     } catch (e) {
         console.error("[DATA-LIB] CRITICAL LOAD ERROR:", e);
         if (typeof updateSyncAnchor === 'function') updateSyncAnchor('ERR', '!');
         if (typeof log_js_error === 'function') log_js_error(e, 'DATA-LIB-LOAD');
-        if (retryCount < 3) {
-            setTimeout(() => loadLibrary(retryCount + 1), 2000);
+        
+        const nextRetry = retryCount + 1;
+        if (nextRetry <= 3) {
+            console.info(`[DATA-LIB] Attempting recovery retry ${nextRetry}/3...`);
+            if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Loading data (Attempt ${nextRetry})...`, "INFO");
+            setTimeout(() => loadLibrary(nextRetry), 2500);
         }
     }
 }
@@ -235,7 +248,12 @@ async function renderLibrary() {
     
     const track = document.getElementById('coverflow-track');
     if (!track) {
-        if (typeof log_js_error === 'function') log_js_error(new Error("#coverflow-track missing"), 'LIBRARY-RENDER');
+        // [v1.54.025] Forensic Hydration Guard: If we are on the library tab but the fragment isn't ready
+        const libPane = document.getElementById('library-panel-container');
+        if (libPane && libPane.classList.contains('active')) {
+            console.warn("[FE-PULSE] #coverflow-track missing. Deferred hydration pulsed...");
+            setTimeout(() => renderLibrary(), 150);
+        }
         return;
     }
 

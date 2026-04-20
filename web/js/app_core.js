@@ -712,15 +712,23 @@ window.addEventListener('DOMContentLoaded', async () => {
             if (typeof window.auditFragmentHydration === 'function') {
                 window.auditFragmentHydration(name, 'success');
             }
+            
+            // [v1.54.024] Header Orchestration Hook: Fire immediately when icons are ready
+            if (name === 'icons') {
+                console.info("[BOOT] Icons hydrated. Pulsing Header Orchestrator...");
+                if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
+            }
+
             if (fragmentsLoaded === fragmentsNeeded) mwv_finalize_boot();
         };
 
         const bootStartTime = Date.now();
         if (typeof FragmentLoader?.load === 'function') {
-            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
-            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html?v=' + Date.now(), () => onFragmentDone('icons'));
-            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
-            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('diags'));
+            const cb = Date.now();
+            FragmentLoader.load('modals-placeholder', `fragments/modals_container.html?cb=${cb}`, () => onFragmentDone('modals-res'));
+            FragmentLoader.load('svg-icons-placeholder', `fragments/icons.html?cb=${cb}`, () => onFragmentDone('icons'));
+            FragmentLoader.load('context-menu-placeholder', `fragments/context_menu.html?cb=${cb}`, () => onFragmentDone('menus'));
+            FragmentLoader.load('diagnostics-overlay-container', `fragments/diagnostics_sidebar.html?cb=${cb}`, () => onFragmentDone('diags'));
         } else {
             mwv_finalize_boot();
         }
@@ -757,10 +765,15 @@ window.addEventListener('DOMContentLoaded', async () => {
                 switchTab(startTab);
             }
 
-            // 4. Data Sync
+            // 4. Data Sync (Non-blocking v1.54.028)
             console.log("Data: Triggering library sync...");
-            if (typeof loadLibrary === 'function') await loadLibrary();
-            if (typeof loadEditItems === 'function') await loadEditItems();
+            (async () => {
+                 try {
+                     if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
+                     if (typeof loadLibrary === 'function') await loadLibrary();
+                     if (typeof loadEditItems === 'function') await loadEditItems();
+                 } catch (e) { console.warn("Background Sync Warning:", e); }
+            })();
 
             // Start stats polling
             if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
@@ -920,7 +933,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeReg('video', {
         shellId: 'video-panel-container',
         fragmentId: 'video-main-viewport',
-        fragmentPath: 'fragments/video_cinema.html',
+        fragmentPath: 'fragments/video_view.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
         }
@@ -928,7 +941,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeReg('tools', {
         shellId: 'tools-panel-container',
         fragmentId: 'tools-main-viewport',
-        fragmentPath: 'fragments/tools_dashboard.html',
+        fragmentPath: 'fragments/tools_panel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
         }
@@ -936,7 +949,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeReg('logbuch', {
         shellId: 'logbook-tab-container',
         fragmentId: 'logbook-main-viewport',
-        fragmentPath: 'fragments/logbook_view.html',
+        fragmentPath: 'fragments/logbuch_panel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
         }
@@ -944,7 +957,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeReg('tests', {
         shellId: 'tests-panel-container',
         fragmentId: 'tests-main-viewport',
-        fragmentPath: 'fragments/test_sentinel.html',
+        fragmentPath: 'fragments/diagnostics_suite.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
         }
@@ -1151,7 +1164,7 @@ function initNuclearBootstrapSentinel() {
                 // Determine fragment path from ID
                 let fragPath = null;
                 if (targetId === 'player-main-viewport') fragPath = 'fragments/player_queue.html';
-                if (targetId === 'library-main-viewport') fragPath = 'fragments/library_grid.html';
+                if (targetId === 'library-main-viewport') fragPath = 'fragments/library_explorer.html';
                 
                 if (fragPath && typeof window.FragmentLoader !== 'undefined') {
                     console.info(`[SENTINEL-NUCLEAR] Forcing Atomic Injection: ${fragPath} -> #${targetId}`);

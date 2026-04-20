@@ -22,12 +22,16 @@ from unittest.mock import MagicMock
 
 # Project-level imports
 from src.core.eel_shell import eel
-from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, FRONTEND_SETTINGS, EEL_SETTINGS, LAUNCH_PROFILE
+from src.core import db, api_testing
+from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, FRONTEND_SETTINGS, EEL_SETTINGS, LAUNCH_PROFILE, APP_VERSION, BACKEND_VERSION, FRONTEND_VERSION
 from src.core.logger import get_logger
-from src.core import db
 from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem
 
 log = get_logger("api_legacy_archive")
+
+STARTUP_TIME = time.time()
+CHECKPOINTS = []
+profiler = None
 
 """
 UNUSED FUNCTIONS (SUPERSEDED OR REDUNDANT):
@@ -3230,7 +3234,7 @@ def test_media_route(path: str):
 
 def get_version():
     """Returns the application version."""
-    return VERSION
+    return APP_VERSION
 
 
 

@@ -196,11 +196,22 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     count_total = 0
 
     try:
-        all_media = db.get_all_media()
-        count_total = len(all_media)
+        # [v1.46.060] Hardened Hydration: Retry internally if DB is busy
+        # This prevents the frontend from receiving an empty set and triggering 
+        # its own aggressive (and redundant) retry logic.
+        max_internal_retries = 3
+        for attempt in range(max_internal_retries):
+            all_media = db.get_all_media()
+            count_total = len(all_media)
+            
+            if count_total > 0 or not db.DB_FILENAME or not os.path.exists(db.DB_FILENAME):
+                break
+                
+            log.warning(f"[BD-AUDIT] Internal Retry {attempt+1}/{max_internal_retries}: DB returned 0 items. Waiting for stabilization...")
+            time.sleep(0.5)
+            
     except Exception as e:
         log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
-        # [v1.46.058] Still try to get the count even if it fails partially
         count_total = 0
         status = "db_busy"
 

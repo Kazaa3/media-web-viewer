@@ -21,37 +21,37 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
     <!-- Core Styles -->
-    <link rel="stylesheet" href="css/main.css?v=1.46.080">
+    <link rel="stylesheet" href="css/main.css?cb=1713643763">
 
     <!-- System & Backend Integration (Load Early) -->
     <script src="/eel.js"></script>
     <!-- Modular Application Helpers -->
-    <script src="js/theme_helpers.js?v=1.46.080"></script>
-    <script src="js/fragment_loader.js?v=1.46.080"></script>
-    <script src="js/window_manager.js?v=1.46.080"></script>
-    <script src="js/environment.js?v=1.46.080"></script>
-    <script src="js/common_helpers.js?v=1.46.080"></script>
-    <script src="js/system_helpers.js?v=1.46.080"></script>
-    <script src="js/ui_core.js?v=1.46.080"></script>
-    <script src="js/ui_nav_helpers.js?v=1.46.080"></script>
-    <script src="js/trace_helpers.js?v=1.46.080"></script>
-    <script src="js/db.js?v=1.46.080"></script>
-    <script src="js/video.js?v=1.46.080"></script>
-    <script src="js/audioplayer.js?v=1.46.080"></script>
-    <script src="js/visualizer_engine.js?v=1.46.008"></script>
-    <script src="js/mwv_hotkeys.js?v=1.46.080"></script>
-    <script src="js/mediacontrols.js?v=1.46.080"></script>
-    <script src="js/bibliothek.js?v=1.46.080"></script>
-    <script src="js/translations.js?v=1.46.080"></script>
-    <script src="js/item.js?v=1.46.080"></script>
-    <script src="js/collections.js?v=1.46.080"></script>
-    <script src="js/options_helpers.js?v=1.46.080"></script>
-    <script src="js/diagnostics/sidebar_controller.js?v=1.46.080"></script>
-    <script src="js/playlists.js?v=1.46.080"></script>
-    <script src="js/app_core.js?v=1.46.080"></script>
-    <script src="js/gui_diagnostics.js?v=1.46.080"></script>
-    <script src="js/dom_hud.js?v=1.46.080"></script>
-    <script src="js/nuclear_recovery_pulse.js?v=1.46.008"></script>
+    <script src="js/theme_helpers.js?cb=1713643763"></script>
+    <script src="js/fragment_loader.js?cb=1713643763"></script>
+    <script src="js/window_manager.js?cb=1713643763"></script>
+    <script src="js/environment.js?cb=1713643763"></script>
+    <script src="js/common_helpers.js?cb=1713643763"></script>
+    <script src="js/system_helpers.js?cb=1713643763"></script>
+    <script src="js/ui_core.js?cb=1713643763"></script>
+    <script src="js/ui_nav_helpers.js?cb=1713643763"></script>
+    <script src="js/trace_helpers.js?cb=1713643763"></script>
+    <script src="js/db.js?cb=1713643763"></script>
+    <script src="js/video.js?cb=1713643763"></script>
+    <script src="js/audioplayer.js?cb=1713643763"></script>
+    <script src="js/visualizer_engine.js?cb=1713643763"></script>
+    <script src="js/mwv_hotkeys.js?cb=1713643763"></script>
+    <script src="js/mediacontrols.js?cb=1713643763"></script>
+    <script src="js/bibliothek.js?cb=1713643763"></script>
+    <script src="js/translations.js?cb=1713643763"></script>
+    <script src="js/item.js?cb=1713643763"></script>
+    <script src="js/collections.js?cb=1713643763"></script>
+    <script src="js/options_helpers.js?cb=1713643763"></script>
+    <script src="js/diagnostics/sidebar_controller.js?cb=1713643763"></script>
+    <script src="js/playlists.js?cb=1713643763"></script>
+    <script src="js/app_core.js?cb=1713643763"></script>
+    <script src="js/gui_diagnostics.js?cb=1713643763"></script>
+    <script src="js/dom_hud.js?cb=1713643763"></script>
+    <script src="js/nuclear_recovery_pulse.js?cb=1713643763"></script>
 
     <style>
         .theme-toggle {
@@ -124,92 +124,186 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             runAtomicBootstrap();
-            // 1. Initial Icon Hydration (v1.46.01) - MOVED TO ATOMIC ORCHESTRATOR
-            
-            // 2. Header Orchestration Pulse
-            setTimeout(() => {
-                if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
-            }, 600);
+            // 1. Initial Icon Hydration (v1.46.01) - MOVED TO app_core.js Handshake
         });
 
-        const SVG_PATHS = {
-            power: 'icon-power',
-            refresh: 'icon-refresh',
-            pulse: 'icon-pulse',
-            shield: 'icon-shield',
-            grid: 'icon-grid',
-            db: 'icon-db',
-            diag: 'icon-diag',
-            check: 'icon-check',
-            layout: 'icon-layout',
-            menu: 'icon-menu',
-            zen: 'icon-zen',
-            trash: 'icon-trash'
-        };
+        // [v1.54.035] SVG Registry moved to config_master.py (Single Source of Truth)
+        // window.CONFIG.ui_settings.header_orchestrator.icon_mapping used instead.
 
         /**
-         * orchestrateHeaderUI (v1.46.02)
+         * orchestrateHeaderUI (v1.54.023 Hardened)
          * Dynamically rebuilds the header clusters based on GLOBAL_CONFIG.
-         * Ensures correct ordering and respects all visibility toggles.
+         * Includes a recursive wait-for-icons pulse to prevent empty render circles.
          */
-        function orchestrateHeaderUI() {
+        async function orchestrateHeaderUI(retryCount = 0) {
             const config = window.CONFIG?.ui_settings?.header_orchestrator;
-            if (!config) return;
+            if (!config) {
+                if (retryCount < 10) {
+                    console.warn(`[HEADER] Config missing. Retrying (${retryCount}/10)...`);
+                    setTimeout(() => orchestrateHeaderUI(retryCount + 1), 200);
+                }
+                return;
+            }
+
+            // [v1.54.040] Robust Icon Registry Sentinel
+            const registry = document.getElementById('svg-icons-placeholder');
+            const hasIcons = registry && registry.querySelector('symbol, svg');
+            
+            if (!hasIcons && retryCount < 25) {
+                 console.warn(`[HEADER] Icon Registry not yet hydrated. Awaiting symbols (${retryCount}/25)...`);
+                 setTimeout(() => orchestrateHeaderUI(retryCount + 1), 150);
+                 return;
+            }
 
             console.info("[HEADER] Starting Orchestration Pulse...");
 
-            // 1. Logo Management (Early return if hidden)
-            const logo = document.querySelector('.header-logo-pulsar');
-            if (logo) {
-                logo.style.display = config.show_logo ? 'flex' : 'none';
-                logo.innerText = config.logo_text || "dict";
+            // [v1.54.029] Centralized Logo Orchestration
+            const logoConfig = config.logo || {};
+            const logoNode = document.querySelector('.header-logo-pulsar');
+            
+            if (logoNode) {
+                // Visibility Toggle
+                logoNode.style.display = logoConfig.visible ? 'flex' : 'none';
+                
+                const logoTextSpan = document.getElementById('header-logo-text');
+                if (logoTextSpan) logoTextSpan.innerText = logoConfig.text || "dict";
+                
+                // Styling Centralization
+                logoNode.style.fontFamily = logoConfig.font_family || 'inherit';
+                logoNode.style.fontSize = logoConfig.font_size || '18px';
+                logoNode.style.fontWeight = logoConfig.font_weight || '900';
+                logoNode.style.color = logoConfig.color || 'var(--text-primary)';
+                logoNode.style.letterSpacing = logoConfig.letter_spacing || 'normal';
+                logoNode.style.marginRight = '20px';
+                logoNode.style.cursor = 'default';
             }
 
-            // 2. Left Cluster Orchestration (Sequential Rebuild)
+            // 2. Left Cluster Orchestration (Buttons LEFT OF Logo Order)
             const primaryCluster = document.querySelector('.nav-cluster.primary-cluster');
             if (primaryCluster && config.left_cluster) {
-                // Collect existing persistent nodes to prevent accidental deletion
-                const logoNode = document.querySelector('.header-logo-pulsar');
+                primaryCluster.style.pointerEvents = 'none'; // Pass-through interaction
+                primaryCluster.style.display = 'flex';
+                primaryCluster.style.alignItems = 'center';
+                
+                const layout = window.CONFIG?.header_layout || {};
                 const navButtonsNode = document.getElementById('header-nav-buttons');
+                const clusterFragment = document.createDocumentFragment();
+                
+                // [v1.54.032] Master Toggle Implementation
+                const showLeft = config.show_left_cluster !== false;
 
-                primaryCluster.innerHTML = ''; // Wipe and rebuild buttons
+                // Order Item 1: Orchestrated Buttons (NOW FIRST)
+                if (showLeft) {
+                    config.left_cluster.forEach(btn => {
+                        if (btn.visible === false) return; 
 
-                config.left_cluster.forEach(btn => {
-                    if (btn.visible === false) return; // Strict visibility check
+                        const el = document.createElement('button');
+                        el.id = `header-btn-l-${btn.id}`;
+                        el.title = btn.title;
+                        el.className = 'tab-btn header-orchestrated-btn';
+                        
+                        // [v1.54.032] Item-Level Steering Overrides
+                        const size = (btn.size || layout.btn_size || 28) + 'px';
+                        const borderColor = btn.border_color || layout.btn_border_color || 'rgba(255, 255, 255, 0.1)';
+                        const bgAlpha = btn.bg_alpha || layout.btn_bg_alpha || '12';
 
-                    const el = document.createElement('button');
-                    el.id = `header-btn-l-${btn.id}`;
-                    el.title = btn.title;
-                    el.className = 'tab-btn header-orchestrated-btn';
-                    el.style = "padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;";
+                        el.style.cssText = `
+                            padding: 0 !important;
+                            margin-right: ${layout.btn_gap || 8}px;
+                            border-radius: ${layout.btn_border_radius || '50%'} !important;
+                            width: ${size} !important;
+                            height: ${size} !important;
+                            min-width: ${size} !important;
+                            min-height: ${size} !important;
+                            aspect-ratio: 1/1 !important;
+                            flex-shrink: 0 !important;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid ${borderColor};
+                            color: var(--text-primary);
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.2s ease;
+                            box-sizing: border-box !important;
+                            pointer-events: auto !important;
+                            flex-shrink: 0 !important;
+                            z-index: 10007;
+                        `;
 
-                    if (btn.id === 'power') {
-                        el.style.backgroundColor = "rgba(255, 51, 102, 0.1)";
-                        el.style.color = "#ff3366";
-                        el.style.borderColor = "rgba(255, 51, 102, 0.2)";
-                        el.style.boxShadow = "0 0 10px rgba(255, 51, 102, 0.2)";
-                    }
+                        if (btn.id === 'power') {
+                            el.style.backgroundColor = "rgba(255, 51, 102, 0.1)";
+                            el.style.color = "#ff3366";
+                            el.style.borderColor = "rgba(255, 51, 102, 0.2)";
+                        }
 
-                    el.innerHTML = `<svg class="icon" style="pointer-events: none;"><use href="#${SVG_PATHS[btn.icon] || ''}"></use></svg>`;
-                    el.onclick = () => eval(btn.action);
-                    primaryCluster.appendChild(el);
-                });
+                        // [v1.54.035] Dynamic Icon Resolution from Config SSOT
+                        const mapping = config.icon_mapping || {};
+                        const iconId = mapping[btn.icon] || `icon-${btn.icon}`;
+                        const iconSize = Math.floor((btn.size || layout.btn_size || 28) * 0.6);
 
-                // Re-append persistent structural components
-                if (logoNode) primaryCluster.appendChild(logoNode);
-                if (navButtonsNode) primaryCluster.appendChild(navButtonsNode);
+                        el.innerHTML = `<svg class="icon" style="width: ${iconSize}px; height: ${iconSize}px; pointer-events: none; stroke: currentColor; fill: none; stroke-width: ${btn.stroke_width || 2};"><use href="#${iconId}" xlink:href="#${iconId}"></use></svg>`;
+                        el.onclick = (e) => {
+                            e.preventDefault();
+                            eval(btn.action);
+                        };
+                        clusterFragment.appendChild(el);
+                    });
+                }
+
+                // Order Item 2: Logo (NOW SECOND)
+                if (logoNode) {
+                    logoNode.style.marginRight = '24px';
+                    clusterFragment.appendChild(logoNode);
+                }
+
+                // Order Item 3: Navigation Tabs Container
+                if (navButtonsNode) {
+                    navButtonsNode.style.pointerEvents = 'auto'; // Tabs need clicks
+                    navButtonsNode.style.flexShrink = '1';       // Tabs can shrink if needed
+                    clusterFragment.appendChild(navButtonsNode);
+                }
+
+                // Final Atomic Swap
+                primaryCluster.innerHTML = '';
+                primaryCluster.appendChild(clusterFragment);
             }
 
             // 3. Middle Tabs Orchestration (Ordering & Visibility)
             const tabContainer = document.getElementById('header-nav-buttons');
+            const tabLayout = config.tab_layout || {};
+            
             if (tabContainer && config.mid_tabs) {
                 tabContainer.innerHTML = '';
+                tabContainer.style.gap = tabLayout.gap || '6px';
+                tabContainer.style.display = 'flex';
+                tabContainer.style.alignItems = 'center';
+
                 config.mid_tabs.forEach(tab => {
                     if (tab.visible === false) return;
                     const btn = document.createElement('button');
                     btn.id = `nav-btn-${tab.id}`;
-                    btn.setAttribute('data-category', tab.id); // [v1.46.03] RESTORED: Critical for CSS/JS hooks
+                    btn.setAttribute('data-category', tab.id); 
                     btn.className = 'menu-item-btn' + (window.currentMainCategory === tab.id ? ' active' : '');
+                    
+                    // Centralized Tab Styling
+                    btn.style.cssText = `
+                        padding: ${tabLayout.padding || '4px 12px'} !important;
+                        border-radius: ${tabLayout.border_radius || '6px'} !important;
+                        font-size: ${tabLayout.font_size || '11px'} !important;
+                        font-weight: ${tabLayout.font_weight || '600'} !important;
+                        height: ${tabLayout.height || '26px'} !important;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        white-space: nowrap;
+                        color: inherit;
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    `;
+
                     btn.innerText = tab.label;
                     btn.onclick = (e) => {
                         if (tab.action.includes('switchMainCategory')) {
@@ -225,39 +319,61 @@
             // 4. Right Cluster Orchestration (Secondary Cluster)
             const secondaryCluster = document.querySelector('.nav-cluster.secondary-cluster');
             if (secondaryCluster && config.right_cluster) {
-                // [v1.46.03] Apply Global Layout Steering
                 const layout = window.CONFIG?.header_layout || {};
                 secondaryCluster.style.gap = (layout.btn_gap || 8) + 'px';
-                secondaryCluster.style.display = 'flex';
+                secondaryCluster.style.display = (config.show_right_cluster !== false) ? 'flex' : 'none';
                 secondaryCluster.style.alignItems = 'center';
+                secondaryCluster.style.zIndex = '10006'; // Ensure priority over HUD
+                secondaryCluster.style.position = 'relative';
+                secondaryCluster.style.pointerEvents = 'none'; // Pass-through interaction
 
-                secondaryCluster.innerHTML = ''; // Wipe and rebuild
-                config.right_cluster.forEach(btn => {
-                    if (btn.visible === false) return; // Strict visibility enforcement
+                secondaryCluster.querySelectorAll('.header-orchestrated-btn').forEach(n => n.remove());
+                
+                if (config.show_right_cluster !== false) {
+                    config.right_cluster.forEach(btn => {
+                        if (btn.visible === false) return;
 
-                    const el = document.createElement('button');
-                    el.id = `header-btn-r-${btn.id}`;
-                    if (layout.show_tooltips !== false) el.title = btn.title;
-                    el.className = 'tab-btn header-orchestrated-btn';
+                        const el = document.createElement('button');
+                        el.id = `header-btn-r-${btn.id}`;
+                        if (layout.show_tooltips !== false) el.title = btn.title;
+                        el.className = 'tab-btn header-orchestrated-btn';
 
-                    // Dynamic Styling from Config Registry
-                    const size = (layout.btn_size || 34) + 'px';
-                    const color = btn.color || '#e5e5e7';
-                    const radius = layout.btn_border_radius || '50%';
+                        // [v1.54.032] Item-Level Steering Overrides
+                        const size = (btn.size || layout.btn_size || 28) + 'px';
+                        const color = btn.color || '#e5e5e7';
+                        const bgAlpha = btn.bg_alpha || layout.btn_bg_alpha || '12';
+                        const borderColor = btn.border_color || layout.btn_border_color || 'rgba(255, 255, 255, 0.1)';
+                        
+                        el.style.cssText = `
+                            padding: 0 !important;
+                            border-radius: ${layout.btn_border_radius || '50%'} !important;
+                            width: ${size} !important;
+                            height: ${size} !important;
+                            min-width: ${size} !important;
+                            min-height: ${size} !important;
+                            aspect-ratio: 1/1 !important;
+                            flex-shrink: 0 !important;
+                            cursor: pointer;
+                            border: 1px solid ${borderColor};
+                            color: ${color};
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.2s ease;
+                            box-sizing: border-box !important;
+                            background-color: ${color}${bgAlpha};
+                            box-shadow: 0 2px 10px ${color}1a;
+                            pointer-events: auto !important;
+                            flex-shrink: 0 !important;
+                            z-index: 10007;
+                        `;
 
-                    el.style.width = size;
-                    el.style.height = size;
-                    el.style.padding = '0';
-                    el.style.borderRadius = radius;
-                    el.style.cursor = 'pointer';
-                    el.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-                    el.style.color = color;
+                        // [v1.54.035] Dynamic Icon Resolution from Config SSOT
+                        const mapping = config.icon_mapping || {};
+                        const iconId = mapping[btn.icon] || `icon-${btn.icon}`;
+                        const iconSize = Math.floor((btn.size || layout.btn_size || 28) * 0.55);
 
-                    // [v1.46.03] Advanced Color Pulsing
-                    el.style.backgroundColor = color + '12'; // ~7% alpha base
-                    el.style.boxShadow = `0 2px 10px ${color}1a`;
-
-                    el.innerHTML = `<svg class="icon" style="pointer-events: none; width: 1.1em; height: 1.1em;"><use href="#icon-${btn.icon}"></use></svg>`;
+                        el.innerHTML = `<svg class="icon" style="pointer-events: none; width: ${iconSize}px; height: ${iconSize}px; stroke: currentColor; fill: none; stroke-width: ${btn.stroke_width || 2};"><use href="#${iconId}" xlink:href="#${iconId}"></use></svg>`;
                     el.onclick = (e) => {
                         console.info(`[Header-Action] ${btn.id} triggered.`);
                         eval(btn.action);
@@ -286,7 +402,7 @@
 
 <body class="media-orchestrator-shell-environment" data-mwv-category="media" data-mwv-tab="player">
     <!-- [v1.46.064] Master SVG Glyph Registry (Single Source) -->
-    <div id="svg-icons-placeholder" style="display: none;"></div>
+    <div id="svg-icons-placeholder" style="position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; pointer-events: none; opacity: 0;"></div>
 
 
 
@@ -295,17 +411,10 @@
     <header id="master-persistent-header"
         style="position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: var(--shadow-soft); user-select: none; transition: background 0.3s ease, height 0.3s ease;">
         <div class="nav-cluster primary-cluster" style="display: flex; align-items: center; padding-left: 10px;">
-            <!-- EXIT / POWER BUTTON (v1.41.162 Restoration: Ganz Oben Links) -->
-            <button id="header-btn-power-exit" onclick="exitApplication()" title="EXIT APPLICATION" class="tab-btn"
-                style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); margin-right: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);">
-                <svg class="icon">
-                    <use href="#icon-power"></use>
-                </svg>
-            </button>
-
             <div class="header-logo-pulsar" onclick="toggleMenuBar()"
                 style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -1px; transition: transform 0.2s;"
-                onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict
+                onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                <span id="header-logo-text">dict</span>
             </div>
 
             <!-- Mega Navigation (Persistent System Row) -->
@@ -347,7 +456,7 @@
 
         <!-- NEW: Floating Elite Technical HUD (Pills) -->
         <div id="header-technical-hud"
-            style="position: absolute; top: 45px; right: 20px; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 20px; display: none; gap: 15px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10005;">
+            style="position: absolute; top: 72px; right: 20px; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 20px; display: none; gap: 15px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10005;">
             <div class="hud-pill-mini">PID: <span id="diag-pid" style="color: #007aff; font-weight: 900;">--</span>
             </div>
             <span style="opacity: 0.2;">|</span>
@@ -362,49 +471,8 @@
 
         <!-- System Controls (Right Cluster): Dynamically Managed via orchestrateHeaderUI (v1.46.03) -->
         <div id="header-right-system-cluster" class="nav-cluster secondary-cluster"
-            style="display: flex; gap: 6px; align-items: center; margin-right: 15px; flex-wrap: nowrap; min-width: 0; justify-content: flex-end;">
-            <button id="header-btn-r-status" class="nav-item-tiny" title="Technical HUD Toggle"
-                onclick="toggleTechnicalHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-pulse"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-auditor" class="nav-item-tiny" title="DOM Auditor Toggle"
-                onclick="toggleDomAuditor()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-shield"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-sync" class="nav-item-tiny" title="Sync Anchor Toggle"
-                onclick="toggleSyncAnchor()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-refresh"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-footer_hud" class="nav-item-tiny" title="Footer HUD Toggle"
-                onclick="toggleFooterHUD()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-burger"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-diag" class="nav-item-tiny" title="Diagnostics Overlay Toggle"
-                onclick="toggleDiagnosticsSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-diagnostics"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-db_status" class="nav-item-tiny" title="DB Status Toggle"
-                onclick="toggleFooterDBStatus()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-db"></use>
-                </svg>
-            </button>
-            <button id="header-btn-r-sidebar" class="nav-item-tiny" title="Global Sidebar Toggle"
-                onclick="toggleSidebar()">
-                <svg class="icon" style="width: 14px; height: 14px;">
-                    <use href="#icon-layout"></use>
-                </svg>
-            </button>
+            style="display: flex; gap: 6px; align-items: center; margin-right: 15px; flex-wrap: nowrap; min-width: 0; justify-content: flex-end; position: relative; z-index: 10006;">
+            <!-- Orchestrated Buttons only -->
         </div>
     </header>
 
@@ -994,24 +1062,24 @@
 
     <!-- Cleaned up redundant layout-footer -->
 
-    <script src="js/version.js?v=1.46.080"></script>
-    <script src="js/coverflow_controller.js?v=1.46.080"></script>
-    <script src="js/video_test_suite.js?v=1.46.080"></script>
-    <script src="js/stats-overlay.js?v=1.46.080"></script>
-    <script src="js/diagnostics_helpers.js?v=1.46.080"></script>
+    <script src="js/version.js?cb=1713643763"></script>
+    <script src="js/coverflow_controller.js?cb=1713643763"></script>
+    <script src="js/video_test_suite.js?cb=1713643763"></script>
+    <script src="js/stats-overlay.js?cb=1713643763"></script>
+    <script src="js/diagnostics_helpers.js?cb=1713643763"></script>
     <!-- Modular Recovery & Data Audit Diagnostics (v1.41.00) -->
-    <script src="js/diagnostics/recovery_manager.js?v=1.46.080"></script>
-    <script src="js/diagnostics/gui_integrity.js?v=1.46.080"></script>
-    <script src="js/forensic_flag_center.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_negative.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_positive.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/bibliothek_stages.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_transcoding.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_real.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_ffmpeg_mock.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_format_real.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_transcode_real.js?v=1.46.080"></script>
-    <script src="js/diagnostics/stages/stage_video_universal.js?v=1.46.080"></script>
+    <script src="js/diagnostics/recovery_manager.js?cb=1713643763"></script>
+    <script src="js/diagnostics/gui_integrity.js?cb=1713643763"></script>
+    <script src="js/forensic_flag_center.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_negative.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_positive.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/bibliothek_stages.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_transcoding.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_real.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_ffmpeg_mock.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_format_real.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_transcode_real.js?cb=1713643763"></script>
+    <script src="js/diagnostics/stages/stage_video_universal.js?cb=1713643763"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
 
     <!-- Externally loaded SVG icons/* --- Context Menu (Modernized v1.34) --- */
@@ -1025,11 +1093,11 @@
     <div id="dom-auditor-container"></div>
     <!-- NEW: Status Notifications Container (Integrated v1.34-1.37 Bridge) -->
     <div id="status-notification-container"></div>
-    <script src="js/diagnostics/dom_auditor.js?v=1.46.080"></script>
-    <script src="js/forensic_recovery_engine.js?v=1.46.080"></script>
-    <script src="js/nuclear_recovery_pulse.js?v=1.46.080"></script>
-    <script src="js/forensic_hydration_bridge.js?v=1.46.080"></script>
-    <script src="js/ui_test_suite.js?v=1.46.080"></script>
+    <script src="js/diagnostics/dom_auditor.js?cb=1713643763"></script>
+    <script src="js/forensic_recovery_engine.js?cb=1713643763"></script>
+    <script src="js/nuclear_recovery_pulse.js?cb=1713643763"></script>
+    <script src="js/forensic_hydration_bridge.js?cb=1713643763"></script>
+    <script src="js/ui_test_suite.js?cb=1713643763"></script>
 
     <!-- [v1.45.200] Atomic Stabilization Buffers -->
     <div id="diagnostics-overlay-container"></div>

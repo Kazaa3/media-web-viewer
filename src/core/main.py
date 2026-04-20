@@ -15,6 +15,15 @@ if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
 # --- 1. Path Forensics Done ---
+# [v1.46.136] Early Monkey Patching (Harden: Phase 0)
+# Must occur before any other module imports to avoid MonkeyPatchWarning (ssl/socket)
+try:
+    from gevent import monkey
+    monkey.patch_all()
+    print("STDOUT: [Bootstrap] gevent monkey-patching successful (Phase 0)", flush=True)
+except ImportError:
+    pass
+
 if sys.platform != "win32":
     # [v1.53.003-R3] Adaptive Environment Bootstrap: Force project-local .venv
     _venv_py = _root / ".venv" / "bin" / "python3"
@@ -522,14 +531,8 @@ if __name__ == "__main__":
     if PORT_CLEANUP_CMD:
         subprocess.run(PORT_CLEANUP_CMD, shell=True)
 
-    # 2. Early Monkey Patching (v1.46.136 Stability)
-    # Must occur as early as possible after main imports
-    try:
-        from gevent import monkey
-        monkey.patch_all()
-        print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
-    except ImportError:
-        pass
+    # 2. Early Monkey Patching (v1.46.136 Stability) - COMPLETED IN PHASE 0
+    # Relocated to top for forensic integrity.
 
     # 3. Environment Shield
     from src.core import api_core_app
