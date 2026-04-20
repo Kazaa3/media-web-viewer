@@ -8540,21 +8540,17 @@ def get_environment_info(force_refresh=False):
         trace_log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(trace_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 80}\n")
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')
-                        }] get_environment_info() called\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] get_environment_info() called\n")
             f.write(f"force_refresh: {force_refresh}\n")
             f.write(f"package_count: {len(installed_packages)}\n")
-            f.write(f"installed_packages_source: {
-                    installed_packages_source}\n")
+            f.write(f"installed_packages_source: {installed_packages_source}\n")
             f.write(f"requirements_status: {requirements_status}\n")
-            f.write(f"first_3_packages: {
-                    installed_packages[:3] if installed_packages else 'EMPTY'}\n")
+            f.write(f"first_3_packages: {installed_packages[:3] if installed_packages else 'EMPTY'}\n")
             f.write(f"env_type: {result.get('env_type')}\n")
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
         # Also print to console for immediate visibility
-        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
-            installed_packages)}, source={installed_packages_source}, req={requirements_status}")
+        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(installed_packages)}, source={installed_packages_source}, req={requirements_status}")
     except Exception as e:
         print(f"⚠️  UI-TRACE logging failed: {e}")
 
