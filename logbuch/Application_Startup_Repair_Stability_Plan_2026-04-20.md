@@ -1,3 +1,52 @@
+# Forensic Header: Final Repair & Logging Walkthrough
+
+The workstation header is now fully functional, with restored SVG icons, system-critical buttons on the left, and a mandatory forensic logging layer for all UI interactions.
+
+---
+
+## Key Enhancements
+
+### 1. High-Fidelity SVG Rendering
+We have resolved the "invisible icon" issue by:
+
+- **Dual-Attribute Mapping:** Using both `href` and `xlink:href` for maximum compatibility with the SVG Glyph Registry.
+- **Color Correction:** Fixed a bug where the CSS color property was being assigned a pixel value (e.g., 28px) instead of the intended hex color.
+- **Geometry Lock:** Enforced specific `stroke-width` (default 2.5) as defined in the master configuration.
+
+### 2. Restored Left-Side System Buttons
+The Power and Restart buttons are now correctly orchestrated to the left of the logo:
+
+- **Power Button:** Styled with a distinctive red theme (`#ff3366`) and semi-transparent background for high visibility.
+- **Restart Button:** Integrated with the backend `restart_app()` handshake.
+
+### 3. Forensic Backend Logging
+Every spawned button now performs a backend handshake:
+
+- **Spawn Events:** `eel.log_spawn_event(id, 'SPAWNED')` is fired immediately upon DOM injection.
+- **Click Traces:** Every click triggers `eel.log_gui_event(id, 'CLICK', action)`, providing a tamper-proof audit trail of operator actions.
+
+### 4. Interactive Polish
+- **Hover Frames:** Added dynamic background lighting and scaling (`scale(1.1)`) on hover to resolve the "missing frame" feedback.
+- **Click Reliability:** Corrected pointer-events hierarchy to ensure the button wrapper captures all clicks even when the user hits the icon directly.
+
+---
+
+## Validation Matrix
+
+- **Power/Restart:** Visible in the left cluster with correct iconography.
+- **Right Cluster:** All 10+ system icons (Status, Sync, Theme, etc.) are visible and styled.
+- **Backend Handshake:** Verified console logs for `[Header-Action]` and eel triggers.
+- **Visual Consistency:** Hover states produce immediate geographic and color shifts.
+
+---
+
+**IMPORTANT**
+
+The orchestrator now waits for the `svg-icons-placeholder` to be fully hydrated before spawning the header. This prevents "empty circle" rendering during high-latency boot sequences.
+
+**NOTE**
+
+All buttons utilize the `header-orchestrated-btn` class for unified CSS targeting and design consistency.
 # Forensic Header UI Repair & Logging Plan
 
 The goal is to fix the missing SVG icons in the header (both left and right clusters), restore the missing left-side system buttons (Power, Restart), and implement mandatory backend logging for all spawned UI elements.

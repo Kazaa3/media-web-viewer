@@ -2185,11 +2185,20 @@ async function orchestrateHeaderUI(retryCount = 0) {
              if (logoConfig.visible) {
                  const logoDiv = document.createElement('div');
                  logoDiv.className = 'header-logo-pulsar';
-                 logoDiv.innerHTML = `<span id="header-logo-text">${logoConfig.text || "dict"}</span>`;
-                 logoDiv.style.cssText = `
-                    font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -1px; margin-right: 20px;
-                 `;
+                 logoDiv.innerHTML = `<span id="header-logo-text" class="logo-text">${logoConfig.text || "dict"}</span>`;
                  clusterFragment.appendChild(logoDiv);
+                 logSpawn('header-logo-container');
+             }
+
+             // [v1.55.010] Technical HUD Orchestration & Logging
+             const hud = document.getElementById('header-technical-hud');
+             if (hud) {
+                 const pills = hud.querySelectorAll('.hud-pill');
+                 pills.forEach(pill => {
+                     const valNode = pill.querySelector('.hud-val');
+                     if (valNode && valNode.id) logSpawn(valNode.id);
+                     else logSpawn('hud-pill-generic');
+                 });
              }
 
              // Navigation Tabs Container (Level 1)
