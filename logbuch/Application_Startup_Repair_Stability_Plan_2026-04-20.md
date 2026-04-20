@@ -1,3 +1,64 @@
+# Implementation Plan: DOM Auditor & Header integrity Pulse
+
+The goal is to restore the DOM Auditor functionality, ensure 100% visibility for the DICT logo in all themes, and implement a high-fidelity backend handshake for every header component via SVG spawn logging.
+
+---
+
+**User Review Required**
+
+**IMPORTANT**
+
+**DOM Auditor Overlay:** I will be re-injecting the `dom-auditor-container` into the master shell. This may cause a small layout jump during the initial fragment load (boot sequence).
+
+**NOTE**
+
+**Spawn Logging:** Every header button and icon will now trigger a `logSpawn` event. I will also implement "despawn" logging for when the header is re-orchestrated or tabs are switched.
+
+---
+
+## Proposed Changes
+
+### 1. Shell: Fragment Anchoring
+- **[MODIFY] `shell_master.html`**
+	- Add `<div id="dom-auditor-container"></div>` to the overlay section.
+	- Remove redundant hardcoded logo (since it is dynamically managed by the orchestrator).
+
+### 2. Boot: Fragment Loading
+- **[MODIFY] `app_core.js`**
+	- Include `dom-auditor-container` in the `mwv_finalize_boot` fragment loading chain.
+
+### 3. Header: Orchestration & Forensic Logging
+- **[MODIFY] `ui_nav_helpers.js`**
+	- Update `orchestrateHeaderUI`:
+		- Implement a centralized `logLifecycle(id, type)` function that handles `logSpawn` and console reporting.
+		- Ensure EVERY created button (including SVGs) calls `logSpawn`.
+		- Log a "DESPAWN" event when the header container is cleared.
+	- Fix Logo rendering:
+		- Ensure `.header-logo-pulsar` has a border and background that is visible in both dark and elite-inversion (white) modes.
+		- Force explicit dimensions to prevent squashing.
+
+### 4. Styles: Visibility Hardening
+- **[MODIFY] `shell_master.css`**
+	- Harden `.header-logo-pulsar` and `.logo-text` for the elite-inversion theme.
+	- Ensure `svg-icons-placeholder` doesn't interfere with layout.
+
+---
+
+## Open Questions
+- Should the "despawn" logs be sent to the backend as well, or just kept in the JS console for developer debugging?
+- Do you want the DOM Auditor to auto-start a scan when opened?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Check backend logs for 🚀 `[SPAWN-LOG] DICT-ICON-TEXT -> SPAWNED`.
+- Check for 🚀 `[SPAWN-LOG] NAV-BTN-PLAYER -> SPAWNED` etc.
+
+### Manual Verification
+- Click the Checkbox icon in the top right. The DOM Auditor overlay should appear.
+- Verify the "DICT" logo is clearly visible on the white header bar.
 # Forensic UI: Header Restoration & Layout Hardening
 
 The Forensic Media Workstation UI has been hardened to support higher data density and consistent branding across all diagnostic modes.

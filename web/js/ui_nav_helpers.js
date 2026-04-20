@@ -2123,11 +2123,12 @@ async function orchestrateHeaderUI(retryCount = 0) {
             return `<svg class="icon" style="width: ${size}px; height: ${size}px; pointer-events: none; stroke: currentColor; fill: none; stroke-width: ${strokeWidth};"><use href="#${iconId}" xlink:href="#${iconId}"></use></svg>`;
         };
 
-        // Helper for Backend Logging (v1.55.006)
-        const logSpawn = (id) => {
+        // Helper for Backend Logging (v1.55.020 Lifecycle Audit)
+        const logLifecycle = (id, state, details = "") => {
             if (typeof eel !== 'undefined' && typeof eel.log_spawn_event === 'function') {
-                eel.log_spawn_event(id, 'SPAWNED');
+                eel.log_spawn_event(id, state.toUpperCase());
             }
+            console.info(`🚀 [Lifecycle] ${id.toUpperCase()} -> ${state.toUpperCase()} ${details ? '| ' + details : ''}`);
         };
 
         const logAction = (id, action) => {
@@ -2176,18 +2177,48 @@ async function orchestrateHeaderUI(retryCount = 0) {
                     };
 
                     clusterFragment.appendChild(el);
-                    logSpawn(el.id);
+                    logLifecycle(el.id, 'spawn', btn.id);
                 });
             }
 
-            // [v1.55.003] Logo Handling
+            // [v1.55.003] Logo Handling: Restoration with Config-Driven Styling
             const logoConfig = config.logo || {};
             if (logoConfig.visible) {
                 const logoDiv = document.createElement('div');
                 logoDiv.className = 'header-logo-pulsar';
-                logoDiv.innerHTML = `<span id="header-logo-text" class="logo-text">${logoConfig.text || "dict"}</span>`;
+                logoDiv.id = 'header-logo-container';
+                
+                const logoText = document.createElement('span');
+                logoText.id = 'header-logo-text';
+                logoText.className = 'logo-text';
+                logoText.innerText = logoConfig.text || "dict";
+                
+                // Apply Config-Driven Styles (v1.55.022-ELITE)
+                const isElite = document.querySelector('.master-header').classList.contains('elite-inversion');
+                
+                if (logoConfig.font_size) logoText.style.fontSize = logoConfig.font_size;
+                if (logoConfig.font_weight) logoText.style.fontWeight = logoConfig.font_weight;
+                if (logoConfig.font_family) logoText.style.fontFamily = logoConfig.font_family;
+                if (logoConfig.letter_spacing) logoText.style.letterSpacing = logoConfig.letter_spacing;
+                
+                // Theme-Aware Color Hardening
+                logoText.style.color = isElite ? '#000000' : (logoConfig.color || '#ffffff');
+                logoText.style.zIndex = "10";
+                
+                logoDiv.style.cssText = `
+                    display: flex; align-items: center; justify-content: center;
+                    min-width: 60px; height: 32px; padding: 0 12px;
+                    border-radius: 16px; margin: 0 15px; cursor: pointer;
+                    background: ${isElite ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)'};
+                    border: 1px solid ${isElite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'};
+                    transition: all 0.3s ease; scale: 1;
+                `;
+                
+                logoDiv.appendChild(logoText);
                 clusterFragment.appendChild(logoDiv);
-                logSpawn('header-logo-container');
+                
+                logLifecycle('header-logo-container', 'spawn');
+                logLifecycle('dict-icon-text', 'spawn');
             }
 
             // [v1.55.010] Technical HUD Orchestration & Logging
@@ -2196,8 +2227,8 @@ async function orchestrateHeaderUI(retryCount = 0) {
                 const pills = hud.querySelectorAll('.hud-pill');
                 pills.forEach(pill => {
                     const valNode = pill.querySelector('.hud-val');
-                    if (valNode && valNode.id) logSpawn(valNode.id);
-                    else logSpawn('hud-pill-generic');
+                    if (valNode && valNode.id) logLifecycle(valNode.id, 'spawn');
+                    else logLifecycle('hud-pill-generic', 'spawn');
                 });
             }
 
@@ -2222,10 +2253,11 @@ async function orchestrateHeaderUI(retryCount = 0) {
                     }
                 };
                 tabContainer.appendChild(btn);
-                logSpawn(btn.id);
+                logLifecycle(btn.id, 'spawn', tab.id);
             });
             clusterFragment.appendChild(tabContainer);
 
+            logLifecycle('primary-cluster-content', 'despawn');
             primaryCluster.innerHTML = '';
             primaryCluster.appendChild(clusterFragment);
         }
@@ -2282,10 +2314,11 @@ async function orchestrateHeaderUI(retryCount = 0) {
                 };
 
                 orchestratedButtons.appendChild(el);
-                logSpawn(el.id);
+                logLifecycle(el.id, 'spawn', btn.id);
             });
 
             // Standard approach: Replace old sys cluster
+            logLifecycle('secondary-cluster-sys', 'despawn');
             const oldCluster = secondaryCluster.querySelector('.header-sys-cluster');
             if (oldCluster) {
                 secondaryCluster.replaceChild(orchestratedButtons, oldCluster);
