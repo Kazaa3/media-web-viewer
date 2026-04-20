@@ -44,9 +44,7 @@ from src.core.config_master import (
     WINDOW_SIZE, FRONTEND_SETTINGS, EEL_SETTINGS,
     LAUNCH_PROFILE, FORENSIC_TOOLS_LIST,
     GLOBAL_CONFIG, PORT_CLEANUP_CMD,
-    BITRATE_QUALITY_THRESHOLDS, DEPENDENCY_REGISTRY,
-    APP_VERSION, APP_VERSION_FULL, BACKEND_VERSION, FRONTEND_VERSION,
-    VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
+    BITRATE_QUALITY_THRESHOLDS, DEPENDENCY_REGISTRY
 )
 from src.core.db import get_active_db_path
 from src.core import (
@@ -158,6 +156,11 @@ try:
     from eel import chrome
     log.info("[Bootstrap] Eel loaded successfully")
 
+    # --- CORE METADATA REGISTRY ---
+    from src.core.config_master import (
+        GLOBAL_CONFIG, APP_VERSION, APP_VERSION_CORE, APP_VERSION_FULL, BACKEND_VERSION, FRONTEND_VERSION,
+        VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS
+    )
     from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, MediaItem, get_allowed_internal_cats
     from src.core.transcoder import TranscoderManager
     from src.core import handbrake_wrapper as handbrake
@@ -539,7 +542,7 @@ if __name__ == "__main__":
         sys.exit(1)
         
     # 5. Log Session Details
-    log_self_diagnostics()
+    log_session_diagnostics()
     
     # 6. Start Eel Application
     start_app()
