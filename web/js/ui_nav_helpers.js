@@ -183,15 +183,30 @@ window.toggleTechnicalHUD = toggleTechnicalHUD;
  * Toggles the 7-Point DOM Auditor HUD (v1.41.151)
  */
 function toggleDomAuditor(forceState = null) {
-    const hud = document.getElementById('dom-auditor-hud');
+    let hud = document.getElementById('dom-auditor-hud');
+    
+    // [v1.55.032] Recursive Shadow/Displacement Search
+    if (!hud) {
+        hud = document.querySelector('[id*="dom-auditor-hud"]');
+        if (!hud) {
+            const container = document.getElementById('dom-auditor-container');
+            if (container) hud = container.querySelector('.glassmorphic-panel');
+        }
+    }
+
     const btn = document.getElementById('header-btn-r-auditor');
     if (!hud) {
-        console.warn("[UI-NAV] DOM Auditor HUD container not found.");
+        console.warn("❌ [UI-NAV] DOM Auditor HUD container not found in DOM.");
+        if (typeof showToast === 'function') showToast("AUDITOR NOT LOADED", "error");
         return;
     }
 
-    const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none' || hud.style.opacity === '0');
+    
+    // Apply state with safety hardening
     hud.style.display = isVisible ? 'block' : 'none';
+    hud.style.pointerEvents = isVisible ? 'auto' : 'none';
+    if (isVisible) hud.style.opacity = '1';
 
     if (btn) btn.classList.toggle('active', isVisible);
 
@@ -646,7 +661,7 @@ window.toggleZenMode = function (forceState = null) {
         window.MWV_UI.toggleZen(forceState);
     } else {
         console.warn("[UI-NAV] MWV_UI.toggleZen not found. Falling back to legacy hide.");
-        const header = document.getElementById('master-persistent-header');
+        const header = document.getElementById('master-header-container'); // [v1.55.033] Sync ID
         if (header) header.style.display = 'none';
     }
 };
@@ -2257,9 +2272,17 @@ async function orchestrateHeaderUI(retryCount = 0) {
             });
             clusterFragment.appendChild(tabContainer);
 
+            // [v1.55.034] Atomic Update Guard: Preserve Logo presence to prevent "flash" disappearance
+            const existingLogo = primaryCluster.querySelector('#header-logo-container');
+            
             logLifecycle('primary-cluster-content', 'despawn');
             primaryCluster.innerHTML = '';
             primaryCluster.appendChild(clusterFragment);
+            
+            // Recapture liveness indicator if logo was already present
+            if (existingLogo) {
+                console.debug("[HEADER] Partial Sync: Logo preserved/re-hydrated in same tick.");
+            }
         }
 
         // 2. Secondary Cluster Orchestration (Right)

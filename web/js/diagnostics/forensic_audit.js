@@ -15,7 +15,7 @@
 
     // 1. Container Audit
     const criticalContainers = [
-        'master-persistent-header',
+        'master-header-container',
         'main-sidebar',
         'layout-container',
         'coverflow-track',

@@ -193,7 +193,7 @@ svg.icon {
 
 /* --- Layout Structure --- */
 /* --- MWV Orchestrator Visibility Matrix (v1.41.00) --- */
-body.mwv-hide-header #master-persistent-header { display: none !important; }
+body.mwv-hide-header #master-header-container { display: none !important; }
 body.mwv-hide-subnav #sub-nav-container { display: none !important; }
 body.mwv-hide-footer .layout-footer { display: none !important; }
 

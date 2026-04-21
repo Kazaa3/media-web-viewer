@@ -177,6 +177,12 @@ function syncUiGeometry(config) {
  * Redners Level 1 Menu from GLOBAL_CONFIG.
  */
 function renderMasterNav(config) {
+    // [v1.55.030] Forensic Gate: Bypass legacy renderer if Rebuild Mode is active
+    if (config?.ui_evolution_mode === 'rebuild') {
+        console.debug("[NAV] renderMasterNav bypassed (Rebuild Mode Active)");
+        return;
+    }
+
     const navBar = document.getElementById('master-header-container')?.querySelector('.nav-cluster');
     if (!navBar || !config?.navigation_orchestrator?.level_1) return;
 
@@ -766,12 +772,10 @@ window.addEventListener('DOMContentLoaded', async () => {
             console.log("Data: Triggering library sync...");
             (async () => {
                  try {
-                     // Independent UI Orchestration (Non-blocking)
-                     setTimeout(() => {
-                         if (typeof orchestrateHeaderUI === 'function') orchestrateHeaderUI();
-                     }, 0);
-                     
-                     if (typeof loadLibrary === 'function') await loadLibrary();
+                      // Independent UI Orchestration (Non-blocking)
+                      // Redundant post-sync pulse removed in favor of fragment-driven trigger (v1.55.031)
+                      
+                      if (typeof loadLibrary === 'function') await loadLibrary();
                      if (typeof loadEditItems === 'function') await loadEditItems();
                  } catch (e) { console.warn("Background Sync Warning:", e); }
             })();
